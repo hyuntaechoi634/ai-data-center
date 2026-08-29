@@ -12,11 +12,11 @@ ROOT = Path(__file__).resolve().parent
 MAP_PATH = ROOT / "filename-map.csv"
 SUPPLEMENTAL_MAP_PATH = ROOT / "supplemental-file-map.csv"
 SOURCE_MANIFEST = (
-    ROOT / "provenance" / "brp7d8-calibrated-source-manifest.sha256"
+    ROOT / "provenance" / "final-calibrated-source-manifest.sha256"
 )
 SUPPLEMENTAL_MANIFEST = ROOT / "provenance" / "supplemental-files.sha256"
 GENERATION_MANIFEST = ROOT / "provenance" / "generation-inputs.sha256"
-XML_MANIFEST = ROOT / "provenance" / "brp7d8-cal-xml-manifest.sha256"
+XML_MANIFEST = ROOT / "provenance" / "final-calibrated-xml-manifest.sha256"
 
 
 def digest(path):
@@ -43,7 +43,7 @@ def main():
     parser.add_argument(
         "--xml-snapshot",
         type=Path,
-        help="also verify a 226-file XML directory against brp7d8-cal",
+        help="also verify a 226-file final calibrated XML directory",
     )
     args = parser.parse_args()
     with MAP_PATH.open(newline="", encoding="utf-8") as stream:
@@ -135,12 +135,12 @@ def main():
         return 1
 
     message = (
-        "PASS: 45 public files match the calibrated brp7d8 manifest, the "
+        "PASS: 45 public files match the final calibrated source manifest, the "
         "supplemental scenario overlay matches its manifest, and "
         f"{len(generation_expected)} generation inputs match their manifest"
     )
     if args.xml_snapshot:
-        message += "; 226 XML files match brp7d8-cal"
+        message += "; 226 XML files match the final calibrated manifest"
     print(message)
     return 0
 

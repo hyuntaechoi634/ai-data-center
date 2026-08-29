@@ -13,7 +13,7 @@ FIGURE_PROJECTS: dict[str, dict[str, str]] = {
         "entrypoint": "figures/figure-01/make_figure.py",
         "output_stem": "figure-01",
         "default_image": "figure-01.jpg",
-        "baseline_description": "Selected template Figure 1 compute-service and electricity-demand results",
+        "baseline_description": "GCAM 9.1 final calibrated Figure 1 compute-service and electricity-demand results",
     },
     "figure-02": {
         "label": "Figure 02",
@@ -22,7 +22,7 @@ FIGURE_PROJECTS: dict[str, dict[str, str]] = {
         "entrypoint": "figures/figure-02/make_figure.py",
         "output_stem": "figure-02",
         "default_image": "figure-02.jpg",
-        "baseline_description": "Selected template Figure 2 clean-capacity and generation results",
+        "baseline_description": "GCAM 9.1 final calibrated Figure 2 clean-capacity and generation results",
     },
     "figure-03": {
         "label": "Figure 03",
@@ -31,7 +31,7 @@ FIGURE_PROJECTS: dict[str, dict[str, str]] = {
         "entrypoint": "figures/figure-03/make_figure.py",
         "output_stem": "figure-03",
         "default_image": "figure-03.jpg",
-        "baseline_description": "Selected template Figure 3 operational-emissions results and manufacturing sensitivity",
+        "baseline_description": "GCAM 9.1 final calibrated Figure 3 operational-emissions results and manufacturing sensitivity",
     },
     "figure-04": {
         "label": "Figure 04",
@@ -40,7 +40,7 @@ FIGURE_PROJECTS: dict[str, dict[str, str]] = {
         "entrypoint": "figures/figure-04/make_figure.py",
         "output_stem": "figure-04",
         "default_image": "figure-04.jpg",
-        "baseline_description": "Selected template Figure 4 water-consumption and withdrawal results",
+        "baseline_description": "GCAM 9.1 final calibrated Figure 4 water-consumption and withdrawal results",
     },
     "figure-05": {
         "label": "Figure 05",
@@ -49,16 +49,16 @@ FIGURE_PROJECTS: dict[str, dict[str, str]] = {
         "entrypoint": "figures/figure-05/make_figure.py",
         "output_stem": "figure-05",
         "default_image": "figure-05.jpg",
-        "baseline_description": "Selected template Figure 5 carbon-price and electricity-price results",
+        "baseline_description": "GCAM 9.1 final calibrated Figure 5 carbon-price and electricity-price results",
     },
     "figure-06": {
         "label": "Figure 06",
         "title": "Regional data center shares of electricity and water",
         "project_id": "figure-06-regional",
         "entrypoint": "figures/figure-06/make_figure.py",
-        "output_stem": "figure-06-r12",
-        "default_image": "figure-06-r12.jpg",
-        "baseline_description": "Selected template Figure 6 with GCAM-32 maps and regional comparison rails",
+        "output_stem": "figure-06",
+        "default_image": "figure-06.jpg",
+        "baseline_description": "GCAM 9.1 final calibrated Figure 6 with 32 model-region maps and 12-region comparison rails",
     },
 }
 

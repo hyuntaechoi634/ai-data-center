@@ -1,0 +1,33 @@
+[Unit]
+Description=Figure Studio private web application
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/data/home/hyuntae-choi/ai-datacenter
+EnvironmentFile=/home/hyuntae-choi/.config/figure-studio/service.env
+ExecStart=/data/home/hyuntae-choi/ai-datacenter/analysis/figure-studio/deploy/cloudflare/run_studio.sh
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+InaccessiblePaths=/home/hyuntae-choi/.config/figure-studio/openai-admin.key
+RestrictSUIDSGID=true
+RestrictRealtime=true
+LockPersonality=true
+SystemCallArchitectures=native
+# Bubblewrap needs AF_NETLINK to configure loopback inside its isolated
+# network namespace. External network access remains blocked by --unshare-all.
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+ReadWritePaths=/data/home/hyuntae-choi/ai-datacenter/analysis/figure-studio/var
+MemoryMax=10G
+MemorySwapMax=0
+TasksMax=192
+LimitNOFILE=4096
+OOMPolicy=stop
+
+[Install]
+WantedBy=default.target

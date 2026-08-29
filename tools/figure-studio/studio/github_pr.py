@@ -50,6 +50,9 @@ class ProposalResult:
     number: int
     url: str
     branch: str
+    commit_sha: str
+    merged: bool = False
+    merge_commit_sha: str | None = None
 
 
 @dataclass(frozen=True)
@@ -59,6 +62,7 @@ class PublicExportManifest:
     base_commit: str
     repository_root: str
     allowed_roots: tuple[Path, ...]
+    allowed_files: frozenset[str]
     baseline_sha256: dict[str, str]
 
     @classmethod
@@ -70,7 +74,7 @@ class PublicExportManifest:
             payload = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
             raise ProposalError("The public figure export manifest is invalid") from exc
-        if not isinstance(payload, dict) or payload.get("schema_version") != 1:
+        if not isinstance(payload, dict) or payload.get("schema_version") != 2:
             raise ProposalError("The public figure export manifest is invalid")
         if payload.get("status") != "public-ready":
             raise ProposalError("The final public figure export is not ready")
@@ -104,9 +108,22 @@ class PublicExportManifest:
         for raw_path, raw_hash in raw_hashes.items():
             relative = _safe_relative(str(raw_path))
             digest = str(raw_hash)
-            if not _under_any(relative, tuple(allowed_roots)) or not SHA256.fullmatch(digest):
+            if (
+                not _under_any(relative, tuple(allowed_roots))
+                or relative.suffix.lower() not in SAFE_TEXT_SUFFIXES
+                or not SHA256.fullmatch(digest)
+            ):
                 raise ProposalError("The public figure export contains an invalid baseline hash")
             hashes[relative.as_posix()] = digest
+
+        raw_allowed_files = payload.get("allowed_files")
+        if not isinstance(raw_allowed_files, list) or not raw_allowed_files:
+            raise ProposalError("The public figure export has no exact proposal allowlist")
+        allowed_files = frozenset(
+            _safe_relative(str(raw_path)).as_posix() for raw_path in raw_allowed_files
+        )
+        if allowed_files != frozenset(hashes):
+            raise ProposalError("The public figure proposal allowlist does not match its hashes")
 
         return cls(
             repository=repository,
@@ -114,6 +131,7 @@ class PublicExportManifest:
             base_commit=base_commit,
             repository_root=root_path.as_posix(),
             allowed_roots=tuple(allowed_roots),
+            allowed_files=allowed_files,
             baseline_sha256=hashes,
         )
 
@@ -199,15 +217,20 @@ def collect_proposal_files(
             baseline_files[relative.as_posix()] = path
         for path in _iter_text_files(workspace / root):
             relative = path.relative_to(workspace)
+            if relative.as_posix() not in manifest.allowed_files:
+                raise ProposalError(
+                    f"The revision contains an unreviewed public path: {relative.as_posix()}"
+                )
             workspace_files[relative.as_posix()] = path
 
     for relative, path in baseline_files.items():
         expected = manifest.baseline_sha256.get(relative)
         if expected is None or _hash(path) != expected:
             raise ProposalError("The session baseline does not match the reviewed public export")
-    unexpected_hashes = {
-        path for path in manifest.baseline_sha256 if _under_any(Path(path), roots)
-    } - set(baseline_files)
+    expected_paths = {
+        path for path in manifest.allowed_files if _under_any(Path(path), roots)
+    }
+    unexpected_hashes = expected_paths - set(baseline_files)
     if unexpected_hashes:
         raise ProposalError("The session baseline is incomplete")
 
@@ -292,13 +315,15 @@ class GitHubClient:
             raise ProposalError("GitHub returned an invalid response")
         return result
 
-    def create_draft_pull_request(
+    def create_pull_request(
         self,
         manifest: PublicExportManifest,
         files: list[ProposalFile],
         title: str,
         figure_id: str,
         panel_id: str | None,
+        *,
+        draft: bool,
     ) -> ProposalResult:
         encoded_ref = quote(f"heads/{manifest.base_branch}", safe="/")
         base_ref = self.requester("GET", f"/git/ref/{encoded_ref}", None)
@@ -374,6 +399,13 @@ class GitHubClient:
         changed_paths = "\n".join(
             f"- `{item.repository_path}`" for item in files
         )
+        review_note = (
+            "This is a Draft PR. Review the code and rerender against the controlled source "
+            "package before merging."
+            if draft
+            else "This PR was submitted by the exact owner-admin identity for immediate "
+            "integration after the local public-export checks passed."
+        )
         body = (
             "Figure Studio generated this public code proposal from an authenticated editing "
             "session. Data tables, uploads, rendered outputs, and private source material are "
@@ -382,26 +414,155 @@ class GitHubClient:
             f"Scope: `{panel_id or 'whole figure'}`\n\n"
             "Changed public files:\n\n"
             f"{changed_paths}\n\n"
-            "This is a Draft PR. Review the code and rerender against the controlled source "
-            "package before merging."
+            f"{review_note}"
         )
-        pull = self.requester(
-            "POST",
-            "/pulls",
-            {
-                "title": title,
-                "head": proposal_branch,
-                "base": manifest.base_branch,
-                "body": body,
-                "draft": True,
-                "maintainer_can_modify": True,
-            },
+        try:
+            pull = self.requester(
+                "POST",
+                "/pulls",
+                {
+                    "title": title,
+                    "head": proposal_branch,
+                    "base": manifest.base_branch,
+                    "body": body,
+                    "draft": draft,
+                    "maintainer_can_modify": True,
+                },
+            )
+            number = pull.get("number")
+            url = str(pull.get("html_url", ""))
+            if not isinstance(number, int) or not url.startswith("https://github.com/"):
+                raise ProposalError(
+                    "GitHub created the branch but did not return a pull request"
+                )
+        except Exception as exc:
+            cleanup_endpoint = "/git/refs/heads/" + quote(proposal_branch, safe="/")
+            try:
+                self.requester("DELETE", cleanup_endpoint, None)
+            except Exception as cleanup_exc:
+                raise ProposalError(
+                    "GitHub did not create the PR and the proposal branch could not "
+                    f"be removed: {proposal_branch}"
+                ) from cleanup_exc
+            if isinstance(exc, ProposalError):
+                raise
+            raise ProposalError("GitHub did not create the PR") from exc
+        return ProposalResult(
+            number=number,
+            url=url,
+            branch=proposal_branch,
+            commit_sha=commit_sha,
         )
-        number = pull.get("number")
-        url = str(pull.get("html_url", ""))
-        if not isinstance(number, int) or not url.startswith("https://github.com/"):
-            raise ProposalError("GitHub created the branch but did not return a pull request")
-        return ProposalResult(number=number, url=url, branch=proposal_branch)
+
+    def create_draft_pull_request(
+        self,
+        manifest: PublicExportManifest,
+        files: list[ProposalFile],
+        title: str,
+        figure_id: str,
+        panel_id: str | None,
+    ) -> ProposalResult:
+        return self.create_pull_request(
+            manifest,
+            files,
+            title,
+            figure_id,
+            panel_id,
+            draft=True,
+        )
+
+    def create_and_merge_pull_request(
+        self,
+        manifest: PublicExportManifest,
+        files: list[ProposalFile],
+        title: str,
+        figure_id: str,
+        panel_id: str | None,
+    ) -> ProposalResult:
+        result = self.create_pull_request(
+            manifest,
+            files,
+            title,
+            figure_id,
+            panel_id,
+            draft=False,
+        )
+        encoded_ref = quote(f"heads/{manifest.base_branch}", safe="/")
+        current_ref = self.requester("GET", f"/git/ref/{encoded_ref}", None)
+        current_base = str(current_ref.get("object", {}).get("sha", ""))
+        if current_base != manifest.base_commit:
+            raise ProposalError(
+                f"PR {result.url} was created but not merged because the integration "
+                "branch moved during submission"
+            )
+        try:
+            merged = self.requester(
+                "PUT",
+                f"/pulls/{result.number}/merge",
+                {
+                    "sha": result.commit_sha,
+                    "merge_method": "squash",
+                    "commit_title": title,
+                },
+            )
+        except ProposalError as exc:
+            raise ProposalError(
+                f"PR {result.url} was created but could not be merged immediately: {exc}"
+            ) from exc
+        merge_commit_sha = str(merged.get("sha", ""))
+        if merged.get("merged") is not True or not COMMIT.fullmatch(merge_commit_sha):
+            reason = " ".join(str(merged.get("message", "")).split())[:240]
+            suffix = f": {reason}" if reason else ""
+            raise ProposalError(
+                f"PR {result.url} was created but was not merged immediately{suffix}"
+            )
+
+        cleanup_endpoint = "/git/refs/heads/" + quote(result.branch, safe="/")
+        try:
+            self.requester("DELETE", cleanup_endpoint, None)
+        except ProposalError:
+            pass
+        return ProposalResult(
+            number=result.number,
+            url=result.url,
+            branch=result.branch,
+            commit_sha=result.commit_sha,
+            merged=True,
+            merge_commit_sha=merge_commit_sha,
+        )
+
+
+def read_private_token_file(path: Path | None, label: str = "Credentials") -> str:
+    if path is None:
+        raise ProposalError(f"{label} are not configured")
+    descriptor = None
+    try:
+        descriptor = os.open(
+            path,
+            os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0),
+        )
+        details = os.fstat(descriptor)
+        if (
+            not stat.S_ISREG(details.st_mode)
+            or details.st_uid != os.getuid()
+            or details.st_mode & 0o077
+            or details.st_size < 20
+            or details.st_size > 4096
+        ):
+            raise ProposalError(f"{label} are not configured safely")
+        with os.fdopen(descriptor, "r", encoding="utf-8") as handle:
+            descriptor = None
+            token = handle.read(4097).strip()
+    except ProposalError:
+        raise
+    except (OSError, UnicodeDecodeError) as exc:
+        raise ProposalError(f"{label} are not configured") from exc
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+    if not re.fullmatch(r"[A-Za-z0-9_=-]{20,4096}", token):
+        raise ProposalError(f"{label} are invalid")
+    return token
 
 
 class GitHubProposalPublisher:
@@ -417,37 +578,7 @@ class GitHubProposalPublisher:
         self.token_file = candidate if candidate and candidate.is_absolute() else None
 
     def _token(self) -> str:
-        path = self.token_file
-        if path is None:
-            raise ProposalError("GitHub credentials are not configured")
-        descriptor = None
-        try:
-            descriptor = os.open(
-                path,
-                os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0),
-            )
-            details = os.fstat(descriptor)
-            if (
-                not stat.S_ISREG(details.st_mode)
-                or details.st_uid != os.getuid()
-                or details.st_mode & 0o077
-                or details.st_size < 20
-                or details.st_size > 4096
-            ):
-                raise ProposalError("GitHub credentials are not configured safely")
-            with os.fdopen(descriptor, "r", encoding="utf-8") as handle:
-                descriptor = None
-                token = handle.read(4097).strip()
-        except ProposalError:
-            raise
-        except (OSError, UnicodeDecodeError) as exc:
-            raise ProposalError("GitHub credentials are not configured") from exc
-        finally:
-            if descriptor is not None:
-                os.close(descriptor)
-        if not re.fullmatch(r"[A-Za-z0-9_=-]{20,4096}", token):
-            raise ProposalError("GitHub credentials are invalid")
-        return token
+        return read_private_token_file(self.token_file, "GitHub credentials")
 
     def _manifest(self, baseline: Path | None = None) -> PublicExportManifest:
         manifest = PublicExportManifest.load(baseline or self.template)

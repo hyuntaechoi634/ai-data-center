@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Byte-reconstruct the frozen calibrated brp7d8 regional 2025 demand seed.
+"""Byte-reconstruct the frozen final regional 2025 demand-calibration seed.
 
-The calibrated rows come from the preserved brp7d8 S7 foldback evidence. The
+The calibrated rows come from the preserved final foldback evidence. The
 ordering, eight-significant-digit formatting, and CRLF body reproduce the
-audited brp7d8-cal source hash without reading a mutable build tree.
+audited final calibrated source hash without reading a mutable build tree.
 """
 
 import argparse

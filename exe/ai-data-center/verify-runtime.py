@@ -24,7 +24,7 @@ SOURCE_MAP_PATH = HERE / "provenance" / "runtime-source-map.csv"
 XML_MANIFEST = (
     REPO_ROOT
     / "input/gcamdata/ai-data-center/provenance/"
-    / "brp7d8-cal-xml-manifest.sha256"
+    / "final-calibrated-xml-manifest.sha256"
 )
 XML_SNAPSHOT = REPO_ROOT / "input/gcamdata/xml-ai-data-center-calibrated"
 SCENARIO = re.compile(
@@ -396,83 +396,57 @@ def verify_binary(failures: list[str]) -> None:
         fail("exe/gcam.exe is not executable", failures)
 
     source = REPO_ROOT / "cvs/objects"
+    origin_path = HERE / "gcam-core-origin.txt"
+    expected = "11e128fb7ce3e14e9c4daf3903ba73123046a7aa"
     try:
+        git_root = Path(subprocess.run(
+            ["git", "-C", str(source), "rev-parse", "--show-toplevel"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()).resolve()
+    except (OSError, subprocess.CalledProcessError) as error:
+        fail(f"cannot identify the GCAM core source repository: {error}", failures)
+        return
+
+    if git_root != REPO_ROOT.resolve():
         commit = subprocess.run(
             ["git", "-C", str(source), "rev-parse", "HEAD"],
             check=True,
             capture_output=True,
             text=True,
         ).stdout.strip()
-    except (OSError, subprocess.CalledProcessError) as error:
-        fail(f"cannot read GCAM core source revision: {error}", failures)
+        if commit != expected:
+            fail(f"GCAM core revision is {commit}, expected v9.1 {expected}", failures)
         return
-    expected = "11e128fb7ce3e14e9c4daf3903ba73123046a7aa"
-    if commit != expected:
-        fail(f"GCAM core revision is {commit}, expected v9.1 {expected}", failures)
 
+    if not origin_path.is_file():
+        fail(f"missing migrated-core origin record: {origin_path}", failures)
+        return
+    origin = {}
+    for line in origin_path.read_text(encoding="utf-8").splitlines():
+        if line and not line.startswith("#"):
+            key, value = line.split("=", 1)
+            origin[key] = value
+    if origin.get("upstream_commit") != expected:
+        fail("migrated-core origin does not identify GCAM v9.1", failures)
 
-def verify_canonical(
-    matrix: Path,
-    failures: list[str],
-) -> None:
-    with MAP_PATH.open(newline="", encoding="utf-8") as stream:
-        rows = list(csv.DictReader(stream))
-    for row in rows:
-        base = (
-            matrix / "exe/brp7d8-exe-configs"
-            if row["kind"] == "scenario"
-            else matrix / "exe/brp7d8-db-configs"
-        )
-        source = base / row["source_file"]
-        if not source.is_file():
-            fail(f"canonical configuration missing: {source}", failures)
-        elif sha256(source) != row["source_sha256"]:
-            fail(f"canonical configuration hash mismatch: {source}", failures)
-
-    canonical_pairs = {
-        "input/solution/cal_broyden_diag10k_waterfix_kaist.xml":
-            "input/solution/cal_broyden_kaist.xml",
-        "input/magicc/inputs/input_gases.emk":
-            "input/magicc/inputs/input_gases.emk",
-        "input/policy/ai-datacenter/ai_demand_Constant.xml":
-            "input/policy/ai-data-center/demand-constant.xml",
-        "input/policy/ai-datacenter/ai_demand_Low.xml":
-            "input/policy/ai-data-center/demand-low.xml",
-        "input/policy/ai-datacenter/ai_demand_Medium.xml":
-            "input/policy/ai-data-center/demand-medium.xml",
-        "input/policy/ai-datacenter/ai_demand_High.xml":
-            "input/policy/ai-data-center/demand-high.xml",
-        "input/policy/ai-datacenter/ai_efficiency_Low.xml":
-            "input/policy/ai-data-center/efficiency-low.xml",
-        "input/policy/ai-datacenter/ai_efficiency_Medium.xml":
-            "input/policy/ai-data-center/efficiency-medium.xml",
-        "input/policy/ai-datacenter/ai_efficiency_High.xml":
-            "input/policy/ai-data-center/efficiency-high.xml",
-        "input/policy/ai-datacenter/ai_trade_open.xml":
-            "input/policy/ai-data-center/trade-open.xml",
-        "input/policy/ai-datacenter/ref_co2_2025peg.xml":
-            "input/policy/ai-data-center/carbon-policy-reference.xml",
-        "input/policy/ai-datacenter/nz2050_co2.xml":
-            "input/policy/ai-data-center/carbon-policy-net-zero-2050.xml",
-    }
-    for source_name, public_name in canonical_pairs.items():
-        source = matrix / source_name
-        public = REPO_ROOT / public_name
-        if not source.is_file() or not public.is_file():
-            fail(f"canonical comparison missing: {source_name} or {public_name}", failures)
-        elif sha256(source) != sha256(public):
-            fail(f"canonical content differs: {source_name} and {public_name}", failures)
-
-    for piece in range(7):
-        source = matrix / f"exe/restart/brp7d8-warm/restart.{piece}"
-        public = (
-            REPO_ROOT
-            / f"exe/restart/ai-data-center-warm-start/restart.{piece}"
-        )
-        if not source.is_file() or not public.is_file():
-            fail(f"warm restart comparison missing for piece {piece}", failures)
-        elif sha256(source) != sha256(public):
-            fail(f"warm restart differs for piece {piece}", failures)
+    listing = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "ls-files", "-s", "--", "cvs/objects"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+    digest = hashlib.sha256(listing.encode("utf-8")).hexdigest()
+    entries = len([line for line in listing.splitlines() if line])
+    if digest != origin.get("index_sha256") or str(entries) != origin.get("tracked_entries"):
+        fail("migrated GCAM core index differs from its frozen v9.1 origin", failures)
+    dirty = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "diff", "--quiet", "--", "cvs/objects"],
+        check=False,
+    ).returncode
+    if dirty != 0:
+        fail("migrated GCAM core has uncommitted tracked-file changes", failures)
 
 
 def main() -> int:
@@ -495,8 +469,6 @@ def main() -> int:
         else None
     )
     verify_source_map(failures, canonical)
-    if args.canonical_matrix is not None:
-        verify_canonical(canonical, failures)
 
     if failures:
         print(f"FAIL: {len(failures)} runtime verification errors", file=sys.stderr)

@@ -53,6 +53,12 @@ class GitHubProposalTests(unittest.TestCase):
             base_commit=BASE_COMMIT,
             repository_root="figure-studio/public",
             allowed_roots=(Path("figures/figure-01"), Path("figures/helpers")),
+            allowed_files=frozenset(
+                {
+                    "figures/figure-01/make_figure.py",
+                    "figures/helpers/style.py",
+                }
+            ),
             baseline_sha256={
                 "figures/figure-01/make_figure.py": digest(self.original),
                 "figures/helpers/style.py": digest(b"COLOR = 'blue'\n"),
@@ -97,6 +103,15 @@ class GitHubProposalTests(unittest.TestCase):
             encoding="utf-8",
         )
         with self.assertRaisesRegex(ProposalError, "credential"):
+            collect_proposal_files(
+                self.baseline, self.workspace, "figure-01", self.manifest
+            )
+
+    def test_rejects_new_text_file_even_inside_allowed_root(self) -> None:
+        (self.workspace / "figures" / "figure-01" / "uploaded-notes.txt").write_text(
+            "restricted source notes\n", encoding="utf-8"
+        )
+        with self.assertRaisesRegex(ProposalError, "unreviewed public path"):
             collect_proposal_files(
                 self.baseline, self.workspace, "figure-01", self.manifest
             )
@@ -168,6 +183,57 @@ class GitHubProposalTests(unittest.TestCase):
                 "figure-01",
                 None,
             )
+
+    def test_removes_branch_when_pull_request_creation_fails(self) -> None:
+        calls: list[tuple[str, str, dict | None]] = []
+
+        def request(method: str, endpoint: str, payload: dict | None) -> dict:
+            calls.append((method, endpoint, payload))
+            if endpoint.startswith("/git/ref/"):
+                return {"object": {"sha": BASE_COMMIT}}
+            if endpoint == f"/git/commits/{BASE_COMMIT}":
+                return {"tree": {"sha": BASE_TREE}}
+            if endpoint == "/git/blobs":
+                return {"sha": "3" * 40}
+            if endpoint == "/git/trees":
+                return {"sha": "4" * 40}
+            if endpoint == "/git/commits":
+                return {"sha": "5" * 40}
+            if endpoint == "/git/refs":
+                return {"ref": payload["ref"]}
+            if endpoint == "/pulls":
+                raise ProposalError("simulated pull request failure")
+            if method == "DELETE" and endpoint.startswith("/git/refs/heads/"):
+                return {}
+            self.fail(f"Unexpected endpoint {endpoint}")
+
+        client = GitHubClient(
+            self.manifest.repository,
+            "token-for-test-only-1234567890",
+            requester=request,
+        )
+        with self.assertRaisesRegex(ProposalError, "simulated"):
+            client.create_draft_pull_request(
+                self.manifest,
+                [
+                    ProposalFile(
+                        workspace_path="figures/figure-01/make_figure.py",
+                        repository_path=(
+                            "figure-studio/public/figures/figure-01/make_figure.py"
+                        ),
+                        content=b"print('revised')\n",
+                    )
+                ],
+                "Propose Figure 01 revision",
+                "figure-01",
+                None,
+            )
+        self.assertTrue(
+            any(
+                method == "DELETE" and endpoint.startswith("/git/refs/heads/")
+                for method, endpoint, _ in calls
+            )
+        )
 
     def test_token_file_must_be_private_regular_file(self) -> None:
         token = Path(self.temporary.name) / "github.token"

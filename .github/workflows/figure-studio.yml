@@ -26,3 +26,26 @@ jobs:
         run: >-
           python3
           input/gcamdata/ai-data-center/provenance/verify_publication_boundary.py
+
+  exact-proposal-diff:
+    if: >-
+      github.event_name == 'pull_request' &&
+      startsWith(github.head_ref, 'cht/figure-proposal/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out trusted base verifier
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+      - name: Check out proposed revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: proposal
+      - name: Verify exact reviewed proposal paths
+        run: >-
+          python3
+          base/tools/figure-studio/verify_figure_proposal_diff.py
+          --base base
+          --proposal proposal

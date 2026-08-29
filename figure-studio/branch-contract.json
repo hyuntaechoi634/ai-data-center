@@ -1,10 +1,17 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "repository": "hyuntaechoi634/ai-data-center",
   "integration_branch": "cht/proj/figure-studio",
   "proposal_branch_prefix": "cht/figure-proposal",
+  "web_submission_modes": [
+    "private-owner-review-queue",
+    "exact-owner-admin-immediate-integration-merge"
+  ],
+  "github_token_available_to_web": "owner-admin-only-when-configured",
+  "owner_admin_target": "cht/proj/figure-studio",
+  "owner_admin_may_target_main": false,
   "public_export_root": "figure-studio/public",
-  "public_export_status": "awaiting-rev8",
+  "public_export_status": "public-ready-code-only",
   "restricted_local_source": "analysis/manuscript-figures",
   "automatic_pr_file_classes": [
     "plotting-code",
@@ -16,6 +23,8 @@
     "derived-results",
     "uploads",
     "rendered-outputs",
-    "session-history"
-  ]
+    "session-history",
+    "new-unreviewed-text-files"
+  ],
+  "billing_display_source": "sanitized-admin-api-cache"
 }

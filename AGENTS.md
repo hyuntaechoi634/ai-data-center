@@ -62,9 +62,10 @@ exhaustive.
 
 ## Frozen outputs and naming
 
-Frozen labels such as `brp6-cal`, `brp7d3-cal`, and `brp7d8-cal` remain
-immutable evidence. Verify them by SHA-256 after any move. Do not silently
-regenerate a frozen label in place.
+Frozen source labels remain immutable evidence. Verify them by SHA-256 after
+any move. Do not silently regenerate a frozen label in place. Keep internal
+labels inside provenance records and reversible source maps; use descriptive
+names for public paths, commands, and interfaces.
 
 For public files, prefer descriptive names. When GCAM requires conventional
 chunk or dataset identifiers, keep a checked, reversible mapping rather than
@@ -79,7 +80,7 @@ files, including the separately locked direct-air-capture scenario overlay.
 Do not commit or push the migrated gcamdata layer to a public remote until
 `input/gcamdata/ai-data-center/provenance/PUBLICATION_REVIEW.md` is resolved.
 The regional data-center electricity targets and derived table are identified
-as based on restricted BNEF material. Preserve the audited brp7d8 evidence
+as based on restricted BNEF material. Preserve the audited source evidence
 unchanged. If redistribution is not permitted, create a separate open-data
 release profile and new manifests.
 
@@ -106,11 +107,11 @@ The descriptive final configurations and runner are under
 `input/policy/ai-data-center/`, and
 `input/solution/cal_broyden_kaist.xml`. The calibrated seven-part restart is
 required for local reproduction of the 2050 runs, but it was generated from
-the restricted calibrated brp7d8 XML layer. Keep `restart.*` ignored and
+the restricted final calibrated XML layer. Keep `restart.*` ignored and
 denylisted. A future open-data profile must generate a distinct restart
 lineage.
 
 Run `python3 exe/ai-data-center/verify-runtime.py` before any model launch.
-The solver rev5 change is XML-only. Do not require byte-identical executable
+The final solver change is XML-only. Do not require byte-identical executable
 hashes from independent builds when all builds use the unmodified GCAM v9.1
 core source at commit `11e128fb7ce3e14e9c4daf3903ba73123046a7aa`.

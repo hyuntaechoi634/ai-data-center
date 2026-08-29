@@ -885,6 +885,8 @@ class SessionStore:
         number: int,
         url: str,
         branch: str,
+        status: str = "created",
+        merge_commit_sha: str | None = None,
     ) -> None:
         metadata = self.load(session_id)
         records = metadata.setdefault("pull_requests", [])
@@ -893,10 +895,55 @@ class SessionStore:
                 "number": number,
                 "url": url,
                 "branch": branch,
+                "status": status,
+                "merge_commit_sha": merge_commit_sha,
                 "created_at": utcnow(),
             }
         )
         metadata["pull_requests"] = records[-10:]
+        if status == "merged-integration-branch":
+            metadata.setdefault("messages", []).append(
+                {
+                    "role": "system",
+                    "text": (
+                        f"PR #{number} passed the exact public-file checks and was "
+                        "merged into the integration branch."
+                    ),
+                    "at": utcnow(),
+                }
+            )
+            metadata["messages"] = metadata["messages"][-40:]
+        self.save(session_id, metadata)
+
+    def record_proposal(
+        self,
+        session_id: str,
+        proposal_id: str,
+        status: str,
+        changed_files: int,
+    ) -> None:
+        metadata = self.load(session_id)
+        records = metadata.setdefault("proposals", [])
+        records.append(
+            {
+                "id": proposal_id,
+                "status": status,
+                "changed_files": changed_files,
+                "created_at": utcnow(),
+            }
+        )
+        metadata["proposals"] = records[-10:]
+        metadata.setdefault("messages", []).append(
+            {
+                "role": "system",
+                "text": (
+                    f"Proposal {proposal_id} is waiting for owner review. "
+                    "No public GitHub branch has been created."
+                ),
+                "at": utcnow(),
+            }
+        )
+        metadata["messages"] = metadata["messages"][-40:]
         self.save(session_id, metadata)
 
     def chat_context(self, session_id: str, limit: int = 10) -> list[dict]:

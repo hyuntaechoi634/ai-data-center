@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- rev8b candidate 2026-08-29 (dual Forest stages): trialbracket variant with the Forest stage
+     GATED at price>20 (rev7-validated gate; the ungated stage perturbed the
+     DConstant_ELow_nz land complex). = waterfix + gentle all-trial re-bracket
+     (interval 0.05) + gated Forest re-bracket. Nothing else added. -->
 <scenario>
     <!-- This is the default solution configuration file.  In this configuration file,
          the user-configurable-solver enables specification of solver components and their ordering.
@@ -105,12 +109,7 @@
 			<solution-info-filter>unsolved && solvable && market-matches="_water withdrawals"</solution-info-filter>
         </bisect-all-solver-component>
 
-        <!-- TRIALBRACKET rev5 2026-08-29: filter narrowed to NEGATIVE-price Trial-Value only.
-             rev2's all-trial coverage destabilized healthy positive trials
-             (DLow_ELow_nz: wind/offshore-trial-supply and budget-fraction trials
-             jammed with an Africa_Western NaN storm). The 2026-08-21 defect was
-             ONLY the negative-price trials that the stock price>0 stages skip;
-             this filter now matches that defect exactly. (rev2 original:) coverage fix, not a budget change.
+        <!-- TRIALBRACKET variant 2026-08-21 (rev2): coverage fix, not a budget change.
              The stock stages filter to negative_emiss_budget / price>0 / water, so
              unsolved NEGATIVE-price Trial-Value markets are never re-bracketed
              (DHigh x nz2050 2030 failure: X=XL=XR collapsed brackets, |ED| 4-63).
@@ -123,7 +122,31 @@
             <max-bracket-iterations>60</max-bracket-iterations>
             <max-iterations>15</max-iterations>
             <use-secant-brackets>1</use-secant-brackets>
-            <solution-info-filter>unsolved && solvable && market-type="Trial-Value" && !(price-greater-than="0")</solution-info-filter>
+            <solution-info-filter>unsolved && solvable && market-type="Trial-Value"</solution-info-filter>
+        </bisect-all-solver-component>
+
+        <!-- rev3 2026-08-21: runaway-price boundary markets (observed: Central Asia
+             Forest at X~1.2e6, demand ~4e-16, clearing point near XL~1.06e6 with
+             ED ~ -7e-15; 5% steps cannot re-bracket an order-of-magnitude runaway).
+             Halving/doubling steps re-bracket runaway Forest-product markets. -->
+        <bisect-all-solver-component>
+            <bracket-interval>1.0</bracket-interval>
+            <max-bracket-iterations>40</max-bracket-iterations>
+            <max-iterations>15</max-iterations>
+            <use-secant-brackets>1</use-secant-brackets>
+            <solution-info-filter>unsolved && solvable && market-matches="Forest" && price-greater-than="20"</solution-info-filter>
+        </bisect-all-solver-component>
+
+        <!-- rev8b: negative-price Forest rescue. The >20 gate above cannot fire
+             on a Forest market whose bracket collapsed NEGATIVE (observed:
+             UkraineForest X=-326 in DMedium_ELow_nz 2030). Healthy land
+             markets (0 < price <= 20) are still touched by neither stage. -->
+        <bisect-all-solver-component>
+            <bracket-interval>1.0</bracket-interval>
+            <max-bracket-iterations>40</max-bracket-iterations>
+            <max-iterations>15</max-iterations>
+            <use-secant-brackets>1</use-secant-brackets>
+            <solution-info-filter>unsolved && solvable && market-matches="Forest" && !(price-greater-than="0")</solution-info-filter>
         </bisect-all-solver-component>
 
         <broyden-solver-component>

@@ -1,7 +1,9 @@
-# Public figure export placeholder
+# Public figure code export
 
-The rev8 public figure export is not ready. This placeholder contains no figure
-data, source tables, plotting code, or rendered output.
+This directory contains the reviewed plotting code and captions for Figure 01
+through Figure 06 from the GCAM 9.1 final calibrated result set.
 
-Populate this directory only through the reviewed public-export process. The
-local interim manuscript package is not an eligible source for direct copying.
+It intentionally excludes source data, derived result tables, uploaded files,
+rendered output, and session history. Figure Studio proposals may change only
+the exact existing files recorded in `PROPOSAL_ALLOWLIST.json`. Internal run
+labels remain only in local data lineage and are not public display names.

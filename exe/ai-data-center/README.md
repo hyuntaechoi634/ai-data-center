@@ -24,7 +24,8 @@ database output enabled and split into four independent groups of six:
 - `demand-constant` holds all three efficiency levels under two climate
   policies.
 
-All 48 configurations use:
+The 24 unique scenario cells are represented by two execution profiles, for
+48 configuration files in total. Both profiles use:
 
 - calibrated inputs in `input/gcamdata/xml-ai-data-center-calibrated/`
 - policy overlays in `input/policy/ai-data-center/`
@@ -61,11 +62,12 @@ python3 exe/ai-data-center/verify-runtime.py \
   --canonical-matrix /path/to/read-only/gcam-matrix
 ```
 
-The verifier checks all 226 calibrated gcamdata XML files, all 48
-configurations, every referenced runtime file, solver and policy hashes, the
-seven restart pieces, and the GCAM v9.1 source revision. It requires a locally
-built `exe/gcam.exe`, but does not compare its byte hash because equivalent
-builds can differ while using the same unmodified v9.1 C++ source.
+The verifier checks all 226 calibrated gcamdata XML files, the 24 scenario
+cells in both execution profiles, every referenced runtime file, solver and
+policy hashes, the seven restart pieces, and the GCAM v9.1 source revision.
+It requires a locally built `exe/gcam.exe`, but does not compare its byte hash
+because equivalent builds can differ while using the same unmodified v9.1
+C++ source.
 
 ## Build the four databases
 
@@ -84,11 +86,17 @@ timestamped backup rather than deleted.
 
 ## Solver and executable boundary
 
-The validated rev5 change is entirely in
-`input/solution/cal_broyden_kaist.xml`: it adds rebracketing only for unsolved
-negative-price `Trial-Value` markets. No GCAM C++ solver source was modified.
-The public, build, and matrix core source trees all resolve to GCAM v9.1
-commit `11e128fb7ce3e14e9c4daf3903ba73123046a7aa`.
+The final solver is `input/solution/cal_broyden_kaist.xml`. It uses a gentle
+all-trial rebracketing stage and separate recovery gates for runaway and
+negative-price Forest markets. This is an XML-only solver configuration
+change; no GCAM C++ solver source was modified. The public, build, and matrix
+core source trees all resolve to GCAM v9.1 commit
+`11e128fb7ce3e14e9c4daf3903ba73123046a7aa`.
+
+The migrated repository has its own Git history, so the runtime verifier does
+not compare the repository HEAD with the upstream GCAM commit. It instead
+checks the frozen Git index fingerprint in `gcam-core-origin.txt` and rejects
+tracked changes within `cvs/objects/`.
 
 The executable is a local build product and remains ignored by Git, following
 the upstream GCAM repository convention.

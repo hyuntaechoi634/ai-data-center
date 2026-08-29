@@ -443,7 +443,7 @@ button:disabled {
 
 .composer-agent-bar {
   display: grid;
-  grid-template-columns: max-content max-content minmax(0, 1fr);
+  grid-template-columns: max-content max-content minmax(0, 1fr) max-content;
   align-items: center;
   gap: 0.55rem;
   padding: 0.62rem 0.85rem 0.52rem;
@@ -480,6 +480,34 @@ button:disabled {
 
 .composer-agent-bar .agent-status {
   justify-self: end;
+}
+
+.billing-status {
+  justify-self: end;
+  border: 1px solid #c8d7cf;
+  border-radius: 999px;
+  padding: 0.3rem 0.55rem;
+  background: #f5f8f6;
+  color: #355449;
+  font-size: 1.08rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.billing-status.warning {
+  border-color: #dec98b;
+  background: #fff9e8;
+  color: #725a16;
+}
+
+.billing-status.critical {
+  border-color: #e1aaa4;
+  background: #fff2f0;
+  color: #8c342b;
+}
+
+.billing-status.stale {
+  opacity: 0.68;
 }
 
 .chat-messages {
@@ -1100,7 +1128,7 @@ button:disabled {
   }
 
   .composer-agent-bar {
-    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
     gap: 0.4rem;
     padding-inline: 0.7rem;
   }
@@ -1112,7 +1140,17 @@ button:disabled {
   }
 
   .composer-agent-bar .agent-status {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
     gap: 0.22rem;
+    font-size: 0.94rem;
+  }
+
+  .composer-agent-bar .billing-status {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: start;
     font-size: 0.94rem;
   }
 

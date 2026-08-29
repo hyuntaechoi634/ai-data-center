@@ -9,7 +9,7 @@ runtime input. Its hashes are locked in
 
 ## Publication boundary
 
-These restart bytes were generated from the restricted calibrated brp7d8 XML
+These restart bytes were generated from the restricted final calibrated XML
 layer. They remain a local runtime asset and are ignored by Git. The
 publication denylist rejects `restart.*` even if it is force-added. A future
 open-data profile must generate a distinct restart lineage rather than

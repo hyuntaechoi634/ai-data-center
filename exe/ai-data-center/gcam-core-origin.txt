@@ -1,0 +1,5 @@
+# Frozen GCAM core origin for the migrated repository.
+upstream_commit=11e128fb7ce3e14e9c4daf3903ba73123046a7aa
+tracked_entries=623
+index_sha256=d567dfb04c9bdd894c912c1987fb8cd44c15ff3fdb898729cd17a78f9e88c85a
+hector_gitlink=4bc2383a727e1379258fd3cab4569906b043be61

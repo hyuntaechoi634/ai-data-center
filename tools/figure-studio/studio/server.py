@@ -16,14 +16,16 @@ from urllib.parse import parse_qs, quote, unquote, urlparse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from .agent import AgentError, build_figure_agent
+from .billing import BillingStatusReader
 from .catalog import DEFAULT_FIGURE_ID, figure_catalog
-from .github_pr import GitHubProposalPublisher, ProposalError
+from .github_pr import ProposalError
 from .panels import (
     PanelError,
     capture_panel_snapshot,
     validate_panel_id,
     validate_panel_revision,
 )
+from .proposal_queue import ProposalQueue
 from .rendering import RenderError, normalize_formats, render_project
 from .sessions import SessionError, SessionStore
 
@@ -86,11 +88,13 @@ class FigureStudioApplication:
         self.retention_days = retention_days
         self.store = SessionStore(template_root or self.app_root / "template", session_root)
         self.store.cleanup_expired(self.retention_days)
-        self.proposals = GitHubProposalPublisher(
+        self.proposals = ProposalQueue(
             self.store.template,
             require_cloudflare_access=require_cloudflare_access,
+            allowed_emails=self.allowed_emails,
         )
         self.agent = build_figure_agent(external_mode=require_cloudflare_access)
+        self.billing = BillingStatusReader()
         if require_cloudflare_access and not self.agent.available():
             raise AgentError(
                 "Cloudflare Access mode requires a dedicated OpenAI project key file"
@@ -100,7 +104,7 @@ class FigureStudioApplication:
             max(1, int(os.environ.get("FIGURE_STUDIO_MAX_CONCURRENT_JOBS", "1")))
         )
 
-    def decorate_state(self, state: dict) -> dict:
+    def decorate_state(self, state: dict, identity: str = "") -> dict:
         session_id = state["session_id"]
         for collection in ("current", "default"):
             key = f"{collection}_artifacts"
@@ -127,7 +131,8 @@ class FigureStudioApplication:
             "cloudflare_access" if self.require_cloudflare_access else "local_or_shared_token"
         )
         state["download_url"] = f"/api/sessions/{session_id}/download/project.zip"
-        state["pull_request"] = self.proposals.configuration()
+        state["pull_request"] = self.proposals.configuration(identity)
+        state["api_billing"] = self.billing.status()
         state["available_figures"] = figure_catalog()
         for panel in state.get("panels", []):
             panel_id = quote(str(panel.get("id", "")), safe="")
@@ -192,6 +197,9 @@ class FigureStudioHandler(BaseHTTPRequestHandler):
 
     def _query(self) -> dict[str, list[str]]:
         return parse_qs(urlparse(self.path).query)
+
+    def _decorate_state(self, state: dict) -> dict:
+        return self.app.decorate_state(state, self._identity(required=False))
 
     def _identity(self, required: bool = True) -> str:
         if not self.app.require_cloudflare_access:
@@ -393,12 +401,18 @@ class FigureStudioHandler(BaseHTTPRequestHandler):
             return
         try:
             parts = self._parts(path)
+            if parts == ["api", "billing"]:
+                self._json_response(
+                    200,
+                    {"ok": True, "api_billing": self.app.billing.status()},
+                )
+                return
             if len(parts) == 3 and parts[:2] == ["api", "sessions"]:
                 if not self._require_owner(parts[2]):
                     return
                 with self.app.store.lock(parts[2]):
                     state = self.app.store.state(parts[2])
-                self._json_response(200, {"ok": True, "state": self.app.decorate_state(state)})
+                self._json_response(200, {"ok": True, "state": self._decorate_state(state)})
                 return
             if (
                 len(parts) == 6
@@ -488,7 +502,7 @@ class FigureStudioHandler(BaseHTTPRequestHandler):
                 if not self._require_rate("session-create", 8, 3600):
                     return
                 state = self.app.store.create(owner=owner, figure_id=figure_id)
-                self._json_response(201, {"ok": True, "state": self.app.decorate_state(state)})
+                self._json_response(201, {"ok": True, "state": self._decorate_state(state)})
                 return
             if len(parts) != 4 or parts[:2] != ["api", "sessions"]:
                 self.send_error(404)
@@ -510,25 +524,25 @@ class FigureStudioHandler(BaseHTTPRequestHandler):
                             raise SessionError(f"Invalid base64 data for {name}") from exc
                         decoded.append((name, data))
                     state = self.app.store.upload(session_id, decoded)
-                    self._json_response(200, {"ok": True, "state": self.app.decorate_state(state)})
+                    self._json_response(200, {"ok": True, "state": self._decorate_state(state)})
                     return
                 if action == "remove-upload":
                     state = self.app.store.remove_upload(session_id, str(payload.get("name", "")))
-                    self._json_response(200, {"ok": True, "state": self.app.decorate_state(state)})
+                    self._json_response(200, {"ok": True, "state": self._decorate_state(state)})
                     return
                 if action == "reset":
                     state = self.app.store.reset(
                         session_id, bool(payload.get("keep_uploads", True))
                     )
-                    self._json_response(200, {"ok": True, "state": self.app.decorate_state(state)})
+                    self._json_response(200, {"ok": True, "state": self._decorate_state(state)})
                     return
                 if action == "undo":
                     state = self.app.store.undo(session_id)
-                    self._json_response(200, {"ok": True, "state": self.app.decorate_state(state)})
+                    self._json_response(200, {"ok": True, "state": self._decorate_state(state)})
                     return
                 if action == "redo":
                     state = self.app.store.redo(session_id)
-                    self._json_response(200, {"ok": True, "state": self.app.decorate_state(state)})
+                    self._json_response(200, {"ok": True, "state": self._decorate_state(state)})
                     return
                 if action == "pull-request":
                     if not self._require_rate("pull-request", 4, 3600):
@@ -544,29 +558,57 @@ class FigureStudioHandler(BaseHTTPRequestHandler):
                     title = str(
                         payload.get("title") or f"Propose {label}{scope} revision"
                     )
-                    proposal = self.app.proposals.publish(
+                    proposal = self.app.proposals.submit(
                         self.app.store.session_dir(session_id),
                         current_state["figure_id"],
                         panel_id,
                         title,
+                        self._identity(),
                     )
-                    self.app.store.record_pull_request(
-                        session_id,
-                        proposal.number,
-                        proposal.url,
-                        proposal.branch,
-                    )
+                    response: dict
+                    if proposal.pull_request is not None:
+                        pull_request = proposal.pull_request
+                        self.app.store.record_pull_request(
+                            session_id,
+                            pull_request.number,
+                            pull_request.url,
+                            pull_request.branch,
+                            status=proposal.status,
+                            merge_commit_sha=pull_request.merge_commit_sha,
+                        )
+                        response = {
+                            "pull_request": {
+                                "number": pull_request.number,
+                                "url": pull_request.url,
+                                "branch": pull_request.branch,
+                                "status": proposal.status,
+                                "changed_files": proposal.changed_files,
+                                "merge_commit_sha": pull_request.merge_commit_sha,
+                            }
+                        }
+                    else:
+                        if proposal.proposal_id is None:
+                            raise ProposalError("The proposal result is invalid")
+                        self.app.store.record_proposal(
+                            session_id,
+                            proposal.proposal_id,
+                            proposal.status,
+                            proposal.changed_files,
+                        )
+                        response = {
+                            "proposal": {
+                                "id": proposal.proposal_id,
+                                "status": proposal.status,
+                                "changed_files": proposal.changed_files,
+                            }
+                        }
                     state = self.app.store.state(session_id)
                     self._json_response(
                         201,
                         {
                             "ok": True,
-                            "state": self.app.decorate_state(state),
-                            "pull_request": {
-                                "number": proposal.number,
-                                "url": proposal.url,
-                                "branch": proposal.branch,
-                            },
+                            "state": self._decorate_state(state),
+                            **response,
                         },
                     )
                     return
@@ -594,7 +636,7 @@ class FigureStudioHandler(BaseHTTPRequestHandler):
                         )
                         state = self.app.store.state(session_id)
                         self._json_response(
-                            200, {"ok": True, "state": self.app.decorate_state(state)}
+                            200, {"ok": True, "state": self._decorate_state(state)}
                         )
                     finally:
                         try:
@@ -685,7 +727,7 @@ class FigureStudioHandler(BaseHTTPRequestHandler):
                         state = self.app.store.state(session_id)
                         self._json_response(
                             200,
-                            {"ok": True, "state": self.app.decorate_state(state)},
+                            {"ok": True, "state": self._decorate_state(state)},
                         )
                     except (AgentError, RenderError, PanelError) as exc:
                         if panel_id and revision_id:
@@ -717,7 +759,7 @@ class FigureStudioHandler(BaseHTTPRequestHandler):
                             {
                                 "ok": False,
                                 "error": public_error,
-                                "state": self.app.decorate_state(state),
+                                "state": self._decorate_state(state),
                             },
                         )
                     finally:

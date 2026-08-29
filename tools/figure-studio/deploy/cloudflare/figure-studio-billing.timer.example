@@ -1,0 +1,12 @@
+[Unit]
+Description=Refresh Figure Studio OpenAI billing status every five minutes
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=5min
+AccuracySec=20s
+Persistent=true
+Unit=figure-studio-billing.service
+
+[Install]
+WantedBy=timers.target

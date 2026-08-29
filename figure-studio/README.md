@@ -1,15 +1,15 @@
 # Figure Studio integration branch
 
-Status: AWAITING REV8 PUBLIC EXPORT
+Status: FINAL CALIBRATED CODE EXPORT READY
 
 This branch is the public integration target for Figure Studio. Application
-code lives under `tools/figure-studio/`. The future reviewed figure export will
-live under `figure-studio/public/`.
+code lives under `tools/figure-studio/`. The reviewed plotting-code and caption
+export lives under `figure-studio/public/`.
 
-The interim package under local `analysis/manuscript-figures/` remains ignored
-and denylisted. It must not be copied or force-added here. After rev8 finishes,
-create a distinct reviewed public export with new hashes and then enable Draft
-PR publishing from the web application.
+The complete local package under `analysis/manuscript-figures/` remains ignored
+and denylisted. It must not be copied or force-added here. Only the exact
+reviewed plotting files and captions may enter the public export. Source data,
+derived tables, and rendered figures remain excluded.
 
 User proposal branches use `cht/figure-proposal/...` and target
 `cht/proj/figure-studio`. They must not use a child name below the integration

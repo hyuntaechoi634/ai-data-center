@@ -440,6 +440,64 @@ function renderAgentStatus() {
   }
 }
 
+function renderBilling(status = app.state?.api_billing) {
+  const badge = $("#billingBadge");
+  const spent = Number(status?.spent_usd);
+  const limit = Number(status?.limit_usd);
+  const hasSpent =
+    status?.spent_usd !== null &&
+    status?.spent_usd !== undefined &&
+    status?.spent_usd !== "" &&
+    Number.isFinite(spent) &&
+    spent >= 0;
+  const hasLimit =
+    status?.limit_usd !== null &&
+    status?.limit_usd !== undefined &&
+    status?.limit_usd !== "" &&
+    Number.isFinite(limit) &&
+    limit >= 0;
+  badge.className = "billing-status";
+  if (!hasSpent && !hasLimit) {
+    badge.classList.add("hidden");
+    badge.textContent = "API --";
+    badge.title = status?.message || "API billing is not connected";
+    return;
+  }
+  badge.classList.remove("hidden");
+  if (hasSpent && hasLimit) {
+    badge.textContent = `API $${spent.toFixed(2)} / $${limit.toFixed(2)}`;
+  } else if (hasSpent) {
+    badge.textContent = `API $${spent.toFixed(2)}`;
+  } else {
+    badge.textContent = `API -- / $${limit.toFixed(2)}`;
+  }
+  const ratio = hasSpent && hasLimit && limit > 0 ? spent / limit : 0;
+  if (ratio >= 1 || status?.enforcement === "enforcing") {
+    badge.classList.add("critical");
+  } else if (ratio >= 0.8) {
+    badge.classList.add("warning");
+  }
+  if (status?.stale || !status?.available) badge.classList.add("stale");
+  const details = [status?.message || "OpenAI API billing"];
+  if (hasSpent) details.push(`Exact spend $${spent.toFixed(6)}`);
+  if (hasLimit) {
+    details.push(
+      `${status?.limit_verified ? "Verified" : "Unverified"} limit $${limit.toFixed(2)}`,
+    );
+  }
+  if (status?.enforcement === "enforcing") {
+    details.push("The hard limit is currently blocking requests");
+  } else if (status?.enforcement === "inactive") {
+    details.push("The hard limit is not currently blocking requests");
+  } else if (status?.enforcement) {
+    details.push(`Current enforcement state ${status.enforcement}`);
+  }
+  if (status?.updated_at) {
+    details.push(`Updated ${new Date(status.updated_at).toLocaleString()}`);
+  }
+  badge.title = details.join(". ");
+}
+
 function renderActionAvailability() {
   const state = app.state;
   const showCurrent = hasCurrentRevision(state);
@@ -450,9 +508,12 @@ function renderActionAvailability() {
   $("#downloadProject").disabled = !state || app.busy;
   const pullRequest = state?.pull_request || {};
   const pullRequestButton = $("#pullRequestButton");
+  pullRequestButton.textContent =
+    pullRequest.mode === "owner-admin-immediate-merge" ? "Apply PR" : "Propose PR";
   pullRequestButton.disabled =
     !showCurrent || !pullRequest.available || app.busy;
-  pullRequestButton.title = pullRequest.message || "Create a public Draft PR";
+  pullRequestButton.title =
+    pullRequest.message || "Submit a private proposal for owner review";
   $("#modelSelect").disabled = !state?.agent_available || app.busy;
   $("#effortSelect").disabled = !state?.agent_available || app.busy;
   renderAgentStatus();
@@ -537,6 +598,7 @@ function renderState() {
       : "";
 
   renderAgentControls(state);
+  renderBilling(state.api_billing);
   $("#tokenButton").classList.toggle("hidden", state.auth_mode === "cloudflare_access");
 
   renderActionAvailability();
@@ -551,6 +613,17 @@ function renderState() {
   warningBox.classList.toggle("hidden", !warnings.length);
   document.title = `${app.figureId.replace("figure-", "Figure ")} - Figure Studio`;
   renderNavigator();
+}
+
+async function refreshBilling() {
+  if (!app.state) return;
+  try {
+    const payload = await api("/api/billing", {}, false);
+    app.state.api_billing = payload.api_billing;
+    renderBilling(payload.api_billing);
+  } catch (_) {
+    return;
+  }
 }
 
 function selectPanel(panelId) {
@@ -828,38 +901,44 @@ async function createPullRequest() {
   if (!app.state || app.busy) return;
   const configuration = app.state.pull_request || {};
   if (!configuration.available) {
-    showToast(configuration.message || "Pull request publishing is unavailable", 8000);
+    showToast(configuration.message || "Proposal submission is unavailable", 8000);
     return;
   }
   const panelId = selectedPanelId();
   const scope = panelId ? ` panel ${panelId.toUpperCase()}` : "";
-  const repository = configuration.repository || "the public repository";
+  const immediate = configuration.mode === "owner-admin-immediate-merge";
+  const confirmation = immediate
+    ? `Apply ${figureLabel()}${scope} immediately to the integration branch through a PR? Only exact allowlisted public files can be included.`
+    : `Submit ${figureLabel()}${scope} for owner review? No public GitHub branch will be created until the owner reviews the exact file diff.`;
   if (
-    !window.confirm(
-      `Create a public Draft PR for ${figureLabel()}${scope} in ${repository}? Only reviewed code and caption paths will be included.`,
-    )
+    !window.confirm(confirmation)
   ) {
     return;
   }
   setBusy(
     true,
-    "Creating a Draft PR",
-    "Validating the public export boundary and publishing the code proposal.",
+    immediate ? "Applying the revision" : "Submitting a proposal",
+    immediate
+      ? "Validating the exact public file allowlist, creating the PR, and merging it into the integration branch."
+      : "Validating the exact public file allowlist and creating a private review bundle.",
   );
-  let popup = null;
   try {
-    popup = window.open("", "_blank");
     const payload = await api(`/api/sessions/${app.sessionId}/pull-request`, {
       method: "POST",
       body: JSON.stringify({ panel_id: panelId || null }),
     });
-    if (popup) {
-      popup.opener = null;
-      popup.location = payload.pull_request.url;
+    if (payload.pull_request) {
+      showToast(
+        `PR #${payload.pull_request.number} was merged into the integration branch.`,
+        9000,
+      );
+    } else {
+      showToast(
+        `Proposal ${payload.proposal.id} is waiting for owner review.`,
+        8000,
+      );
     }
-    showToast(`Draft PR #${payload.pull_request.number} created.`, 7000);
   } catch (error) {
-    if (popup) popup.close();
     showToast(error.message, 9000);
   } finally {
     setBusy(false);
@@ -966,3 +1045,4 @@ window.addEventListener("beforeunload", () => {
 
 renderNavigator();
 initialize();
+window.setInterval(refreshBilling, 5 * 60 * 1000);

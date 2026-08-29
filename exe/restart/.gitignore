@@ -4,6 +4,6 @@
 !ai-data-center-warm-start/
 !ai-data-center-warm-start/README.md
 # The calibrated restart is a local runtime derivative of the restricted
-# brp7d8 XML layer. Keep the documentation visible but keep restart bytes
+# final calibrated XML layer. Keep the documentation visible but keep restart bytes
 # private until an open-data runtime lineage is built.
 ai-data-center-warm-start/restart.*

@@ -1,0 +1,21 @@
+[Unit]
+Description=Refresh sanitized Figure Studio OpenAI billing status
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/data/home/hyuntae-choi/ai-datacenter
+EnvironmentFile=/home/hyuntae-choi/.config/figure-studio/service.env
+ExecStart=/home/hyuntae-choi/miniforge3/bin/python /data/home/hyuntae-choi/ai-datacenter/analysis/figure-studio/refresh_openai_billing.py --expected-limit-usd 10
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/hyuntae-choi/.cache/figure-studio
+RestrictSUIDSGID=true
+RestrictRealtime=true
+LockPersonality=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+MemoryMax=128M
+TasksMax=16
