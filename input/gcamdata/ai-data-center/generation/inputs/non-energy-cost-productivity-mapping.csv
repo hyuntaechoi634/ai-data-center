@@ -1,0 +1,16 @@
+service,cost_mapping_group,year,hardware_productivity_index_2021_1,benchmark_index_2021_1,hw_share,fac_share,opex_share,total_nonenergy_unit_cost_index_2021_1,mapping_identity,status
+conventional,conventional,2021,1.000000,1.000000,0.7662,0.2008,0.033,1.000000,nu_rel=s_hw/H+s_fac/B+s_opex,adopted_3term_2026-08-20_H_hist_measured_B_fleet_path_rho1_forward
+conventional,conventional,2022,1.163153,1.163153,0.7662,0.2008,0.033,0.864361,nu_rel=s_hw/H+s_fac/B+s_opex,adopted_3term_2026-08-20_H_hist_measured_B_fleet_path_rho1_forward
+conventional,conventional,2023,1.352924,1.352924,0.7662,0.2008,0.033,0.747748,nu_rel=s_hw/H+s_fac/B+s_opex,adopted_3term_2026-08-20_H_hist_measured_B_fleet_path_rho1_forward
+conventional,conventional,2024,1.573657,1.573657,0.7662,0.2008,0.033,0.647492,nu_rel=s_hw/H+s_fac/B+s_opex,adopted_3term_2026-08-20_H_hist_measured_B_fleet_path_rho1_forward
+conventional,conventional,2025,1.830403,1.830403,0.7662,0.2008,0.033,0.561299,nu_rel=s_hw/H+s_fac/B+s_opex,adopted_3term_2026-08-20_H_hist_measured_B_fleet_path_rho1_forward
+training,ai_service,2021,1.000000,1.000000,0.83,0.15,0.02,1.000000,nu_rel=s_hw/H+s_fac/B+s_opex,adopted_3term_2026-08-20_H_hist_measured_B_fleet_path_rho1_forward
+training,ai_service,2022,1.341641,1.232829,0.83,0.15,0.02,0.760317,nu_rel=s_hw/H+s_fac/B+s_opex,adopted_3term_2026-08-20_H_hist_measured_B_fleet_path_rho1_forward
+training,ai_service,2023,1.800000,1.519868,0.83,0.15,0.02,0.579804,nu_rel=s_hw/H+s_fac/B+s_opex,adopted_3term_2026-08-20_H_hist_measured_B_fleet_path_rho1_forward
+training,ai_service,2024,2.414953,1.873739,0.83,0.15,0.02,0.443746,nu_rel=s_hw/H+s_fac/B+s_opex,adopted_3term_2026-08-20_H_hist_measured_B_fleet_path_rho1_forward
+training,ai_service,2025,3.240000,2.310000,0.83,0.15,0.02,0.341108,nu_rel=s_hw/H+s_fac/B+s_opex,adopted_3term_2026-08-20_H_hist_measured_B_fleet_path_rho1_forward
+inference,ai_service,2021,1.000000,1.000000,0.83,0.15,0.02,1.000000,nu_rel=s_hw/H+s_fac/B+s_opex,adopted_3term_2026-08-20_H_hist_measured_B_fleet_path_rho1_forward
+inference,ai_service,2022,1.341641,1.232829,0.83,0.15,0.02,0.760317,nu_rel=s_hw/H+s_fac/B+s_opex,adopted_3term_2026-08-20_H_hist_measured_B_fleet_path_rho1_forward
+inference,ai_service,2023,1.800000,1.519868,0.83,0.15,0.02,0.579804,nu_rel=s_hw/H+s_fac/B+s_opex,adopted_3term_2026-08-20_H_hist_measured_B_fleet_path_rho1_forward
+inference,ai_service,2024,2.414953,1.873739,0.83,0.15,0.02,0.443746,nu_rel=s_hw/H+s_fac/B+s_opex,adopted_3term_2026-08-20_H_hist_measured_B_fleet_path_rho1_forward
+inference,ai_service,2025,3.240000,2.310000,0.83,0.15,0.02,0.341108,nu_rel=s_hw/H+s_fac/B+s_opex,adopted_3term_2026-08-20_H_hist_measured_B_fleet_path_rho1_forward

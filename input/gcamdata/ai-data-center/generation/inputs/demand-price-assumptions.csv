@@ -1,0 +1,4 @@
+service,electricity_cost_share_2021,nonenergy_source,lambda,technology_sensitive_nonenergy_share,flat_nonenergy_share,status
+training,0.058,analysis/cost-diagnostics/data/derived/nonenergy_cost_productivity_mapping.csv,0.60,0.83,0.17,service_specific_H_mapping_structural_assumption
+inference,0.058,analysis/cost-diagnostics/data/derived/nonenergy_cost_productivity_mapping.csv,0.60,0.83,0.17,service_specific_H_mapping_structural_assumption
+conv,0.105,analysis/cost-diagnostics/data/derived/nonenergy_cost_productivity_mapping.csv,0.25,1.00,0.00,service_specific_H_mapping_structural_assumption

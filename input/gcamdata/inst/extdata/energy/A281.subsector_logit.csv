@@ -1,0 +1,8 @@
+# File: A281.subsector_logit.csv
+# Title: conventional compute - single subsector (no archetypes)
+# Source: structural, mirrors A280.subsector_logit.
+# Units: unitless
+# Column types: ccnc
+# ----------
+supplysector,subsector,logit.exponent,logit.type
+conventional compute,conventional compute,-3,

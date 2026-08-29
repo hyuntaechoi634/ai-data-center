@@ -1,0 +1,15 @@
+# File: A280.globaltech_cost.csv
+# Title: AI non-energy cost by service, v3.2 three-input split
+# Units: 1975 billion$/TSU or 1975 billion$/ISU
+# Source: 2021 level preserves the energy/non-energy cost-share calibration; the 3-term mapping s_hw/H + s_fac/B + s_opex
+# (AI 0.83/0.15/0.02, H=B rho=1) is carried as THREE inputs (hw-capital / facility-capital / opex, one term each;
+# sum identical to the former composite non-energy row) - v3.2 2026-08-27, V32_SPEC.md.
+# Column types: ccccnnnnnnnnnnnn
+# ----------
+supplysector,subsector,technology,minicam.non.energy.input,2021,2025,2030,2035,2040,2045,2050,2060,2070,2080,2090,2100
+training compute,training compute,training compute,hw-capital,0.37101,0.11450926,0.058847471,0.045854484,0.04176176,0.040323913,0.039797921,0.039529616,0.039492081,0.039486812,0.039486072,0.039485968
+training compute,training compute,training compute,facility-capital,0.06705,0.029025974,0.014916743,0.011623261,0.010585832,0.010221364,0.010088035,0.010020025,0.01001051,0.010009175,0.010008987,0.010008961
+training compute,training compute,training compute,opex,0.00894,0.00894,0.00894,0.00894,0.00894,0.00894,0.00894,0.00894,0.00894,0.00894,0.00894,0.00894
+inference compute,inference compute,inference compute,hw-capital,0.49455633,0.15264084,0.07559034,0.056043732,0.049340786,0.046736204,0.045669476,0.045033878,0.044919621,0.044898942,0.044895195,0.044894516
+inference compute,inference compute,inference compute,facility-capital,0.08937765,0.038691623,0.01916075,0.014206047,0.012506974,0.011846761,0.011576365,0.011415253,0.011386291,0.011381049,0.0113801,0.011379927
+inference compute,inference compute,inference compute,opex,0.01191702,0.01191702,0.01191702,0.01191702,0.01191702,0.01191702,0.01191702,0.01191702,0.01191702,0.01191702,0.01191702,0.01191702

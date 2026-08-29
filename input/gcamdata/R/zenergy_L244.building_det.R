@@ -64,11 +64,11 @@ module_energy_L244.building_det <- function(command, ...) {
              FILE = "gcam-usa/A44.globaltech_retirement",
              "L144.flsp_bm2_R_res_Yh",
              "L144.flsp_bm2_R_comm_Yh",
-             "L144.base_service_EJ_serv",
-             "L144.base_service_EJ_serv_fuel",
-             "L1441.base_service_EJ_serv_fuel_tech_USA",
-             "L144.in_EJ_R_bld_serv_F_Yh",
-             "L1441.in_EJ_R_bld_serv_F_tech_Yh_USA",
+             "L1280.base_service_EJ_serv",
+             "L1280.base_service_EJ_serv_fuel",
+             "L1280.base_service_EJ_serv_fuel_tech_USA",
+             "L1280.in_EJ_R_bld_serv_F_Yh",
+             "L1280.in_EJ_R_bld_serv_F_tech_Yh_USA",
              "L144.end_use_eff",
              "L1441.end_use_eff_USA",
              "L144.shell_eff_R_Y",
@@ -229,11 +229,11 @@ module_energy_L244.building_det <- function(command, ...) {
     A44.globaltech_retirement_USA <- get_data(all_data, "gcam-usa/A44.globaltech_retirement", strip_attributes = TRUE)
     L144.flsp_bm2_R_res_Yh <- get_data(all_data, "L144.flsp_bm2_R_res_Yh", strip_attributes = TRUE)
     L144.flsp_bm2_R_comm_Yh <- get_data(all_data, "L144.flsp_bm2_R_comm_Yh", strip_attributes = TRUE)
-    L144.base_service_EJ_serv <- get_data(all_data, "L144.base_service_EJ_serv", strip_attributes = TRUE)
-    L144.base_service_EJ_serv_fuel <- get_data(all_data, "L144.base_service_EJ_serv_fuel", strip_attributes = TRUE)
-    L1441.base_service_EJ_serv_fuel_tech_USA <- get_data(all_data, "L1441.base_service_EJ_serv_fuel_tech_USA", strip_attributes = TRUE)
-    L144.in_EJ_R_bld_serv_F_Yh <- get_data(all_data, "L144.in_EJ_R_bld_serv_F_Yh")
-    L1441.in_EJ_R_bld_serv_F_tech_Yh_USA <- get_data(all_data, "L1441.in_EJ_R_bld_serv_F_tech_Yh_USA")
+    L1280.base_service_EJ_serv <- get_data(all_data, "L1280.base_service_EJ_serv", strip_attributes = TRUE)
+    L1280.base_service_EJ_serv_fuel <- get_data(all_data, "L1280.base_service_EJ_serv_fuel", strip_attributes = TRUE)
+    L1280.base_service_EJ_serv_fuel_tech_USA <- get_data(all_data, "L1280.base_service_EJ_serv_fuel_tech_USA", strip_attributes = TRUE)
+    L1280.in_EJ_R_bld_serv_F_Yh <- get_data(all_data, "L1280.in_EJ_R_bld_serv_F_Yh")
+    L1280.in_EJ_R_bld_serv_F_tech_Yh_USA <- get_data(all_data, "L1280.in_EJ_R_bld_serv_F_tech_Yh_USA")
     L144.end_use_eff <- get_data(all_data, "L144.end_use_eff", strip_attributes = TRUE)
     L1441.end_use_eff_USA <- get_data(all_data, "L1441.end_use_eff_USA", strip_attributes = TRUE)
     L144.shell_eff_R_Y <- get_data(all_data, "L144.shell_eff_R_Y", strip_attributes = TRUE)
@@ -890,11 +890,11 @@ module_energy_L244.building_det <- function(command, ...) {
         }
       return(modern_USAbld_table)
     }
-    L1441.in_EJ_R_bld_serv_F_tech_Yh_USA <- specify_modern_USAbld(L1441.in_EJ_R_bld_serv_F_tech_Yh_USA)
+    L1280.in_EJ_R_bld_serv_F_tech_Yh_USA <- specify_modern_USAbld(L1280.in_EJ_R_bld_serv_F_tech_Yh_USA)
     L1441.internal_gains_USA <- specify_modern_USAbld(L1441.internal_gains_USA)
     L1441.prices_bld_USA <- specify_modern_USAbld(L1441.prices_bld_USA, sector_name = "sector", filter_subsector = FALSE)
     L1441.NEcost_75USDGJ_USA <- specify_modern_USAbld(L1441.NEcost_75USDGJ_USA)
-    L1441.base_service_EJ_serv_fuel_tech_USA <- specify_modern_USAbld(L1441.base_service_EJ_serv_fuel_tech_USA)
+    L1280.base_service_EJ_serv_fuel_tech_USA <- specify_modern_USAbld(L1280.base_service_EJ_serv_fuel_tech_USA)
     L1441.end_use_eff_USA <- specify_modern_USAbld(L1441.end_use_eff_USA)
     A44.globaltech_shrwt_USA <- specify_modern_USAbld(A44.globaltech_shrwt_USA)
     A44.sector_USA <- specify_modern_USAbld(A44.sector_USA, filter_subsector = FALSE)
@@ -902,7 +902,7 @@ module_energy_L244.building_det <- function(command, ...) {
 
     generic_services_USA <- unique(L1441.internal_gains_USA$supplysector)
 
-    L1441.supplysec_subsec <- L1441.in_EJ_R_bld_serv_F_tech_Yh_USA %>%
+    L1441.supplysec_subsec <- L1280.in_EJ_R_bld_serv_F_tech_Yh_USA %>%
       distinct(supplysector, subsector) %>%
       # all fuels included in L1441 are modern fuel
       mutate(
@@ -957,14 +957,14 @@ module_energy_L244.building_det <- function(command, ...) {
     # First, generate L244.base_service, and filter only the model base years and change names as indicated in calibrated_techs_bld_det
 
     # YZ 2025/9/7 replace service+fuel with detailed service+fuel in the USA
-    L144.base_service_EJ_serv_fuel_adj <- L144.base_service_EJ_serv_fuel %>%
+    L144.base_service_EJ_serv_fuel_adj <- L1280.base_service_EJ_serv_fuel %>%
       anti_join(L1441.supplysec_subsec %>%
                   mutate(GCAM_region_ID = gcam.USA_CODE),
                 by = c('GCAM_region_ID', 'service'='supplysector', 'fuel'='subsector')) %>%
       # filter out modern fuels in the default "others" service. Gas in resid cooling is also filtered out for simplicity
       # no value for such is provided in Scout and it is a small value (zero in 2021)
       filter(!(GCAM_region_ID == gcam.USA_CODE & fuel %in% unique(L1441.supplysec_subsec$subsector))) %>%
-      bind_rows(L1441.base_service_EJ_serv_fuel_tech_USA %>%
+      bind_rows(L1280.base_service_EJ_serv_fuel_tech_USA %>%
                   mutate(sector = if_else(grepl('resid', supplysector), 'bld_resid', 'bld_comm')) %>%
                   rename(service = supplysector, fuel = subsector, value = base.service) %>%
                   group_by(GCAM_region_ID, sector, fuel, service, year) %>%
@@ -1090,8 +1090,8 @@ module_energy_L244.building_det <- function(command, ...) {
           add_units("Fahrenheit Degree Days") %>%
           add_comments("Degree days are from L143.HDDCDD_scen_R_Y") %>%
           add_precursors("L143.HDDCDD_scen_R_Y", "common/GCAM_region_names",
-                         "energy/A44.internal_gains", "energy/A44.sector", "L144.base_service_EJ_serv",
-                         "L1441.base_service_EJ_serv_fuel_tech_USA", "energy/calibrated_techs_bld_det")
+                         "energy/A44.internal_gains", "energy/A44.sector", "L1280.base_service_EJ_serv",
+                         "L1280.base_service_EJ_serv_fuel_tech_USA", "energy/calibrated_techs_bld_det")
       })
 
     # Assign each tibble in list
@@ -1104,11 +1104,11 @@ module_energy_L244.building_det <- function(command, ...) {
     #------------------------------------------------------
     # L244.GenericServiceSatiation: Satiation levels assumed for non-thermal building services
     # First, calculate the service output per unit floorspace in the USA region
-    L244.ServiceSatiation_USA_pre <- L144.base_service_EJ_serv %>%
+    L244.ServiceSatiation_USA_pre <- L1280.base_service_EJ_serv %>%
       filter(GCAM_region_ID == gcam.USA_CODE) %>%
       # YZ -comment out since this is not true (tradBio is in the L144)
       # # Add tradBio which is not consumed in USA
-      # bind_rows(L144.base_service_EJ_serv %>%
+      # bind_rows(L1280.base_service_EJ_serv %>%
       #             filter(grepl("TradBio",service)) %>%
       #             select(-GCAM_region_ID,-value) %>%
       #             distinct() %>%
@@ -1544,19 +1544,19 @@ module_energy_L244.building_det <- function(command, ...) {
       distinct()
 
     # L244.StubTechCalInput_bld: Calibrated energy consumption by buildings technologies
-    L244.StubTechCalInput_bld_pre <- L144.in_EJ_R_bld_serv_F_Yh %>%
+    L244.StubTechCalInput_bld_pre <- L1280.in_EJ_R_bld_serv_F_Yh %>%
       filter(year %in% MODEL_BASE_YEARS) %>%
       rename(calibrated.value = value) %>%
       mutate(calibrated.value = round(calibrated.value, energy.DIGITS_CALOUTPUT)) %>%
       left_join_error_no_match(GCAM_region_names, by = "GCAM_region_ID") %>%
       left_join_error_no_match(calibrated_techs_bld_det, by = c("sector", "service", "fuel")) %>%
       # YZ 2025/9/10 combine with det USA services + fuel + tech
-      anti_join(L1441.in_EJ_R_bld_serv_F_tech_Yh_USA %>%
+      anti_join(L1280.in_EJ_R_bld_serv_F_tech_Yh_USA %>%
                   mutate(region = gcam.USA_REGION), by = c('region', 'supplysector', 'subsector')) %>%
       filter(!(region == gcam.USA_REGION & subsector %in% unique(L1441.supplysec_subsec$subsector))) %>%
       bind_rows(L1441.end_use_eff_USA %>%
                   select(-efficiency) %>%
-                  left_join(L1441.in_EJ_R_bld_serv_F_tech_Yh_USA,
+                  left_join(L1280.in_EJ_R_bld_serv_F_tech_Yh_USA,
                             by = c('supplysector','subsector','technology','minicam.energy.input','year')) %>%
                   mutate(region = gcam.USA_REGION,
                          GCAM_region_ID = gcam.USA_CODE) %>%
@@ -2778,7 +2778,7 @@ module_energy_L244.building_det <- function(command, ...) {
           add_units("EJ/billion m2 floorspace") %>%
           add_comments("For USA, calculate satiation level as base year service / base year floorspace times multiplier") %>%
           add_comments("USA values written to all regions, then we make sure that no satiation level is below base year service per floorspace") %>%
-          add_precursors("L144.base_service_EJ_serv", "energy/calibrated_techs_bld_det", "common/GCAM_region_names",
+          add_precursors("L1280.base_service_EJ_serv", "energy/calibrated_techs_bld_det", "common/GCAM_region_names",
                          "L144.flsp_bm2_R_res_Yh", "L144.flsp_bm2_R_comm_Yh", "energy/A44.demand_satiation_mult_SSPs")
       })
 
@@ -3166,16 +3166,16 @@ module_energy_L244.building_det <- function(command, ...) {
     L244.ThermalBaseService %>%
       add_title("Historical building heating and cooling energy output") %>%
       add_units("EJ/yr") %>%
-      add_comments("L144.base_service_EJ_serv rounded and renamed") %>%
+      add_comments("L1280.base_service_EJ_serv rounded and renamed") %>%
       add_legacy_name("L244.ThermalBaseService") %>%
-      add_precursors("energy/A44.internal_gains", "L1441.internal_gains_USA", "energy/A44.sector", "gcam-usa/A44.sector", "L144.base_service_EJ_serv",
+      add_precursors("energy/A44.internal_gains", "L1441.internal_gains_USA", "energy/A44.sector", "gcam-usa/A44.sector", "L1280.base_service_EJ_serv",
                      "energy/calibrated_techs_bld_det", "common/GCAM_region_names") ->
       L244.ThermalBaseService
 
     L244.GenericBaseService %>%
       add_title("Historical building `other` energy output") %>%
       add_units("EJ/yr") %>%
-      add_comments("L144.base_service_EJ_serv rounded and renamed") %>%
+      add_comments("L1280.base_service_EJ_serv rounded and renamed") %>%
       add_legacy_name("L244.GenericBaseService") %>%
       same_precursors_as(L244.ThermalBaseService) ->
       L244.GenericBaseService
@@ -3187,7 +3187,7 @@ module_energy_L244.building_det <- function(command, ...) {
       add_comments("USA values written to all regions, which are multiplied by ratio of degree days in each region to degree days in USA") %>%
       add_comments("then we make sure that no satiation level is below base year service per floorspace") %>%
       add_legacy_name("L244.ThermalServiceSatiation") %>%
-      add_precursors("L144.base_service_EJ_serv", "energy/calibrated_techs_bld_det", "common/GCAM_region_names",
+      add_precursors("L1280.base_service_EJ_serv", "energy/calibrated_techs_bld_det", "common/GCAM_region_names",
                      "L144.flsp_bm2_R_res_Yh", "L144.flsp_bm2_R_comm_Yh", "energy/A44.demand_satiation_mult", "gcam-usa/A44.demand_satiation_mult",
                      "L143.HDDCDD_scen_R_Y", "energy/A44.internal_gains", "L1441.internal_gains_USA", "energy/A44.sector", "gcam-usa/A44.sector", "energy/A44.gcam_consumer") ->
       L244.ThermalServiceSatiation
@@ -3198,7 +3198,7 @@ module_energy_L244.building_det <- function(command, ...) {
       add_comments("For USA, calculate satiation level as base year service / base year floorspace times multiplier") %>%
       add_comments("USA values written to all regions, then we make sure that no satiation level is below base year service per floorspace") %>%
       add_legacy_name("L244.GenericServiceSatiation") %>%
-      add_precursors("L144.base_service_EJ_serv", "energy/calibrated_techs_bld_det", "common/GCAM_region_names",
+      add_precursors("L1280.base_service_EJ_serv", "energy/calibrated_techs_bld_det", "common/GCAM_region_names",
                      "L144.flsp_bm2_R_res_Yh", "L144.flsp_bm2_R_comm_Yh", "energy/A44.demand_satiation_mult", "gcam-usa/A44.demand_satiation_mult") ->
       L244.GenericServiceSatiation
 
@@ -3207,7 +3207,7 @@ module_energy_L244.building_det <- function(command, ...) {
       add_units("Unitless") %>%
       add_comments("Calculated based on max (Model_Base_Years) at region level") %>%
       add_legacy_name("L244.GenericServiceImpedance") %>%
-      add_precursors("L144.base_service_EJ_serv", "energy/calibrated_techs_bld_det", "common/GCAM_region_names",
+      add_precursors("L1280.base_service_EJ_serv", "energy/calibrated_techs_bld_det", "common/GCAM_region_names",
                      "L144.flsp_bm2_R_res_Yh", "L144.flsp_bm2_R_comm_Yh", "energy/A44.demand_satiation_mult", "gcam-usa/A44.demand_satiation_mult",
                      "L102.pcgdp_thous90USD_Scen_R_Y", "L101.Pop_thous_R_Yh","L144.prices_bld", "L1441.prices_bld_USA", "socioeconomics/income_shares") ->
       L244.GenericServiceImpedance
@@ -3217,7 +3217,7 @@ module_energy_L244.building_det <- function(command, ...) {
       add_units("Unitless") %>%
       add_comments("Calculated based on max (Model_Base_Years) at region level") %>%
       add_legacy_name("L244.ThermalServiceImpedance") %>%
-      add_precursors("L144.base_service_EJ_serv", "energy/calibrated_techs_bld_det", "common/GCAM_region_names",
+      add_precursors("L1280.base_service_EJ_serv", "energy/calibrated_techs_bld_det", "common/GCAM_region_names",
                      "L144.flsp_bm2_R_res_Yh", "L144.flsp_bm2_R_comm_Yh", "energy/A44.demand_satiation_mult", "gcam-usa/A44.demand_satiation_mult",
                      "L102.pcgdp_thous90USD_Scen_R_Y", "L101.Pop_thous_R_Yh","L144.prices_bld", "L1441.prices_bld_USA", "socioeconomics/income_shares",
                      "L143.HDDCDD_scen_R_Y","L144.shell_eff_R_Y", "L144.internal_gains", "L1441.internal_gains_USA") ->
@@ -3228,7 +3228,7 @@ module_energy_L244.building_det <- function(command, ...) {
       add_units("Unitless") %>%
       add_comments("Calculated based on max (Model_Base_Years) at region level") %>%
       add_legacy_name("L244.GenericServiceImpedance") %>%
-      add_precursors("L144.base_service_EJ_serv", "energy/calibrated_techs_bld_det", "common/GCAM_region_names",
+      add_precursors("L1280.base_service_EJ_serv", "energy/calibrated_techs_bld_det", "common/GCAM_region_names",
                      "L144.flsp_bm2_R_res_Yh", "L144.flsp_bm2_R_comm_Yh", "energy/A44.demand_satiation_mult", "gcam-usa/A44.demand_satiation_mult",
                      "L102.pcgdp_thous90USD_Scen_R_Y", "L101.Pop_thous_R_Yh","L144.prices_bld", "L1441.prices_bld_USA", "socioeconomics/income_shares") ->
       L244.GenericServiceAdder
@@ -3238,7 +3238,7 @@ module_energy_L244.building_det <- function(command, ...) {
       add_units("Unitless") %>%
       add_comments("Calculated based on max (Model_Base_Years) at region level") %>%
       add_legacy_name("L244.ThermalServiceAdder") %>%
-      add_precursors("L144.base_service_EJ_serv", "energy/calibrated_techs_bld_det", "common/GCAM_region_names",
+      add_precursors("L1280.base_service_EJ_serv", "energy/calibrated_techs_bld_det", "common/GCAM_region_names",
                      "L144.flsp_bm2_R_res_Yh", "L144.flsp_bm2_R_comm_Yh", "energy/A44.demand_satiation_mult", "gcam-usa/A44.demand_satiation_mult",
                      "L102.pcgdp_thous90USD_Scen_R_Y", "L101.Pop_thous_R_Yh","L144.prices_bld","socioeconomics/income_shares",
                      "L143.HDDCDD_scen_R_Y","L144.shell_eff_R_Y", "L144.internal_gains", "L1441.internal_gains_USA") ->
@@ -3249,7 +3249,7 @@ module_energy_L244.building_det <- function(command, ...) {
       add_comments("It is zero if no multiple consumers are implemented") %>%
       add_units("Unitless") %>%
       add_legacy_name("L244.GenericServiceCoef") %>%
-      add_precursors("L144.base_service_EJ_serv", "L144.flsp_bm2_R_res_Yh", "L144.flsp_bm2_R_comm_Yh", "energy/A44.demand_satiation_mult", "gcam-usa/A44.demand_satiation_mult",
+      add_precursors("L1280.base_service_EJ_serv", "L144.flsp_bm2_R_res_Yh", "L144.flsp_bm2_R_comm_Yh", "energy/A44.demand_satiation_mult", "gcam-usa/A44.demand_satiation_mult",
                      "L102.pcgdp_thous90USD_Scen_R_Y", "L101.Pop_thous_R_Yh","L144.prices_bld", "L1441.prices_bld_USA",
                      "L144.shell_eff_R_Y","L144.internal_gains", "L1441.internal_gains_USA", "L143.HDDCDD_scen_R_Y") ->
       L244.GenericServiceCoef
@@ -3259,7 +3259,7 @@ module_energy_L244.building_det <- function(command, ...) {
       add_comments("It is zero if no multiple consumers are implemented") %>%
       add_units("Unitless") %>%
       add_legacy_name("L244.ThermalServiceCoef") %>%
-      add_precursors("L144.base_service_EJ_serv", "L144.flsp_bm2_R_res_Yh", "L144.flsp_bm2_R_comm_Yh", "energy/A44.demand_satiation_mult", "gcam-usa/A44.demand_satiation_mult",
+      add_precursors("L1280.base_service_EJ_serv", "L144.flsp_bm2_R_res_Yh", "L144.flsp_bm2_R_comm_Yh", "energy/A44.demand_satiation_mult", "gcam-usa/A44.demand_satiation_mult",
                      "L102.pcgdp_thous90USD_Scen_R_Y", "L101.Pop_thous_R_Yh","L144.prices_bld", "L1441.prices_bld_USA",
                      "L144.shell_eff_R_Y","L144.internal_gains", "L1441.internal_gains_USA", "L143.HDDCDD_scen_R_Y") ->
       L244.ThermalServiceCoef
@@ -3388,10 +3388,10 @@ module_energy_L244.building_det <- function(command, ...) {
     L244.StubTechCalInput_bld %>%
       add_title("Calibrated energy consumption by buildings technologies") %>%
       add_units("calibrated.value: EJ; shareweights: Unitless") %>%
-      add_comments("Calibrated values directly from L144.in_EJ_R_bld_serv_F_Yh combined w L1441.in_EJ_R_bld_serv_F_tech_Yh_USA") %>%
+      add_comments("Calibrated values directly from L1280.in_EJ_R_bld_serv_F_Yh combined w L1280.in_EJ_R_bld_serv_F_tech_Yh_USA") %>%
       add_comments("Shareweights are 1 if subsector/technology total is non-zero, 0 otherwise") %>%
       add_legacy_name("L244.StubTechCalInput_bld") %>%
-      add_precursors("L144.in_EJ_R_bld_serv_F_Yh", "L1441.in_EJ_R_bld_serv_F_tech_Yh_USA",
+      add_precursors("L1280.in_EJ_R_bld_serv_F_Yh", "L1280.in_EJ_R_bld_serv_F_tech_Yh_USA",
                      "common/GCAM_region_names", "energy/calibrated_techs_bld_det") ->
       L244.StubTechCalInput_bld
 
@@ -3425,7 +3425,7 @@ module_energy_L244.building_det <- function(command, ...) {
       add_units("Unitless") %>%
       add_comments("Calculated using pc_thous") %>%
       add_legacy_name("L244.GenericCoalCoef") %>%
-      add_precursors("common/GCAM_region_names","L144.base_service_EJ_serv_fuel") ->
+      add_precursors("common/GCAM_region_names","L1280.base_service_EJ_serv_fuel") ->
       L244.GenericCoalCoef
 
     L244.ThermalCoalCoef %>%
@@ -3433,7 +3433,7 @@ module_energy_L244.building_det <- function(command, ...) {
       add_units("Unitless") %>%
       add_comments("Calculated using pc_thous") %>%
       add_legacy_name("L244.ThermalCoalCoef") %>%
-      add_precursors("common/GCAM_region_names","L144.base_service_EJ_serv_fuel") ->
+      add_precursors("common/GCAM_region_names","L1280.base_service_EJ_serv_fuel") ->
       L244.ThermalCoalCoef
 
     L244.GenericTradBioCoef %>%
@@ -3441,7 +3441,7 @@ module_energy_L244.building_det <- function(command, ...) {
       add_units("Unitless") %>%
       add_comments("Calculated using pc_thous") %>%
       add_legacy_name("L244.GenericTradBioCoef") %>%
-      add_precursors("common/GCAM_region_names","L144.base_service_EJ_serv_fuel") ->
+      add_precursors("common/GCAM_region_names","L1280.base_service_EJ_serv_fuel") ->
       L244.GenericTradBioCoef
 
     L244.ThermalTradBioCoef %>%
@@ -3449,7 +3449,7 @@ module_energy_L244.building_det <- function(command, ...) {
       add_units("Unitless") %>%
       add_comments("Calculated using pc_thous") %>%
       add_legacy_name("L244.ThermalTradBioCoef") %>%
-      add_precursors("common/GCAM_region_names","L144.base_service_EJ_serv_fuel") ->
+      add_precursors("common/GCAM_region_names","L1280.base_service_EJ_serv_fuel") ->
       L244.ThermalTradBioCoef
 
     L244.ThermalShares %>%
@@ -3457,7 +3457,7 @@ module_energy_L244.building_det <- function(command, ...) {
       add_units("%") %>%
       add_comments("Calculated using pc_thous") %>%
       add_legacy_name("L244.ThermalShares") %>%
-      add_precursors("common/GCAM_region_names","L144.in_EJ_R_bld_serv_F_Yh") ->
+      add_precursors("common/GCAM_region_names","L1280.in_EJ_R_bld_serv_F_Yh") ->
       L244.ThermalShares
 
     L244.GenericShares %>%
@@ -3465,7 +3465,7 @@ module_energy_L244.building_det <- function(command, ...) {
       add_units("%") %>%
       add_comments("Calculated using pc_thous") %>%
       add_legacy_name("L244.GenericShares") %>%
-      add_precursors("common/GCAM_region_names","L144.in_EJ_R_bld_serv_F_Yh") ->
+      add_precursors("common/GCAM_region_names","L1280.in_EJ_R_bld_serv_F_Yh") ->
       L244.GenericShares
 
     L244.GlobalTechTrackCapital_bld %>%
@@ -3520,7 +3520,7 @@ module_energy_L244.building_det <- function(command, ...) {
       add_units("$1975/GJ") %>%
       add_comments("Service density for generic services") %>%
       add_legacy_name("L244.GenericBaseDens") %>%
-      add_precursors("common/GCAM_region_names","L144.in_EJ_R_bld_serv_F_Yh","L144.flsp_bm2_R_res_Yh") ->
+      add_precursors("common/GCAM_region_names","L1280.in_EJ_R_bld_serv_F_Yh","L144.flsp_bm2_R_res_Yh") ->
       L244.GenericBaseDens
 
     L244.ThermalBaseDens %>%
@@ -3528,7 +3528,7 @@ module_energy_L244.building_det <- function(command, ...) {
       add_units("$1975/GJ") %>%
       add_comments("Service density for thermal services") %>%
       add_legacy_name("L244.ThermalBaseDens") %>%
-      add_precursors("common/GCAM_region_names","L144.in_EJ_R_bld_serv_F_Yh","L144.flsp_bm2_R_res_Yh") ->
+      add_precursors("common/GCAM_region_names","L1280.in_EJ_R_bld_serv_F_Yh","L144.flsp_bm2_R_res_Yh") ->
       L244.ThermalBaseDens
 
     L244.GlobalTechSCurve_bld_USA %>%

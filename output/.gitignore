@@ -3,6 +3,11 @@ output*.xml
 database*
 *basexdb
 gcam-hector-outputstream*
+
+# AI data-center runtime products.
+/ai-data-center-databases/
+/ai-data-center-run-logs/
+/ai-data-center-database-backups/
 ccsm_c.txt
 concs_c.dis
 emiss_c.dis

@@ -1,0 +1,18 @@
+name: Publication boundary
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  restricted-calibration-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject restricted calibration paths
+        run: >-
+          python3
+          input/gcamdata/ai-data-center/provenance/verify_publication_boundary.py

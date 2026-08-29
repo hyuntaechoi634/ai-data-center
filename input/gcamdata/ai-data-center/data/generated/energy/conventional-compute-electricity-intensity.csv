@@ -1,0 +1,8 @@
+# File: A281.globaltech_eff.csv
+# Title: Conventional IT-electricity coefficient iota
+# Units: EJ IT electricity per CSU
+# Source: 2021 conventional electricity normalization and audited SPECpower chained benchmark B; gamma=iota*M in the R chunks.
+# Column types: ccccnnnnnnnnnnnn
+# ----------
+supplysector,subsector,technology,minicam.energy.input,2021,2025,2030,2035,2040,2045,2050,2060,2070,2080,2090,2100
+conventional compute,conventional compute,conventional compute,elect_td_bld,0.19253617,0.10518786,0.064506244,0.05287301,0.048765036,0.047187082,0.046560033,0.046205054,0.0461466,0.046136939,0.046135342,0.046135077

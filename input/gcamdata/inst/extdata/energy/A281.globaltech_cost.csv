@@ -1,0 +1,12 @@
+# File: A281.globaltech_cost.csv
+# Title: Conventional non-energy cost, v3.2 three-input split
+# Units: 1975 billion$/CSU
+# Source: 2021 level preserves the energy/non-energy cost-share calibration; the 3-term mapping s_hw/H + s_fac/B + s_opex
+# (conv 0.7662/0.2008/0.0330, H=B rho_conv=1 ruling) is carried as THREE inputs (hw-capital / facility-capital / opex, one term each;
+# sum identical to the former composite non-energy row) - v3.2 2026-08-27, V32_SPEC.md.
+# Column types: ccccnnnnnnnnnnnn
+# ----------
+supplysector,subsector,technology,minicam.non.energy.input,2021,2025,2030,2035,2040,2045,2050,2060,2070,2080,2090,2100
+conventional compute,conventional compute,conventional compute,hw-capital,5.66988,3.0976129,1.899605,1.557025,1.4360517,1.3895835,1.371118,1.3606644,1.358943,1.3586585,1.3586115,1.3586037
+conventional compute,conventional compute,conventional compute,facility-capital,1.48592,0.81179937,0.49783435,0.40805353,0.37634977,0.36417173,0.35933241,0.35659281,0.35614169,0.35606713,0.3560548,0.35605276
+conventional compute,conventional compute,conventional compute,opex,0.2442,0.2442,0.2442,0.2442,0.2442,0.2442,0.2442,0.2442,0.2442,0.2442,0.2442,0.2442

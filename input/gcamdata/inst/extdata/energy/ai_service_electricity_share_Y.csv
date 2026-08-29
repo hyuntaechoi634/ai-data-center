@@ -1,0 +1,11 @@
+# File: ai_service_electricity_share_Y.csv
+# Title: AI facility-electricity allocation and implied service index
+# Units: share; TSU or ISU index with world 2021=1
+# Source: LBNL/Omdia workload allocation and audited benchmark B.
+# Column types: cinn
+# ----------
+service,year,electricity.share,world.service.index
+training,2021,0.425,4.7693331
+inference,2021,0.575,4.8406806
+training,2025,0.325,44.525439
+inference,2025,0.675,69.374278

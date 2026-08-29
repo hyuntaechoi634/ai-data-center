@@ -1,0 +1,6 @@
+scenario,tau_training_years,tau_inference_years,long_run_training_log_rate,long_run_inference_log_rate,primary_fan,deployment_scope,status
+Low,7.0,7.0,0.0,0.0,true,full_factorial,rounded_fast_edge_of_reproducible_GDP_residualized_traffic_range_approximately_7_to_10_years
+Medium,10.0,10.0,0.0,0.0,true,full_factorial,rounded_central_to_upper_traffic_range_design_value_not_a_separate_fit
+High,13.0,13.0,0.0,0.0,true,full_factorial,author_approved_upper_stress_informed_by_cross_domain_power_expansion_screen_not_a_fit_or_feasibility_bound
+LegacyDrift_2p5_6p5_9p5,2.5,2.5,0.0,0.0,false,not_deployed,retired_drift_design_retained_for_provenance_only
+ExtendedHigh,15.5,15.5,0.0,0.0,false,not_deployed,stress_test_outside_primary_fan_deployed_rflop48_High_value

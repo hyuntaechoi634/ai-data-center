@@ -76,3 +76,31 @@ xcuserdata
 *.xcuserstate
 .Rproj.user
 input/gcamdata/inst/extdata/emissions/CEDS/desktop.ini
+
+# Local derivation, audit, manuscript, and paper archive.
+/analysis/
+
+# Restricted calibration publication boundary.
+#
+# These files remain available in the local working tree for the audited
+# calibration, but they must not enter a public commit. The publication gate
+# under input/gcamdata/ai-data-center/provenance enforces the same boundary in
+# CI, including against a forced add. Replace this block only together with a
+# reviewed open-data profile and new manifests.
+/input/gcamdata/ai-data-center/generation/ai_constants.py
+/input/gcamdata/ai-data-center/generation/inputs/regional-data-center-electricity-targets-2021-2025.csv
+/input/gcamdata/ai-data-center/generation/inputs/frozen-calibration-foldback-evidence.csv
+/input/gcamdata/ai-data-center/data/locked/energy/regional-demand-calibration-2025.csv
+/input/gcamdata/ai-data-center/data/generated/energy/data-center-electricity-by-region-2021.csv
+/input/gcamdata/ai-data-center/data/generated/energy/conventional-data-center-electricity-share-by-region.csv
+/input/gcamdata/ai-data-center/data/generated/energy/ai-share-of-data-center-electricity-by-region-and-year.csv
+/input/gcamdata/ai-data-center/data/generated/energy/ai-compute-trade-balance-by-region-2021.csv
+/input/gcamdata/ai-data-center/data/generated/energy/power-usage-effectiveness-by-region-and-year.csv
+/input/gcamdata/inst/extdata/energy/aeei_calib_2025_R.csv
+/input/gcamdata/inst/extdata/energy/datacenter_elec_EJ_R_Yh.csv
+/input/gcamdata/inst/extdata/energy/datacenter_convshare_R.csv
+/input/gcamdata/inst/extdata/energy/ai_share_fAI_R_Y.csv
+/input/gcamdata/inst/extdata/energy/datacenter_tradebalance_R_Y.csv
+/input/gcamdata/inst/extdata/energy/pue_R.csv
+/input/policy/ai-data-center/demand-*.xml
+/exe/restart/ai-data-center-warm-start/restart.*

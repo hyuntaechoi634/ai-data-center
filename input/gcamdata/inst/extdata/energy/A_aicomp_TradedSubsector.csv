@@ -1,0 +1,8 @@
+# File: A_aicomp_TradedSubsector.csv
+# Title: Service-specific traded AI-compute subsectors
+# Units: unitless
+# Column types: ccnccccinccc
+# ----------
+supplysector,subsector,logit.exponent,year.fillout,share.weight,apply.to,from.year,to.year,to.value,interpolation.function,traded,logit.type
+traded training compute,traded training compute,-6,start-year,1,share-weight,2025,2100,1,fixed,1,
+traded inference compute,traded inference compute,-6,start-year,1,share-weight,2025,2100,1,fixed,1,

@@ -1,0 +1,12 @@
+# File: A28.chip_resource.csv
+# Title: AI accelerator (chip) supply resource - smooth supply curve (Qbar, mid-price, curve-exponent)
+# Units: maxSubResource RFLOP/yr; price 1975$/EFLOP-yr; curve-exponent unitless; techChange /yr; gdpSupplyElast unitless
+# Source: PHASE-A PLACEHOLDER values (resource present but not yet consumed). The smooth renewable-resource
+#   supply curve Q(P)=Qbar*P^b/(mid.price^b+P^b) endogenizes the chip price: within-period the price climbs the
+#   curve toward Qbar as compute pulls chip demand; mid.price falls over time via techChange (Moore/Wright);
+#   Qbar scales with GDP^gdpSupplyElast (fab buildout). Hosted in one global market. GROUNDING TODO: anchor Qbar
+#   to leading-edge + CoWoS capacity (FLOP-equiv), base.price to 2021 chip cost, b to the EUV/TSMC chokepoint.
+# Column types: ccccccnnnnnn
+# ----------
+host.region,renewresource,smooth.renewable.subresource,output.unit,price.unit,market,base.price,maxSubResource,mid.price,curve.exponent,techChange,gdpSupplyElast
+USA,AI accelerators,AI accelerators,RFLOP,1975$/EFLOP-yr,global,0.174,122,0.193,4,0.1,1.0

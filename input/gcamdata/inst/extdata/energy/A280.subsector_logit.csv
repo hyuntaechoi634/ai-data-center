@@ -1,0 +1,8 @@
+# File: A280.subsector_logit.csv
+# Title: AI production subsector logits
+# Units: unitless
+# Column types: ccnc
+# ----------
+supplysector,subsector,logit.exponent,logit.type
+training compute,training compute,-3,
+inference compute,inference compute,-3,

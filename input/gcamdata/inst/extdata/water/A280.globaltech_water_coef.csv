@@ -1,0 +1,10 @@
+# File: A280.globaltech_water_coef.csv
+# Title: AI scope-1 cooling-water intensity per electricity input
+# Units: m3/GJ electricity
+# Column types: ccccn
+# ----------
+supplysector,subsector,technology,minicam.water.input,coefficient
+training compute,training compute,training compute,water_td_ind_W,0.625
+training compute,training compute,training compute,water_td_ind_C,0.5
+inference compute,inference compute,inference compute,water_td_ind_W,0.625
+inference compute,inference compute,inference compute,water_td_ind_C,0.5

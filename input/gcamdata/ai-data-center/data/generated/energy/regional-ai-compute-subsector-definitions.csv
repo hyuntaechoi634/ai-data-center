@@ -1,0 +1,10 @@
+# File: A_aicomp_RegionalSubsector.csv
+# Title: Domestic and imported AI-compute subsectors
+# Units: unitless
+# Column types: ccnccccincc
+# ----------
+supplysector,subsector,logit.exponent,year.fillout,share.weight,apply.to,from.year,to.year,to.value,interpolation.function,logit.type
+regional training compute,domestic training compute,-6,start-year,1,share-weight,2025,2100,1,fixed,
+regional training compute,imported training compute,-6,start-year,1,share-weight,2025,2100,1,fixed,
+regional inference compute,domestic inference compute,-3,start-year,1,share-weight,2025,2100,1,fixed,
+regional inference compute,imported inference compute,-3,start-year,1,share-weight,2025,2100,1,fixed,

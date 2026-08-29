@@ -1,0 +1,13 @@
+# File: A281.demand.csv
+# Title: conventional compute FINAL DEMAND: perCapitaBased; satiating income elasticity; diffusion aeei
+# Source: a MATURE digital service (vs the nascent AI services): alpha declines 0.8 -> 0.2 (tau 25 yr,
+#   Eom/Fouquet maturation -- appropriate here, unlike AI, because conventional DC services are decades old);
+#   beta = -0.5 (ruling 2026-08-21, unified across services; formerly -0.4 mature digital service: ~= Labandeira 2017 long-run electricity -0.37; maturity gradient vs the
+#   analogue scaled down for maturity). NOTE: the g0/g_inf/tau_g columns below are SUPERSEDED and IGNORED by
+#   zenergy_L2286 -- the conv deepening now comes from energy/aeei_chi_compute_ref (the same chi generator as
+#   AI), data-driven from Koomey efficiency + Byrne-Oliner-Sichel MPU prices, NOT the old IEA-2030 solve.
+# Units: unitless; /yr for g
+# Column types: cnnnnnnn
+# ----------
+energy.final.demand,alpha0,alpha_inf,tau_alpha,price.elasticity,g0,g_inf,tau_g
+conventional compute,0.8,0.2,25,-0.5,0.174,0.01,12

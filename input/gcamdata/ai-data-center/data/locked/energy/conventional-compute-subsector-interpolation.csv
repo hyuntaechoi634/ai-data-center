@@ -1,0 +1,8 @@
+# File: A281.subsector_interp.csv
+# Title: conventional compute - subsector share-weight interpolation
+# Source: structural, mirrors A280.subsector_interp.
+# Units: NA
+# Column types: ccciic
+# ----------
+supplysector,subsector,apply.to,from.year,to.year,interpolation.function
+conventional compute,conventional compute,share-weight,2021,2100,linear

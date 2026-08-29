@@ -1,0 +1,8 @@
+# File: A280.sector.csv
+# Title: Service-specific AI production sectors
+# Units: TSU or ISU output; EJ input; service-specific price unit
+# Column types: ccccncc
+# ----------
+supplysector,output.unit,input.unit,price.unit,logit.exponent,final.energy,logit.type
+training compute,TSU,EJ,1975 billion$/TSU,-3,,
+inference compute,ISU,EJ,1975 billion$/ISU,-3,,

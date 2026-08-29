@@ -1,0 +1,2 @@
+kind,public_path,deployed_path,source_path
+locked-scenario-overlay,data/locked/scenario-overlays/direct-air-capture-advanced.xml,xml/dac_ssp2_adv5.xml,gcam-core/input/gcamdata/xml/dac_ssp2_adv5.xml

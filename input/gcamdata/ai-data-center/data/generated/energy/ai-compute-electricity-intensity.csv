@@ -1,0 +1,9 @@
+# File: A280.globaltech_eff.csv
+# Title: AI IT-electricity coefficient iota by service
+# Units: EJ IT electricity per TSU or ISU
+# Source: 2021 service electricity normalization and audited chained benchmark B; facility coefficient is gamma=iota*M in the R chunks.
+# Column types: ccccnnnnnnnnnnnn
+# ----------
+supplysector,subsector,technology,minicam.energy.input,2021,2025,2030,2035,2040,2045,2050,2060,2070,2080,2090,2100
+training compute,training compute,training compute,elect_td_bld,0.0056845638,0.0024608501,0.0012646558,0.00098543134,0.00089747704,0.00086657714,0.00085527335,0.00084950738,0.00084870073,0.0008485875,0.0008485716,0.00084856937
+inference compute,inference compute,inference compute,elect_td_bld,0.0075775235,0.0032803132,0.0016244669,0.0012044024,0.0010603534,0.0010043799,0.00098145543,0.00096779619,0.00096534076,0.00096489636,0.00096481583,0.00096480123

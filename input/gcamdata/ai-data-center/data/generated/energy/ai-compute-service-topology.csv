@@ -1,0 +1,9 @@
+# File: A_aicomp_services.csv
+# Title: Live topology and units for service-specific AI compute
+# Units: service-specific output units; logit exponent is unitless
+# Source: structural specification. TSU and ISU are separate 2021-normalized chained benchmark-equivalent units and are not added.
+# Column types: ccccccn
+# ----------
+service,production.good,traded.good,regional.good,output.unit,price.unit,logit.exponent
+training,training compute,traded training compute,regional training compute,TSU,1975 billion$/TSU,-6
+inference,inference compute,traded inference compute,regional inference compute,ISU,1975 billion$/ISU,-3

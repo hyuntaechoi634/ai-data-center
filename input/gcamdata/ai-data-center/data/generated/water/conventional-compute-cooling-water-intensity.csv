@@ -1,0 +1,8 @@
+# File: A281.globaltech_water_coef.csv
+# Title: Conventional scope-1 cooling-water intensity
+# Units: m3/GJ electricity
+# Column types: ccccn
+# ----------
+supplysector,subsector,technology,minicam.water.input,coefficient
+conventional compute,conventional compute,conventional compute,water_td_ind_W,0.625
+conventional compute,conventional compute,conventional compute,water_td_ind_C,0.5

@@ -1,0 +1,8 @@
+# File: A_aicomp_RegionalSector.csv
+# Title: Regional training and inference compute sectors
+# Units: service-specific
+# Column types: ccccnc
+# ----------
+supplysector,output.unit,input.unit,price.unit,logit.exponent,logit.type
+regional training compute,TSU,EJ,1975 billion$/TSU,-3,
+regional inference compute,ISU,EJ,1975 billion$/ISU,-3,

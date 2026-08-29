@@ -2,3 +2,7 @@
 data/* binary
 src/* text=lf
 R/* text=lf
+
+# Preserve the audited mixed-newline calibration seed byte-for-byte.
+ai-data-center/data/locked/energy/regional-demand-calibration-2025.csv -text
+inst/extdata/energy/aeei_calib_2025_R.csv -text

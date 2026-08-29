@@ -1,0 +1,8 @@
+# File: A_aicomp_TradedSector.csv
+# Title: Service-specific traded AI-compute sectors
+# Units: service-specific
+# Column types: ccccinc
+# ----------
+supplysector,output.unit,input.unit,price.unit,traded,logit.exponent,logit.type
+traded training compute,TSU,EJ,1975 billion$/TSU,1,-6,
+traded inference compute,ISU,EJ,1975 billion$/ISU,1,-6,

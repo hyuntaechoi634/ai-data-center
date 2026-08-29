@@ -1,0 +1,39 @@
+# File: aeei_chi_compute_ref.csv
+# Title: demand-axis aeei (reference = Medium) by service x year (Design A)
+# Units: /yr (autonomous demand growth; negative = growth)
+# Column types: ccin
+# ----------
+service,scenario,year,aeei
+conv,Medium,2025,-0.122467
+conv,Medium,2030,-0.107165
+conv,Medium,2035,-0.074259
+conv,Medium,2040,-0.051169
+conv,Medium,2045,-0.035122
+conv,Medium,2050,-0.024044
+conv,Medium,2060,-0.013826
+conv,Medium,2070,-0.00643
+conv,Medium,2080,-0.002985
+conv,Medium,2090,-0.001384
+conv,Medium,2100,-0.000642
+inference,Medium,2025,-0.368535
+inference,Medium,2030,-0.326642
+inference,Medium,2035,-0.213269
+inference,Medium,2040,-0.1354
+inference,Medium,2045,-0.084462
+inference,Medium,2050,-0.052115
+inference,Medium,2060,-0.025739
+inference,Medium,2070,-0.009547
+inference,Medium,2080,-0.003523
+inference,Medium,2090,-0.001297
+inference,Medium,2100,-0.000477
+training,Medium,2025,-0.280495
+training,Medium,2030,-0.2674
+training,Medium,2035,-0.171986
+training,Medium,2040,-0.108159
+training,Medium,2045,-0.067073
+training,Medium,2050,-0.041236
+training,Medium,2060,-0.020307
+training,Medium,2070,-0.007519
+training,Medium,2080,-0.002773
+training,Medium,2090,-0.001021
+training,Medium,2100,-0.000376

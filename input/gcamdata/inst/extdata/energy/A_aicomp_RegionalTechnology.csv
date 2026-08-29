@@ -1,0 +1,10 @@
+# File: A_aicomp_RegionalTechnology.csv
+# Title: Regional AI-compute pass-through technologies
+# Units: unitless coefficient
+# Column types: ccccnnnc
+# ----------
+supplysector,subsector,technology,minicam.energy.input,coefficient,input.cost,share.weight,market.name
+regional training compute,domestic training compute,domestic training compute,training compute,1,0,1,regional
+regional training compute,imported training compute,imported training compute,traded training compute,1,0,1,USA
+regional inference compute,domestic inference compute,domestic inference compute,inference compute,1,0,1,regional
+regional inference compute,imported inference compute,imported inference compute,traded inference compute,1,0,1,USA

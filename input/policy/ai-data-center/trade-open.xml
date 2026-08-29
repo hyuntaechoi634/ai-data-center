@@ -1,0 +1,2123 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<scenario>
+  <world>
+    <region name="USA">
+      <supplysector name="traded training compute">
+        <subsector name="USA traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Africa_Eastern traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Africa_Northern traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Africa_Southern traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Africa_Western traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Australia_NZ traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Brazil traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Canada traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Central America and Caribbean traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Central Asia traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="China traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="EU-12 traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="EU-15 traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Ukraine traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Europe_Non_EU traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="European Free Trade Association traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="India traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Indonesia traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Japan traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Mexico traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Middle East traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Pakistan traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Russia traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="South Africa traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="South America_Northern traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="South America_Southern traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="South Asia traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="South Korea traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Southeast Asia traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Taiwan traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Argentina traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Colombia traded training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="traded inference compute">
+        <subsector name="USA traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Africa_Eastern traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Africa_Northern traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Africa_Southern traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Africa_Western traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Australia_NZ traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Brazil traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Canada traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Central America and Caribbean traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Central Asia traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="China traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="EU-12 traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="EU-15 traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Ukraine traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Europe_Non_EU traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="European Free Trade Association traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="India traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Indonesia traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Japan traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Mexico traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Middle East traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Pakistan traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Russia traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="South Africa traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="South America_Northern traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="South America_Southern traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="South Asia traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="South Korea traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Southeast Asia traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Taiwan traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Argentina traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="Colombia traded inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="USA">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="Africa_Eastern">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="Africa_Northern">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="Africa_Southern">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="Africa_Western">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="Australia_NZ">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="Brazil">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="Canada">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="Central America and Caribbean">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="Central Asia">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="China">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="EU-12">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="EU-15">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="Ukraine">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="Europe_Non_EU">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="European Free Trade Association">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="India">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="Indonesia">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="Japan">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="Mexico">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="Middle East">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="Pakistan">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="Russia">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="South Africa">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="South America_Northern">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="South America_Southern">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="South Asia">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="South Korea">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="Southeast Asia">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="Taiwan">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="Argentina">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+    <region name="Colombia">
+      <supplysector name="regional training compute">
+        <subsector name="domestic training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported training compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+      <supplysector name="regional inference compute">
+        <subsector name="domestic inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">1</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+        <subsector name="imported inference compute">
+          <interpolation-rule apply-to="share-weight" delete="1" from-year="2021" to-year="2025">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <interpolation-rule apply-to="share-weight" from-year="2025" to-year="2100">
+            <interpolation-function name="linear"/>
+          </interpolation-rule>
+          <share-weight year="2025">0</share-weight>
+          <share-weight year="2100">1</share-weight>
+        </subsector>
+      </supplysector>
+    </region>
+  </world>
+</scenario>

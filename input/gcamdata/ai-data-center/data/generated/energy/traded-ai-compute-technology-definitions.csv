@@ -1,0 +1,8 @@
+# File: A_aicomp_TradedTechnology.csv
+# Title: Service-specific traded AI-compute technologies
+# Units: unitless coefficient
+# Column types: ccccnnni
+# ----------
+supplysector,subsector,technology,minicam.energy.input,coefficient,input.cost,share.weight,traded
+traded training compute,traded training compute,traded training compute,training compute,1,0,1,1
+traded inference compute,traded inference compute,traded inference compute,inference compute,1,0,1,1

@@ -1,0 +1,21 @@
+restricted_path,upstream,stage,reason
+analysis/research/calibration/inputs/restricted-regional-soft-calibration-targets-2025.csv,BNEF regional electricity targets,local-research,restricted regional soft-calibration evidence
+analysis/research/calibration/inputs/regional-service-electricity-targets-2021-2025.csv,BNEF regional electricity targets,local-research,restricted regional service targets
+input/gcamdata/ai-data-center/generation/ai_constants.py,BNEF regional weights,compact-generation,contains restricted regional shares and normalization assumptions
+input/gcamdata/ai-data-center/generation/inputs/regional-data-center-electricity-targets-2021-2025.csv,BNEF regional electricity targets,compact-generation,direct restricted regional target input
+input/gcamdata/ai-data-center/generation/inputs/frozen-calibration-foldback-evidence.csv,BNEF regional electricity targets,compact-generation,contains regional target TWh foldback evidence
+input/gcamdata/ai-data-center/data/locked/energy/regional-demand-calibration-2025.csv,frozen foldback evidence,locked-authoring,regional 2025 calibration derived from restricted targets
+input/gcamdata/ai-data-center/data/generated/energy/data-center-electricity-by-region-2021.csv,regional data-center electricity targets,generated-authoring,direct regional electricity derivative
+input/gcamdata/ai-data-center/data/generated/energy/conventional-data-center-electricity-share-by-region.csv,regional data-center electricity targets,generated-authoring,conventional share uses restricted regional electricity
+input/gcamdata/ai-data-center/data/generated/energy/ai-share-of-data-center-electricity-by-region-and-year.csv,regional data-center electricity targets,generated-authoring,AI share path uses restricted regional electricity
+input/gcamdata/ai-data-center/data/generated/energy/ai-compute-trade-balance-by-region-2021.csv,regional data-center electricity targets,generated-authoring,trade balance reflects restricted regional allocation
+input/gcamdata/ai-data-center/data/generated/energy/power-usage-effectiveness-by-region-and-year.csv,BNEF 2021 and 2025 regional weights,generated-authoring,PUE path is normalized with restricted regional weights
+input/gcamdata/inst/extdata/energy/aeei_calib_2025_R.csv,regional demand calibration 2025,deployed-gcamdata,deployed regional calibration derivative
+input/gcamdata/inst/extdata/energy/datacenter_elec_EJ_R_Yh.csv,data-center electricity by region 2021,deployed-gcamdata,deployed regional electricity derivative
+input/gcamdata/inst/extdata/energy/datacenter_convshare_R.csv,conventional data-center electricity share by region,deployed-gcamdata,deployed conventional share derivative
+input/gcamdata/inst/extdata/energy/ai_share_fAI_R_Y.csv,AI share of data-center electricity by region and year,deployed-gcamdata,deployed AI share derivative
+input/gcamdata/inst/extdata/energy/datacenter_tradebalance_R_Y.csv,AI compute trade balance by region 2021,deployed-gcamdata,deployed regional trade derivative
+input/gcamdata/inst/extdata/energy/pue_R.csv,power usage effectiveness by region and year,deployed-gcamdata,deployed PUE derivative
+input/gcamdata/xml-ai-data-center-calibrated/**,deployed restricted gcamdata inputs,calibrated-xml,private calibrated XML snapshot
+input/policy/ai-data-center/demand-*.xml,regional calibration and autonomous demand inputs,policy,private demand policy derivative
+exe/restart/ai-data-center-warm-start/restart.*,restricted calibrated brp7d8 XML,warm-restart,private warm restart derivative

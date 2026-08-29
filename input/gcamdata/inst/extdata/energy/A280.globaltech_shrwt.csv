@@ -1,0 +1,8 @@
+# File: A280.globaltech_shrwt.csv
+# Title: AI production technology share weights
+# Units: unitless
+# Column types: cccnnnnnnn
+# ----------
+supplysector,subsector,technology,1975,1990,2005,2010,2015,2021,2100
+training compute,training compute,training compute,0,0,0,0,0,1,1
+inference compute,inference compute,inference compute,0,0,0,0,0,1,1

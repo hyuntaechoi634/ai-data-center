@@ -1,0 +1,15 @@
+# File: A280.demand.csv
+# Title: AI compute FINAL DEMAND parameters (per service)
+# Units: unitless (elasticities); tau in years
+# Source: income elasticity is set to 1 in zenergy_L2282 so world demand is GDP-proportional.
+#   The alpha0/alpha_inf/tau_alpha columns are retained as legacy metadata and are not used by
+#   the current module. price.elasticity -0.5 both (ruling 2026-08-21): precedent arXiv:2603.10498 range [-0.7,-0.2] + Labandeira 2017 + identification argument (diffusion lives in aeei/A(t)); former -0.8 demoted to sensitivity
+#   and computing-record values (~-1.1 Nordhaus-implied, -1.33 Brynjolfsson); NOT identified from AI data
+#   (see the six IV non-identification exhibits, data-raw/out/iv_*/VERDICT.md). Adoption A_g(t)
+#   The dimensionless autonomous-demand shifter is calibrated in analysis/demand-axes and supplied
+#   through aeei_chi_compute; the training/inference mix is otherwise endogenous.
+# Column types: cnnnn
+# ----------
+energy.final.demand,alpha0,alpha_inf,tau_alpha,price.elasticity
+regional training compute,1.0,0.3,25,-0.5
+regional inference compute,1.4,0.4,25,-0.5

@@ -1,0 +1,2 @@
+service,tau_years,long_run_log_rate,status,evidence_basis,note
+conv,13.0,0.0,user_ruling_2026-08-20_common_path_assumption,no_conventional_service_record_identifies_tau_13_and_zero_long_run_rate_is_a_modeling_assumption,Fixed across Low Medium High; outside the AI demand uncertainty axis; retain sensitivity requirement; author ruling recorded in MASTER_DESIGN sections 7 and 9
