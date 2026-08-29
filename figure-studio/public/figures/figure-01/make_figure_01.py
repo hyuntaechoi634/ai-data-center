@@ -204,7 +204,8 @@ def main() -> None:
                       labelspacing=0.35)
 
     # ---------------- row b: electricity ----------------
-    ymax = elec[elec.year == 2050].total_dc_TWh.max() * 1.08
+    panel_b_ymin, panel_b_ymax = 0, 30000
+    panel_b_yticks = np.arange(panel_b_ymin, panel_b_ymax + 1, 5000)
     for j, d in enumerate(DEMANDS):
         ax = fig.add_subplot(gs[1, 2 * j:2 * j + 2])
         style(ax)
@@ -225,10 +226,10 @@ def main() -> None:
             ax.plot(YEARS, tot[eff], color=C_TOT,
                     lw=1.4 if eff == "Medium" else 0.8,
                     alpha=1.0 if eff == "Medium" else 0.7, zorder=4)
-        ax.set_ylim(0, ymax)
+        ax.set_ylim(panel_b_ymin, panel_b_ymax)
         ax.set_xlim(2021, 2050)
         ax.set_xticks([2021] + XT5)
-        ax.yaxis.set_major_locator(plt.MultipleLocator(2500))
+        ax.set_yticks(panel_b_yticks)
         ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: fmt(v)))
         if j != 0:
             ax.tick_params(labelleft=False)
