@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Figure Studio</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="workspace-shell">
+    <aside id="figureSidebar" class="figure-sidebar" aria-label="Figure navigation">
+      <div class="sidebar-header">
+        <span class="sidebar-title">Figures</span>
+        <button id="sidebarToggle" class="sidebar-toggle" type="button" aria-expanded="true" aria-label="Collapse figure navigation" title="Collapse figure navigation">
+          <span aria-hidden="true">‹</span>
+        </button>
+      </div>
+
+      <nav class="figure-navigator" aria-label="Select a figure and panel">
+        <div id="figureTabs" class="figure-tabs">
+          <div class="figure-nav-group">
+            <button class="figure-tab" type="button" data-figure-id="figure-01" title="Compute-service growth and data center electricity consumption">
+              <span class="figure-tab-number">01</span>
+              <span class="figure-tab-label">Figure 01</span>
+            </button>
+          </div>
+          <div class="figure-nav-group">
+            <button class="figure-tab" type="button" data-figure-id="figure-02" title="Power-system response to data center growth">
+              <span class="figure-tab-number">02</span>
+              <span class="figure-tab-label">Figure 02</span>
+            </button>
+          </div>
+          <div class="figure-nav-group">
+            <button class="figure-tab" type="button" data-figure-id="figure-03" title="Data center carbon dioxide emissions and remaining carbon budgets">
+              <span class="figure-tab-number">03</span>
+              <span class="figure-tab-label">Figure 03</span>
+            </button>
+          </div>
+          <div class="figure-nav-group">
+            <button class="figure-tab" type="button" data-figure-id="figure-04" title="Global data center water use">
+              <span class="figure-tab-number">04</span>
+              <span class="figure-tab-label">Figure 04</span>
+            </button>
+          </div>
+          <div class="figure-nav-group">
+            <button class="figure-tab" type="button" data-figure-id="figure-05" title="Price consequences of data center growth">
+              <span class="figure-tab-number">05</span>
+              <span class="figure-tab-label">Figure 05</span>
+            </button>
+          </div>
+          <div class="figure-nav-group">
+            <button class="figure-tab" type="button" data-figure-id="figure-06" title="Regional data center shares of electricity and water">
+              <span class="figure-tab-number">06</span>
+              <span class="figure-tab-label">Figure 06</span>
+            </button>
+          </div>
+        </div>
+      </nav>
+    </aside>
+
+    <section class="main-column">
+      <div class="top-notices">
+        <div id="warningBox" class="warning-box hidden"></div>
+        <button id="tokenButton" class="token-button hidden" type="button">Access token</button>
+      </div>
+
+      <section class="figure-workspace" aria-label="Figure comparison">
+        <div id="comparisonGrid" class="comparison-grid">
+          <article class="figure-card">
+            <div class="figure-label"><span id="defaultLabel">Default</span></div>
+            <div class="image-stage" id="defaultStage">
+              <div class="empty-preview">Loading the default figure</div>
+            </div>
+            <footer class="card-download-footer" aria-label="Default downloads">
+              <span class="download-footer-label">Downloads</span>
+              <div class="download-footer-actions">
+                <button id="downloadDefaultFigure" class="footer-action primary" type="button" disabled>Figure</button>
+              </div>
+            </footer>
+          </article>
+
+          <article id="currentCard" class="figure-card current-card">
+            <div class="figure-label current-header">
+              <div class="current-heading">
+                <span id="currentLabel">Current</span>
+                <span id="updatedAt" class="quiet"></span>
+              </div>
+              <div class="version-header-controls" aria-label="Version controls">
+                <span class="version-label">Version</span>
+                <button id="undoButton" class="header-action" type="button" disabled>Undo</button>
+                <button id="redoButton" class="header-action" type="button" disabled>Redo</button>
+                <button id="resetButton" class="header-action reset-action" type="button">Return to default</button>
+              </div>
+            </div>
+            <div class="image-stage" id="currentStage">
+              <div class="empty-preview">Revised figure will appear here</div>
+            </div>
+            <footer class="card-download-footer" aria-label="Current figure actions">
+              <span class="download-footer-label">Actions</span>
+              <div class="download-footer-actions">
+                <button id="downloadCurrentFigure" class="footer-action primary" type="button" disabled>Figure</button>
+                <button id="downloadProject" class="footer-action" type="button">Data &amp; code</button>
+                <button id="pullRequestButton" class="footer-action" type="button" disabled>Pull request</button>
+              </div>
+            </footer>
+          </article>
+        </div>
+      </section>
+
+      <div class="conversation-row">
+        <section class="conversation" aria-label="Figure editing conversation">
+          <div id="chatMessages" class="chat-messages" aria-live="polite"></div>
+
+          <div id="composer" class="composer">
+            <div id="dropOverlay" class="drop-overlay hidden">Drop files to add them</div>
+            <div class="composer-agent-bar" aria-label="Figure agent settings">
+              <select id="modelSelect" aria-label="Model" disabled>
+                <option>Loading…</option>
+              </select>
+              <select id="effortSelect" aria-label="Reasoning effort" disabled>
+                <option>Effort Loading…</option>
+              </select>
+              <span id="agentBadge" class="agent-status">Checking</span>
+            </div>
+            <div id="uploadList" class="attachment-list hidden"></div>
+            <textarea id="promptInput" rows="1" aria-label="Describe a figure revision" placeholder="Describe how you want to change the figure"></textarea>
+            <div class="composer-footer">
+              <div class="composer-tools">
+                <label class="attach-button">
+                  <span aria-hidden="true">＋</span>
+                  <span>Add files</span>
+                  <input id="fileInput" type="file" multiple hidden>
+                </label>
+                <span class="drop-hint">or drop data and images here</span>
+              </div>
+              <button id="sendButton" class="send-button" type="button" aria-label="Send message" title="Send message">
+                <span aria-hidden="true">↑</span>
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <div id="busyOverlay" class="busy-overlay hidden" aria-live="polite">
+    <div class="busy-card">
+      <div class="spinner"></div>
+      <strong id="busyTitle">Working on the figure</strong>
+      <span id="busyDetail">The agent is editing and rendering the requested revision.</span>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden" role="status"></div>
+  <script src="/app.js"></script>
+</body>
+</html>

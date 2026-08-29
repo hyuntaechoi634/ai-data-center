@@ -22,3 +22,4 @@ input/gcamdata/inst/extdata/energy/pue_R.csv
 input/gcamdata/xml-ai-data-center-calibrated/**
 input/policy/ai-data-center/demand-*.xml
 exe/restart/ai-data-center-warm-start/restart.*
+analysis/manuscript-figures/**

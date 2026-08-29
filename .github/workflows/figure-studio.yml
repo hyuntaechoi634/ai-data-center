@@ -1,0 +1,28 @@
+name: Figure Studio
+
+on:
+  pull_request:
+    branches:
+      - cht/proj/figure-studio
+  push:
+    branches:
+      - cht/proj/figure-studio
+      - 'cht/figure-proposal/**'
+
+permissions:
+  contents: read
+
+jobs:
+  proposal-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test GitHub proposal boundary
+        run: >-
+          python3 -m unittest discover
+          -s tools/figure-studio/tests
+          -v
+      - name: Reject restricted publication paths
+        run: >-
+          python3
+          input/gcamdata/ai-data-center/provenance/verify_publication_boundary.py

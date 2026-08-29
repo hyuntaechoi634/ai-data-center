@@ -49,6 +49,13 @@ the 2021 and 2025 regional BNEF weights. The warm restart was generated from
 the restricted calibrated XML layer and is therefore kept private under the
 same conservative downstream boundary.
 
+The local working package under `analysis/manuscript-figures/` is also
+denylisted as a single interim unit. It contains BNEF-derived outlook tables,
+regional calibration descendants, and mixed-generation scenario results. The
+umbrella rule prevents a force-add of any one of these files while still
+allowing the complete package to be replaced by a reviewed open-data and
+final-results version later.
+
 This is a conservative publication boundary. It does not assert that every
 downstream number is independently copyrightable. It records that the
 redistribution question has not been resolved and prevents accidental public

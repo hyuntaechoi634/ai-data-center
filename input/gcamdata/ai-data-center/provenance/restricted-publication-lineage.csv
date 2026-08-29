@@ -19,3 +19,4 @@ input/gcamdata/inst/extdata/energy/pue_R.csv,power usage effectiveness by region
 input/gcamdata/xml-ai-data-center-calibrated/**,deployed restricted gcamdata inputs,calibrated-xml,private calibrated XML snapshot
 input/policy/ai-data-center/demand-*.xml,regional calibration and autonomous demand inputs,policy,private demand policy derivative
 exe/restart/ai-data-center-warm-start/restart.*,restricted calibrated brp7d8 XML,warm-restart,private warm restart derivative
+analysis/manuscript-figures/**,BNEF-derived figure sources and interim scenario outputs,interim-manuscript-figures,working figure package requires open-data replacement and final result freeze before publication

@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "repository": "hyuntaechoi634/ai-data-center",
+  "integration_branch": "cht/proj/figure-studio",
+  "proposal_branch_prefix": "cht/figure-proposal",
+  "public_export_root": "figure-studio/public",
+  "public_export_status": "awaiting-rev8",
+  "restricted_local_source": "analysis/manuscript-figures",
+  "automatic_pr_file_classes": [
+    "plotting-code",
+    "caption",
+    "configuration"
+  ],
+  "excluded_file_classes": [
+    "source-data",
+    "derived-results",
+    "uploads",
+    "rendered-outputs",
+    "session-history"
+  ]
+}
