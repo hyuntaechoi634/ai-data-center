@@ -180,6 +180,57 @@ def _legend_handles(axis: Any) -> list[tuple[Any, str]]:
     ]
 
 
+def _line_segments(artist: Any) -> list[list[list[float]]]:
+    getter = getattr(artist, "get_segments", None)
+    if getter is None:
+        return []
+    try:
+        raw_segments = getter()
+    except Exception:
+        return []
+    segments: list[list[list[float]]] = []
+    for raw_segment in raw_segments:
+        if hasattr(raw_segment, "tolist"):
+            raw_segment = raw_segment.tolist()
+        try:
+            segment = [
+                [float(point[0]), float(point[1])]
+                for point in raw_segment
+            ]
+        except (TypeError, ValueError, IndexError):
+            continue
+        if len(segment) >= 2:
+            segments.append(segment)
+    return segments
+
+
+def _is_capped_whisker_pair(vertical: Any, caps: Any) -> bool:
+    vertical_segments = _line_segments(vertical)
+    cap_segments = _line_segments(caps)
+    if len(vertical_segments) != 1 or len(cap_segments) != 2:
+        return False
+    v0, v1 = vertical_segments[0][0], vertical_segments[0][-1]
+    scale = max(abs(value) for value in (*v0, *v1, 1.0))
+    tolerance = scale * 1e-7
+    if abs(v0[0] - v1[0]) > tolerance:
+        return False
+    endpoint_y = sorted((v0[1], v1[1]))
+    cap_y: list[float] = []
+    for segment in cap_segments:
+        start, end = segment[0], segment[-1]
+        if abs(start[1] - end[1]) > tolerance:
+            return False
+        if not min(start[0], end[0]) - tolerance <= v0[0] <= max(
+            start[0], end[0]
+        ) + tolerance:
+            return False
+        cap_y.append((start[1] + end[1]) / 2)
+    return all(
+        abs(actual - expected) <= tolerance
+        for actual, expected in zip(sorted(cap_y), endpoint_y)
+    )
+
+
 def _mark_inventory(fig: Figure) -> list[MarkRecord]:
     """Collect deterministic bar, whisker, line and shape groups."""
     records: list[MarkRecord] = []
@@ -243,6 +294,21 @@ def _mark_inventory(fig: Figure) -> list[MarkRecord]:
                     "Capped whisker",
                     _public_artist_label(container),
                     _errorbar_artists(container),
+                    "stroke",
+                )
+
+        collections = list(axis.collections)
+        for collection_index in range(len(collections) - 1):
+            vertical = collections[collection_index]
+            caps = collections[collection_index + 1]
+            if id(vertical) in seen or id(caps) in seen:
+                continue
+            if _is_capped_whisker_pair(vertical, caps):
+                add(
+                    "whisker",
+                    "Capped whisker",
+                    "",
+                    (vertical, caps),
                     "stroke",
                 )
 
