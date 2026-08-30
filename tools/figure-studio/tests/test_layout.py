@@ -88,6 +88,12 @@ class LayoutContractTests(unittest.TestCase):
         self.assertEqual(catalog["elements"][0]["panel_id"], "a")
         self.assertTrue(catalog["elements"][0]["text_editable"])
         self.assertFalse(catalog["elements"][1]["text_editable"])
+        font_families = {item["id"] for item in catalog["font_families"]}
+        self.assertEqual(len(font_families), 17)
+        self.assertIn("Nimbus Sans Narrow", font_families)
+        self.assertIn("STIXGeneral", font_families)
+        self.assertIn("Source Code Pro", font_families)
+        self.assertNotIn("Liberation Sans", font_families)
         update = prepare_layout_update(
             self.workspace,
             "figure-01",

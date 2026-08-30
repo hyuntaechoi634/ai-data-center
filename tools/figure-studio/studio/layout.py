@@ -20,14 +20,23 @@ MAX_LABEL_TEXT = 240
 ELEMENT_ID = re.compile(r"^[A-Za-z0-9:_-]{1,120}$")
 HEX_COLOR = re.compile(r"^#[0-9A-Fa-f]{6}$")
 FONT_FAMILIES = (
-    ("DejaVu Sans", "DejaVu Sans"),
-    ("Liberation Sans", "Liberation Sans"),
-    ("sans-serif", "System sans serif"),
-    ("DejaVu Serif", "DejaVu Serif"),
-    ("Liberation Serif", "Liberation Serif"),
-    ("serif", "System serif"),
-    ("DejaVu Sans Mono", "DejaVu Sans Mono"),
-    ("monospace", "System monospace"),
+    ("DejaVu Sans", "Sans: DejaVu Sans"),
+    ("Nimbus Sans", "Sans: Nimbus Sans"),
+    ("Nimbus Sans Narrow", "Sans: Nimbus Sans Narrow"),
+    ("Cantarell", "Sans: Cantarell"),
+    ("Droid Sans", "Sans: Droid Sans"),
+    ("Droid Sans Fallback", "Sans: Droid Sans Fallback (CJK)"),
+    ("sans-serif", "Sans: renderer default"),
+    ("DejaVu Serif", "Serif: DejaVu Serif"),
+    ("Nimbus Roman", "Serif: Nimbus Roman"),
+    ("P052", "Serif: P052 (Palatino style)"),
+    ("URW Bookman", "Serif: URW Bookman"),
+    ("STIXGeneral", "Serif: STIX General"),
+    ("serif", "Serif: renderer default"),
+    ("DejaVu Sans Mono", "Mono: DejaVu Sans Mono"),
+    ("Nimbus Mono PS", "Mono: Nimbus Mono"),
+    ("Source Code Pro", "Mono: Source Code Pro"),
+    ("monospace", "Mono: renderer default"),
 )
 ALLOWED_FONT_FAMILIES = {value for value, _label in FONT_FAMILIES}
 FONT_WEIGHTS = {"normal", "bold"}
