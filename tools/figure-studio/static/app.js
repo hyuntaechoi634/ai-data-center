@@ -191,8 +191,11 @@ async function preview(stage, url, label, generation) {
     link.target = "_blank";
     link.rel = "noopener";
     const image = document.createElement("img");
-    image.src = objectUrl;
     image.alt = `${label} figure preview`;
+    if (stage.id === "defaultStage") {
+      image.addEventListener("load", sizeLayoutCanvas, { once: true });
+    }
+    image.src = objectUrl;
     link.appendChild(image);
     stage.classList.remove("is-empty");
     stage.replaceChildren(link);
@@ -592,9 +595,9 @@ function renderActionAvailability() {
   });
 }
 
-function renderSelectedPreviews(state = app.state) {
+function renderSelectedPreviews(state = app.state, preserveLayout = false) {
   if (!state) return;
-  if (app.layout.open) return;
+  if (app.layout.open && !preserveLayout) return;
   const panel = selectedPanelRecord(state);
   const panelId = panel?.id || "";
   const generation = ++app.previewGeneration;
@@ -605,7 +608,7 @@ function renderSelectedPreviews(state = app.state) {
   comparison.classList.toggle("panel-wide", Boolean(panelId) && isWidePanel(panel));
   $("#currentCard").classList.toggle(
     "no-revision",
-    Boolean(panelId) && !hasCurrentRevision(state),
+    !preserveLayout && Boolean(panelId) && !hasCurrentRevision(state),
   );
   defaultStage.classList.toggle("panel-focused", Boolean(panelId));
   currentStage.classList.toggle("panel-focused", Boolean(panelId));
@@ -625,6 +628,12 @@ function renderSelectedPreviews(state = app.state) {
     panelId ? `Default panel ${panelId.toUpperCase()}` : "Default",
     generation,
   );
+  if (preserveLayout) {
+    app.layout.selectedId = "";
+    renderLayoutOverlays();
+    window.requestAnimationFrame(sizeLayoutCanvas);
+    return;
+  }
   if (hasCurrentRevision(state)) {
     preview(
       currentStage,
@@ -739,7 +748,9 @@ async function refreshBillingAfter(finishedAt) {
 
 function selectPanel(panelId) {
   if (app.busy || !app.state || app.state.figure_id !== app.figureId) return;
-  if (app.layout.open) closeLayoutEditor();
+  if (app.layout.pending.size || app.layout.previewing) return;
+  const reuseLayout = Boolean(app.layout.open && app.layout.data);
+  if (app.layout.open && !reuseLayout) closeLayoutEditor();
   const normalized = String(panelId || "").toLowerCase();
   const available = new Set(
     (app.state.panels || [])
@@ -751,14 +762,20 @@ function selectPanel(panelId) {
   localStorage.setItem("figureStudioPanels", JSON.stringify(app.panelSelections));
   renderNavigator();
   renderActionAvailability();
-  renderSelectedPreviews();
+  renderSelectedPreviews(app.state, reuseLayout);
+  if (reuseLayout) return;
   window.setTimeout(() => {
     if (!app.busy && selectedPanelId() === normalized) openLayoutEditor();
   }, 0);
 }
 
 async function selectFigure(figureId) {
-  if (!FIGURE_IDS.includes(figureId) || app.busy) return;
+  if (
+    !FIGURE_IDS.includes(figureId) ||
+    app.busy ||
+    app.layout.pending.size ||
+    app.layout.previewing
+  ) return;
   if (app.layout.open) closeLayoutEditor();
   app.figureId = figureId;
   app.sessionId = app.sessionIds[figureId] || "";
@@ -1275,6 +1292,77 @@ function layoutFilteredElements() {
   return layoutElements();
 }
 
+function layoutScopeBBox() {
+  const [canvasWidth, canvasHeight] = app.layout.data?.canvas_px || [0, 0];
+  const panel = selectedPanelRecord();
+  const bbox = panel?.bbox_px;
+  if (
+    Array.isArray(bbox) &&
+    bbox.length === 4 &&
+    bbox.every((value) => Number.isFinite(Number(value)))
+  ) {
+    const [x0, y0, x1, y1] = bbox.map(Number);
+    if (x1 > x0 && y1 > y0) {
+      return [
+        Math.max(0, x0),
+        Math.max(0, y0),
+        Math.min(canvasWidth, x1),
+        Math.min(canvasHeight, y1),
+      ];
+    }
+  }
+  return [0, 0, canvasWidth, canvasHeight];
+}
+
+function sizeLayoutCanvas() {
+  if (!app.layout.open || !app.layout.data) return;
+  const stage = $("#currentStage");
+  const viewport = $("#layoutCanvasViewport");
+  const canvas = $("#layoutCanvas");
+  const [canvasWidth, canvasHeight] = app.layout.data.canvas_px;
+  const [x0, y0, x1, y1] = layoutScopeBBox();
+  const scopeWidth = x1 - x0;
+  const scopeHeight = y1 - y0;
+  const style = window.getComputedStyle(stage);
+  const availableWidth = stage.clientWidth
+    - Number.parseFloat(style.paddingLeft || "0")
+    - Number.parseFloat(style.paddingRight || "0");
+  const availableHeight = stage.clientHeight
+    - Number.parseFloat(style.paddingTop || "0")
+    - Number.parseFloat(style.paddingBottom || "0");
+  if (!(availableWidth > 0 && availableHeight > 0 && scopeWidth > 0 && scopeHeight > 0)) {
+    return;
+  }
+  let frameWidth = 0;
+  let frameHeight = 0;
+  const defaultImage = $("#defaultStage img");
+  if (defaultImage?.complete && defaultImage.naturalWidth > 0 && defaultImage.naturalHeight > 0) {
+    const imageBox = defaultImage.getBoundingClientRect();
+    const imageScale = Math.min(
+      imageBox.width / defaultImage.naturalWidth,
+      imageBox.height / defaultImage.naturalHeight,
+    );
+    frameWidth = defaultImage.naturalWidth * imageScale;
+    frameHeight = defaultImage.naturalHeight * imageScale;
+  }
+  if (!(frameWidth > 0 && frameHeight > 0)) {
+    const fallbackScale = Math.min(
+      availableWidth / scopeWidth,
+      availableHeight / scopeHeight,
+    );
+    frameWidth = scopeWidth * fallbackScale;
+    frameHeight = scopeHeight * fallbackScale;
+  }
+  const scaleX = frameWidth / scopeWidth;
+  const scaleY = frameHeight / scopeHeight;
+  viewport.style.width = `${frameWidth}px`;
+  viewport.style.height = `${frameHeight}px`;
+  canvas.style.width = `${canvasWidth * scaleX}px`;
+  canvas.style.height = `${canvasHeight * scaleY}px`;
+  canvas.style.left = `${-x0 * scaleX}px`;
+  canvas.style.top = `${-y0 * scaleY}px`;
+}
+
 function positionLayoutBox(box, element) {
   const [canvasWidth, canvasHeight] = app.layout.data.canvas_px;
   const [x0, y0, x1, y1] = element.bbox_px;
@@ -1346,7 +1434,6 @@ function renderLayoutInspector() {
   $("#layoutInspectorEmpty").classList.toggle("hidden", Boolean(element));
   $("#layoutInspectorControls").classList.toggle("hidden", !element);
   if (!element) {
-    $("#layoutSelectionHint").textContent = "";
     $("#layoutFontSize").value = "";
     $("#layoutFontFamily").value = "";
     $("#layoutColor").value = "#176b50";
@@ -1359,11 +1446,6 @@ function renderLayoutInspector() {
   const isText = element.kind === "text";
   $("#layoutTypographyControls").classList.toggle("hidden", !isText);
   $("#layoutColorField").classList.toggle("hidden", !isMark);
-  $("#layoutSelectionHint").textContent = isMark
-    ? "Change the selected mark color or visibility."
-    : isText
-      ? "Drag the selected text in Current, or adjust its typography."
-      : "Drag the selected plot in Current to reposition it.";
   $("#layoutVisibilityButton").disabled = false;
   $("#layoutResetElementButton").disabled = false;
   const pending = layoutPendingRecord(element);
@@ -1543,8 +1625,9 @@ function moveLayoutDrag(event) {
   const element = layoutElementById(drag.elementId);
   if (!element) return;
   const rect = $("#layoutCanvas").getBoundingClientRect();
-  const scale = rect.width / app.layout.data.canvas_px[0];
-  if (!(scale > 0)) return;
+  const scaleX = rect.width / app.layout.data.canvas_px[0];
+  const scaleY = rect.height / app.layout.data.canvas_px[1];
+  if (!(scaleX > 0 && scaleY > 0)) return;
   const pointerDx = event.clientX - drag.startX;
   const pointerDy = event.clientY - drag.startY;
   if (!drag.moved && Math.hypot(pointerDx, pointerDy) < 1) return;
@@ -1553,8 +1636,8 @@ function moveLayoutDrag(event) {
   pending.touched.add("offset_px");
   drag.moved = true;
   pending.offset_px = {
-    x: Math.round((drag.offsetX + pointerDx / scale) * 100) / 100,
-    y: Math.round((drag.offsetY + pointerDy / scale) * 100) / 100,
+    x: Math.round((drag.offsetX + pointerDx / scaleX) * 100) / 100,
+    y: Math.round((drag.offsetY + pointerDy / scaleY) * 100) / 100,
   };
   renderLayoutOverlays();
 }
@@ -1637,18 +1720,24 @@ async function openLayoutEditor() {
     app.layout.previewQueued = false;
     populateLayoutFonts(payload.layout.font_families);
     const canvas = $("#layoutCanvas");
+    const viewport = $("#layoutCanvasViewport");
     canvas.style.aspectRatio = `${payload.layout.canvas_px[0]} / ${payload.layout.canvas_px[1]}`;
     app.previewGeneration += 1;
     const currentStage = $("#currentStage");
     currentStage.classList.remove("is-empty");
     currentStage.classList.add("layout-editing");
-    currentStage.replaceChildren(canvas);
+    currentStage.replaceChildren(viewport);
     $("#currentCard").classList.add("layout-edit-mode");
+    $("#currentCard").classList.remove("no-revision");
     $("#layoutControlPanel").classList.add("editing");
     const image = $("#layoutImage");
-    image.onload = renderLayoutOverlays;
+    image.onload = () => {
+      sizeLayoutCanvas();
+      renderLayoutOverlays();
+    };
     image.src = app.layout.objectUrl;
     setLayoutPreviewStatus("Preview ready");
+    window.requestAnimationFrame(sizeLayoutCanvas);
     renderLayoutOverlays();
     renderActionAvailability();
   } catch (error) {
@@ -1660,7 +1749,7 @@ async function openLayoutEditor() {
 
 function closeLayoutEditor() {
   if (!app.layout.open || app.busy) return;
-  const canvas = $("#layoutCanvas");
+  const viewport = $("#layoutCanvasViewport");
   app.layout.open = false;
   window.clearTimeout(app.layout.previewTimer);
   app.layout.previewTimer = 0;
@@ -1676,7 +1765,7 @@ function closeLayoutEditor() {
   }
   $("#layoutImage").removeAttribute("src");
   $("#layoutOverlayLayer").replaceChildren();
-  $("#layoutCanvasHome").appendChild(canvas);
+  $("#layoutCanvasHome").appendChild(viewport);
   $("#currentStage").classList.remove("layout-editing");
   $("#currentCard").classList.remove("layout-edit-mode");
   $("#layoutControlPanel").classList.remove("editing");
@@ -1894,6 +1983,7 @@ window.addEventListener("beforeunload", () => {
   app.previewUrls.forEach((url) => URL.revokeObjectURL(url));
   if (app.layout.objectUrl) URL.revokeObjectURL(app.layout.objectUrl);
 });
+window.addEventListener("resize", sizeLayoutCanvas);
 
 renderNavigator();
 initialize();

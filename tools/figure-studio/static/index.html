@@ -111,22 +111,13 @@
       <div class="conversation-row">
         <section id="layoutControlPanel" class="layout-control-panel" aria-label="Direct figure element editing">
           <div id="layoutEditor" class="layout-inline-editor" aria-label="Figure element controls">
-            <div class="layout-inline-header">
-              <span>
-                <strong>Figure element controls</strong>
-                <small>Click or drag an element in Current</small>
-              </span>
-            </div>
-            <div class="layout-inline-status-row">
+            <div class="visually-hidden" aria-live="polite">
               <span id="layoutPreviewStatus" class="layout-preview-status">Loading editable elements</span>
               <span id="layoutElementCount" class="layout-element-count"></span>
             </div>
             <div class="layout-inspector" aria-label="Selected element settings">
-              <div id="layoutInspectorEmpty" class="layout-inspector-empty">
-                Select text, a plot, a bar, a line or a whisker directly in Current.
-              </div>
+              <div id="layoutInspectorEmpty" class="hidden"></div>
               <div id="layoutInspectorControls" class="layout-inspector-controls hidden">
-                <p id="layoutSelectionHint" class="layout-selection-hint"></p>
                 <div id="layoutTypographyControls" class="layout-control-group">
                   <label class="layout-field">
                     Font size
@@ -151,7 +142,6 @@
                   <button id="layoutResetElementButton" type="button" disabled>Reset element</button>
                 </div>
               </div>
-              <p class="layout-safety-note">Data values remain locked.</p>
               <div class="layout-editor-actions">
                 <button id="layoutCancelButton" type="button">Cancel changes</button>
                 <button id="layoutApplyButton" class="primary" type="button" disabled>Apply changes</button>
@@ -160,9 +150,11 @@
           </div>
 
           <div id="layoutCanvasHome" class="layout-canvas-home hidden" aria-hidden="true">
-            <div id="layoutCanvas" class="layout-canvas">
-              <img id="layoutImage" alt="Interactive figure layout preview">
-              <div id="layoutOverlayLayer" class="layout-overlay-layer"></div>
+            <div id="layoutCanvasViewport" class="layout-canvas-viewport">
+              <div id="layoutCanvas" class="layout-canvas">
+                <img id="layoutImage" alt="Interactive figure layout preview">
+                <div id="layoutOverlayLayer" class="layout-overlay-layer"></div>
+              </div>
             </div>
           </div>
         </section>
