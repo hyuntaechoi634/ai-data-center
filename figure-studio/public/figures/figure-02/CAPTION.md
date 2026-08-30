@@ -1,7 +1,7 @@
 # Figure 2 caption
 
 **Fig. 2 | Power-system response to data center growth.** **a**,**b**,
-Tracked global nameplate capacity commissioned from 2011 to 2024,
+Tracked global nameplate capacity commissioned from 2000 to 2024,
 followed by modeled annualized gross generation-equivalent capacity additions
 under the reference power system (**a**) and net-zero CO₂ by 2050 (**b**).
 Bars show High demand at Medium efficiency, whiskers span the Low and High

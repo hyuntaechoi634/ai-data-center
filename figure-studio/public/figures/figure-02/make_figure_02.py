@@ -108,7 +108,7 @@ def main() -> None:
     hp = H.assign(tech=H.tech.replace(POOL_OTHER)).pivot_table(
         index="year", columns="tech", values="gross_GWyr", aggfunc="sum")
     hp = hp.reindex(columns=[t for t in ORDER if t in hp.columns]).fillna(0.0)
-    hp = hp.loc[[y for y in hp.index if 2011 <= y <= 2024]]
+    hp = hp.loc[[y for y in hp.index if 2000 <= y <= 2024]]
 
     historical_clean_stock = clean_hist.groupby(
         "year").generation_equivalent_capacity_GW.sum()
@@ -181,7 +181,7 @@ def main() -> None:
         ax.hlines(0, 2000, 2050.5, color="0.2", lw=1.0, zorder=4)
         ax.axvline(2025, ymin=0, ymax=0.82, color="0.45", lw=1.0,
                    ls=(0, (4, 3)), zorder=4)
-        ax.set_xlim(2000, 2051.5)
+        ax.set_xlim(1999.3, 2051.5)
         ax.set_xticks([2000, 2010, 2020, 2030, 2040, 2050])
         ax.set_ylim(0, 1650)
         ax.yaxis.set_major_formatter(CM)
