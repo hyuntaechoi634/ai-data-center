@@ -1496,7 +1496,8 @@ function renderLayoutInspector() {
   const pending = layoutPendingRecord(element);
   $("#layoutResetElementButton").disabled = !(
     (pending && !pending.reset) ||
-    (hasCommittedLayoutOverride(element) && !pending?.reset)
+    (hasCommittedLayoutOverride(element) && !pending?.reset) ||
+    (isText && app.layout.fontSizeDraftDirty)
   );
   const visual = layoutVisualState(element);
   if (isMark) {
@@ -1680,6 +1681,7 @@ function handleLayoutFontSizeInput(event) {
   if (!valid) {
     invalidateLayoutPreview();
     setLayoutPreviewStatus("Enter a font size from 5 to 72", "error");
+    $("#layoutResetElementButton").disabled = false;
     renderLayoutApplyAvailability();
     return;
   }
@@ -1727,8 +1729,9 @@ function resetSelectedLayoutElement() {
   if (!element) return;
   const pending = layoutPendingRecord(element);
   const committed = hasCommittedLayoutOverride(element);
-  if (!pending && !committed) return;
+  if (!pending && !committed && !app.layout.fontSizeDraftDirty) return;
   invalidateLayoutPreview();
+  if (app.layout.fontSizeDraftDirty) $("#layoutFontSize").blur();
   app.layout.fontSizeDraftValid = true;
   app.layout.fontSizeDraftDirty = false;
   if (!committed) {
