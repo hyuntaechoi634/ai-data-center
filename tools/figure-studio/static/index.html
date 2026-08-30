@@ -113,7 +113,10 @@
           <span class="layout-launch-icon" aria-hidden="true">
             <i></i><i></i><i></i><i></i>
           </span>
-          <span>Edit layout</span>
+          <span class="layout-launch-copy">
+            <strong>Edit figure elements</strong>
+            <small>Move, resize, change fonts and colors</small>
+          </span>
         </button>
         <section class="conversation" aria-label="Figure editing conversation">
           <div id="chatMessages" class="chat-messages" aria-live="polite"></div>
@@ -165,11 +168,12 @@
       <div class="layout-editor-body">
         <section class="layout-preview-column" aria-label="Interactive figure preview">
           <div class="layout-toolbar">
+            <span class="layout-toolbar-hint">Click any element in the figure to edit it</span>
             <select id="layoutKindFilter" aria-label="Element type">
-              <option value="axis">Plots</option>
-              <option value="text">Text</option>
-              <option value="mark">Bars and lines</option>
-              <option value="all">All elements</option>
+              <option value="all">All editable elements</option>
+              <option value="text">Text and labels</option>
+              <option value="axis">Plot areas</option>
+              <option value="mark">Bars, lines and whiskers</option>
             </select>
             <input id="layoutSearch" type="search" aria-label="Find an element" placeholder="Find an element">
             <span id="layoutPreviewStatus" class="layout-preview-status">Preview ready</span>
@@ -184,7 +188,7 @@
         </section>
         <aside class="layout-inspector" aria-label="Selected element settings">
           <div id="layoutInspectorEmpty" class="layout-inspector-empty">
-            Select an element on the figure.
+            Click an element directly on the figure. Move text and plots, or change the color of bars, lines and whiskers.
           </div>
           <div id="layoutInspectorControls" class="layout-inspector-controls hidden">
             <div id="layoutPositionControls" class="layout-coordinate-grid">

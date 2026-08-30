@@ -542,7 +542,7 @@ function renderActionAvailability() {
   $("#redoButton").disabled = !state?.can_redo || app.busy;
   $("#resetButton").disabled = !showCurrent || app.busy;
   $("#layoutEditButton").disabled = !state || app.busy;
-  $("#layoutEditButton").title = "Edit figure layout";
+  $("#layoutEditButton").title = "Move, resize, and style individual figure elements";
   sendButton.disabled = revising
     ? app.cancelling
     : !state?.agent_available || app.busy;
@@ -1265,15 +1265,20 @@ function layoutFilteredElements() {
 function positionLayoutBox(box, element) {
   const [canvasWidth, canvasHeight] = app.layout.data.canvas_px;
   const [x0, y0, x1, y1] = element.bbox_px;
+  const hitPadding = element.kind === "mark" ? 10 : element.kind === "text" ? 3 : 0;
+  const hitX0 = Math.max(0, x0 - hitPadding);
+  const hitY0 = Math.max(0, y0 - hitPadding);
+  const hitX1 = Math.min(canvasWidth, x1 + hitPadding);
+  const hitY1 = Math.min(canvasHeight, y1 + hitPadding);
   const visual = layoutVisualState(element);
   const originalX = Number(element.offset_px?.x || 0);
   const originalY = Number(element.offset_px?.y || 0);
   const dx = visual.offset_px.x - originalX;
   const dy = visual.offset_px.y - originalY;
-  box.style.left = `${((x0 + dx) / canvasWidth) * 100}%`;
-  box.style.top = `${((y0 + dy) / canvasHeight) * 100}%`;
-  box.style.width = `${(Math.max(3, x1 - x0) / canvasWidth) * 100}%`;
-  box.style.height = `${(Math.max(3, y1 - y0) / canvasHeight) * 100}%`;
+  box.style.left = `${((hitX0 + dx) / canvasWidth) * 100}%`;
+  box.style.top = `${((hitY0 + dy) / canvasHeight) * 100}%`;
+  box.style.width = `${(Math.max(8, hitX1 - hitX0) / canvasWidth) * 100}%`;
+  box.style.height = `${(Math.max(8, hitY1 - hitY0) / canvasHeight) * 100}%`;
   box.classList.toggle("is-hidden", visual.hidden);
   box.classList.toggle("is-reset", Boolean(app.layout.pending.get(element.id)?.reset));
 }
@@ -1625,7 +1630,7 @@ async function openLayoutEditor() {
     image.onload = renderLayoutOverlays;
     image.src = app.layout.objectUrl;
     $("#layoutSearch").value = "";
-    $("#layoutKindFilter").value = "axis";
+    $("#layoutKindFilter").value = "all";
     setLayoutPreviewStatus("Preview ready");
     $("#layoutEditor").classList.remove("hidden");
     document.body.classList.add("layout-editor-open");
