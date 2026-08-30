@@ -55,6 +55,14 @@ const app = {
   effort: localStorage.getItem("figureStudioEffort") || "",
   panelSelections: storedPanelSelections(),
   sidebarCollapsed: localStorage.getItem("figureStudioSidebarCollapsed") === "1",
+  layout: {
+    open: false,
+    data: null,
+    objectUrl: "",
+    selectedId: "",
+    pending: new Map(),
+    drag: null,
+  },
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -529,6 +537,10 @@ function renderActionAvailability() {
   $("#undoButton").disabled = !state?.can_undo || app.busy;
   $("#redoButton").disabled = !state?.can_redo || app.busy;
   $("#resetButton").disabled = !showCurrent || app.busy;
+  $("#layoutEditButton").disabled = !state || app.busy;
+  $("#layoutEditButton").title = panel
+    ? `Edit layout elements assigned to ${panelScopeLabel(panel.id)}`
+    : "Move, hide, and format figure elements";
   sendButton.disabled = revising
     ? app.cancelling
     : !state?.agent_available || app.busy;
@@ -1181,6 +1193,443 @@ async function createPullRequest() {
   }
 }
 
+function layoutElements() {
+  const elements = app.layout.data?.elements || [];
+  const panelId = selectedPanelId();
+  return panelId
+    ? elements.filter((element) => element.panel_id === panelId)
+    : elements;
+}
+
+function layoutElementById(elementId) {
+  return (app.layout.data?.elements || []).find(
+    (element) => element.id === elementId,
+  ) || null;
+}
+
+function layoutPendingRecord(element, create = false) {
+  let record = app.layout.pending.get(element.id);
+  if (!record && create) {
+    record = {
+      id: element.id,
+      reset: false,
+      touched: new Set(),
+      offset_px: {
+        x: Number(element.offset_px?.x || 0),
+        y: Number(element.offset_px?.y || 0),
+      },
+      hidden: Boolean(element.hidden),
+      font_size: element.override?.font_size ?? null,
+      font_family: element.override?.font_family || "",
+    };
+    app.layout.pending.set(element.id, record);
+  }
+  return record || null;
+}
+
+function layoutVisualState(element) {
+  const pending = layoutPendingRecord(element);
+  if (!pending) {
+    return {
+      offset_px: {
+        x: Number(element.offset_px?.x || 0),
+        y: Number(element.offset_px?.y || 0),
+      },
+      hidden: Boolean(element.hidden),
+    };
+  }
+  if (pending.reset) {
+    return { offset_px: { x: 0, y: 0 }, hidden: false };
+  }
+  return {
+    offset_px: pending.offset_px,
+    hidden: pending.hidden,
+  };
+}
+
+function layoutFilteredElements() {
+  const kind = $("#layoutKindFilter").value;
+  const query = $("#layoutSearch").value.trim().toLowerCase();
+  return layoutElements().filter((element) => {
+    if (kind !== "all" && element.kind !== kind) return false;
+    if (!query) return true;
+    return `${element.role} ${element.label} ${element.id}`
+      .toLowerCase()
+      .includes(query);
+  });
+}
+
+function positionLayoutBox(box, element) {
+  const [canvasWidth, canvasHeight] = app.layout.data.canvas_px;
+  const [x0, y0, x1, y1] = element.bbox_px;
+  const visual = layoutVisualState(element);
+  const originalX = Number(element.offset_px?.x || 0);
+  const originalY = Number(element.offset_px?.y || 0);
+  const dx = visual.offset_px.x - originalX;
+  const dy = visual.offset_px.y - originalY;
+  box.style.left = `${((x0 + dx) / canvasWidth) * 100}%`;
+  box.style.top = `${((y0 + dy) / canvasHeight) * 100}%`;
+  box.style.width = `${(Math.max(3, x1 - x0) / canvasWidth) * 100}%`;
+  box.style.height = `${(Math.max(3, y1 - y0) / canvasHeight) * 100}%`;
+  box.classList.toggle("is-hidden", visual.hidden);
+  box.classList.toggle("is-reset", Boolean(app.layout.pending.get(element.id)?.reset));
+}
+
+function renderLayoutElementList(elements) {
+  const select = $("#layoutElementSelect");
+  const prior = app.layout.selectedId;
+  const options = [
+    (() => {
+      const option = document.createElement("option");
+      option.value = "";
+      option.textContent = "Select an element";
+      return option;
+    })(),
+    ...elements.map((element) => {
+      const option = document.createElement("option");
+      option.value = element.id;
+      option.textContent = `${element.role}: ${element.label}`;
+      return option;
+    }),
+  ];
+  select.replaceChildren(...options);
+  const selectedStillVisible = elements.some((element) => element.id === prior);
+  if (!selectedStillVisible) app.layout.selectedId = "";
+  select.value = app.layout.selectedId;
+  select.disabled = !elements.length;
+}
+
+function renderLayoutOverlays() {
+  if (!app.layout.data) return;
+  const layer = $("#layoutOverlayLayer");
+  const elements = layoutFilteredElements();
+  layer.replaceChildren();
+  elements.forEach((element) => {
+    const box = document.createElement("button");
+    box.type = "button";
+    box.className = `layout-element-box ${element.kind}`;
+    box.dataset.elementId = element.id;
+    box.title = `${element.role}: ${element.label}`;
+    box.setAttribute("aria-label", `Select ${element.role}: ${element.label}`);
+    box.classList.toggle("selected", element.id === app.layout.selectedId);
+    box.classList.toggle("pending", app.layout.pending.has(element.id));
+    positionLayoutBox(box, element);
+    box.addEventListener("pointerdown", startLayoutDrag);
+    box.addEventListener("click", () => selectLayoutElement(element.id));
+    box.addEventListener("keydown", handleLayoutElementKeydown);
+    layer.appendChild(box);
+  });
+  renderLayoutElementList(elements);
+  $("#layoutElementCount").textContent = `${elements.length} element${elements.length === 1 ? "" : "s"}`;
+  renderLayoutInspector();
+}
+
+function selectLayoutElement(elementId) {
+  if (!layoutElementById(elementId)) return;
+  app.layout.selectedId = elementId;
+  renderLayoutOverlays();
+  const selected = document.querySelector(
+    `.layout-element-box[data-element-id="${CSS.escape(elementId)}"]`,
+  );
+  selected?.focus({ preventScroll: true });
+}
+
+function renderLayoutInspector() {
+  const element = layoutElementById(app.layout.selectedId);
+  const controls = [
+    "#layoutOffsetX",
+    "#layoutOffsetY",
+    "#layoutFontSize",
+    "#layoutFontFamily",
+    "#layoutVisibilityButton",
+    "#layoutResetElementButton",
+  ];
+  controls.forEach((selector) => {
+    $(selector).disabled = !element;
+  });
+  if (!element) {
+    $("#layoutSelectedRole").textContent = "Select an element";
+    $("#layoutSelectedLabel").textContent = "Click a box on the figure";
+    $("#layoutOffsetX").value = "";
+    $("#layoutOffsetY").value = "";
+    $("#layoutFontSize").value = "";
+    $("#layoutFontFamily").value = "";
+    $("#layoutVisibilityButton").textContent = "Hide element";
+    renderLayoutApplyAvailability();
+    return;
+  }
+  const pending = layoutPendingRecord(element);
+  const visual = layoutVisualState(element);
+  $("#layoutSelectedRole").textContent = element.role;
+  $("#layoutSelectedLabel").textContent = element.label;
+  $("#layoutOffsetX").value = String(Math.round(visual.offset_px.x * 100) / 100);
+  $("#layoutOffsetY").value = String(Math.round(visual.offset_px.y * 100) / 100);
+  const size = pending && !pending.reset && pending.touched.has("font_size")
+    ? pending.font_size
+    : element.font_size;
+  $("#layoutFontSize").value = Number.isFinite(Number(size)) ? String(size) : "";
+  const family = pending && !pending.reset && pending.touched.has("font_family")
+    ? pending.font_family
+    : element.font_family;
+  const fontSelect = $("#layoutFontFamily");
+  fontSelect.value = [...fontSelect.options].some((option) => option.value === family)
+    ? family
+    : "";
+  $("#layoutVisibilityButton").textContent = visual.hidden
+    ? "Show element"
+    : "Hide element";
+  renderLayoutApplyAvailability();
+}
+
+function renderLayoutApplyAvailability() {
+  $("#layoutApplyButton").disabled = app.busy || !app.layout.pending.size;
+}
+
+function updateSelectedLayoutValue(field, value) {
+  const element = layoutElementById(app.layout.selectedId);
+  if (!element) return;
+  const pending = layoutPendingRecord(element, true);
+  pending.reset = false;
+  pending.touched.add(field);
+  pending[field] = value;
+  renderLayoutOverlays();
+}
+
+function updateSelectedLayoutOffset(axis, rawValue) {
+  const element = layoutElementById(app.layout.selectedId);
+  const parsed = Number(rawValue);
+  if (!element || !Number.isFinite(parsed)) return;
+  const pending = layoutPendingRecord(element, true);
+  pending.reset = false;
+  pending.touched.add("offset_px");
+  pending.offset_px[axis] = Math.round(parsed * 100) / 100;
+  renderLayoutOverlays();
+}
+
+function toggleSelectedLayoutVisibility() {
+  const element = layoutElementById(app.layout.selectedId);
+  if (!element) return;
+  const pending = layoutPendingRecord(element, true);
+  pending.reset = false;
+  pending.touched.add("hidden");
+  pending.hidden = !layoutVisualState(element).hidden;
+  renderLayoutOverlays();
+}
+
+function resetSelectedLayoutElement() {
+  const element = layoutElementById(app.layout.selectedId);
+  if (!element) return;
+  app.layout.pending.set(element.id, {
+    id: element.id,
+    reset: true,
+    touched: new Set(),
+    offset_px: { x: 0, y: 0 },
+    hidden: false,
+    font_size: null,
+    font_family: "",
+  });
+  renderLayoutOverlays();
+}
+
+function startLayoutDrag(event) {
+  if (event.button !== 0 || app.busy) return;
+  const elementId = event.currentTarget.dataset.elementId;
+  const element = layoutElementById(elementId);
+  if (!element) return;
+  event.preventDefault();
+  app.layout.selectedId = elementId;
+  const pending = layoutPendingRecord(element, true);
+  pending.reset = false;
+  pending.touched.add("offset_px");
+  app.layout.drag = {
+    pointerId: event.pointerId,
+    elementId,
+    startX: event.clientX,
+    startY: event.clientY,
+    offsetX: pending.offset_px.x,
+    offsetY: pending.offset_px.y,
+  };
+  event.currentTarget.setPointerCapture?.(event.pointerId);
+  renderLayoutOverlays();
+}
+
+function moveLayoutDrag(event) {
+  const drag = app.layout.drag;
+  if (!drag || drag.pointerId !== event.pointerId || !app.layout.data) return;
+  event.preventDefault();
+  const element = layoutElementById(drag.elementId);
+  if (!element) return;
+  const rect = $("#layoutCanvas").getBoundingClientRect();
+  const scale = rect.width / app.layout.data.canvas_px[0];
+  if (!(scale > 0)) return;
+  const pending = layoutPendingRecord(element, true);
+  pending.offset_px = {
+    x: Math.round((drag.offsetX + (event.clientX - drag.startX) / scale) * 100) / 100,
+    y: Math.round((drag.offsetY + (event.clientY - drag.startY) / scale) * 100) / 100,
+  };
+  renderLayoutOverlays();
+}
+
+function endLayoutDrag(event) {
+  if (!app.layout.drag || app.layout.drag.pointerId !== event.pointerId) return;
+  app.layout.drag = null;
+}
+
+function handleLayoutElementKeydown(event) {
+  const elementId = event.currentTarget.dataset.elementId;
+  if (!elementId) return;
+  if (["Delete", "Backspace"].includes(event.key)) {
+    event.preventDefault();
+    app.layout.selectedId = elementId;
+    toggleSelectedLayoutVisibility();
+    return;
+  }
+  const movement = {
+    ArrowLeft: [-1, 0],
+    ArrowRight: [1, 0],
+    ArrowUp: [0, -1],
+    ArrowDown: [0, 1],
+  }[event.key];
+  if (!movement) return;
+  event.preventDefault();
+  app.layout.selectedId = elementId;
+  const element = layoutElementById(elementId);
+  const pending = layoutPendingRecord(element, true);
+  const step = event.shiftKey ? 10 : 1;
+  pending.reset = false;
+  pending.touched.add("offset_px");
+  pending.offset_px.x += movement[0] * step;
+  pending.offset_px.y += movement[1] * step;
+  renderLayoutOverlays();
+}
+
+function populateLayoutFonts(fonts) {
+  const select = $("#layoutFontFamily");
+  const keep = document.createElement("option");
+  keep.value = "";
+  keep.textContent = "Keep current font";
+  const options = (fonts || []).map((font) => {
+    const option = document.createElement("option");
+    option.value = font.id;
+    option.textContent = font.label;
+    return option;
+  });
+  select.replaceChildren(keep, ...options);
+}
+
+async function openLayoutEditor() {
+  if (!app.state || app.busy) return;
+  setBusy(true, "Opening the layout editor", "Loading selectable figure elements.");
+  try {
+    const payload = await api(
+      `/api/sessions/${app.sessionId}/layout/current`,
+      {},
+      false,
+    );
+    const blob = await protectedBlob(
+      authenticatedUrl(payload.preview_url, { v: app.state.updated_at || Date.now() }),
+    );
+    if (app.layout.objectUrl) URL.revokeObjectURL(app.layout.objectUrl);
+    app.layout.objectUrl = URL.createObjectURL(blob);
+    app.layout.data = payload.layout;
+    app.layout.selectedId = "";
+    app.layout.pending = new Map();
+    app.layout.drag = null;
+    app.layout.open = true;
+    populateLayoutFonts(payload.layout.font_families);
+    const panelId = selectedPanelId();
+    $("#layoutEditorScope").textContent = panelId
+      ? `Editing elements assigned to panel ${panelId.toUpperCase()}. Changes outside this panel will be rejected.`
+      : "Move and format presentation elements without changing data.";
+    const canvas = $("#layoutCanvas");
+    canvas.style.aspectRatio = `${payload.layout.canvas_px[0]} / ${payload.layout.canvas_px[1]}`;
+    const image = $("#layoutImage");
+    image.onload = renderLayoutOverlays;
+    image.src = app.layout.objectUrl;
+    $("#layoutSearch").value = "";
+    $("#layoutKindFilter").value = "text";
+    $("#layoutEditor").classList.remove("hidden");
+    document.body.classList.add("layout-editor-open");
+    renderLayoutOverlays();
+  } catch (error) {
+    showToast(error.message, 9000);
+  } finally {
+    setBusy(false);
+  }
+}
+
+function closeLayoutEditor() {
+  if (!app.layout.open || app.busy) return;
+  app.layout.open = false;
+  app.layout.data = null;
+  app.layout.selectedId = "";
+  app.layout.pending = new Map();
+  app.layout.drag = null;
+  if (app.layout.objectUrl) {
+    URL.revokeObjectURL(app.layout.objectUrl);
+    app.layout.objectUrl = "";
+  }
+  $("#layoutImage").removeAttribute("src");
+  $("#layoutOverlayLayer").replaceChildren();
+  $("#layoutEditor").classList.add("hidden");
+  document.body.classList.remove("layout-editor-open");
+}
+
+function serializedLayoutChanges() {
+  return [...app.layout.pending.values()].map((pending) => {
+    if (pending.reset) return { id: pending.id, reset: true };
+    const change = { id: pending.id };
+    pending.touched.forEach((field) => {
+      if (field === "offset_px") {
+        change.offset_px = pending.offset_px;
+      } else {
+        change[field] = pending[field];
+      }
+    });
+    return change;
+  });
+}
+
+async function applyLayoutChanges() {
+  const changes = serializedLayoutChanges().filter(
+    (change) => change.reset || Object.keys(change).length > 1,
+  );
+  if (!changes.length || app.busy) return;
+  setBusy(
+    true,
+    "Applying layout changes",
+    "Rendering the figure and checking the selected panel boundary.",
+  );
+  try {
+    const payload = await api(`/api/sessions/${app.sessionId}/layout`, {
+      method: "POST",
+      body: JSON.stringify({
+        changes,
+        panel_id: selectedPanelId() || null,
+      }),
+    });
+    closeLayoutEditorAfterWork();
+    showToast(
+      payload.changed
+        ? "Layout changes applied. Undo is available in Version."
+        : "The selected layout already had those settings.",
+      7000,
+    );
+  } catch (error) {
+    showToast(error.message, 9000);
+  } finally {
+    setBusy(false);
+    renderLayoutApplyAvailability();
+  }
+}
+
+function closeLayoutEditorAfterWork() {
+  const wasBusy = app.busy;
+  app.busy = false;
+  closeLayoutEditor();
+  app.busy = wasBusy;
+}
+
 function filesFromEvent(event) {
   return [...(event.dataTransfer?.files || [])];
 }
@@ -1245,9 +1694,16 @@ $("#sendButton").addEventListener("click", () => {
   }
 });
 document.addEventListener("keydown", (event) => {
-  if (event.key !== "Escape" || !app.activeJobId || event.repeat) return;
-  event.preventDefault();
-  cancelActiveChat();
+  if (event.key !== "Escape" || event.repeat) return;
+  if (app.layout.open && !app.busy) {
+    event.preventDefault();
+    closeLayoutEditor();
+    return;
+  }
+  if (app.activeJobId) {
+    event.preventDefault();
+    cancelActiveChat();
+  }
 });
 $("#modelSelect").addEventListener("change", (event) => {
   app.model = event.target.value;
@@ -1268,6 +1724,40 @@ $("#downloadCurrentFigure").addEventListener("click", (event) =>
 );
 $("#downloadProject").addEventListener("click", downloadProject);
 $("#pullRequestButton").addEventListener("click", createPullRequest);
+$("#layoutEditButton").addEventListener("click", openLayoutEditor);
+$("#layoutCloseButton").addEventListener("click", closeLayoutEditor);
+$("#layoutCancelButton").addEventListener("click", closeLayoutEditor);
+$("#layoutApplyButton").addEventListener("click", applyLayoutChanges);
+$("#layoutKindFilter").addEventListener("change", renderLayoutOverlays);
+$("#layoutSearch").addEventListener("input", renderLayoutOverlays);
+$("#layoutElementSelect").addEventListener("change", (event) => {
+  if (event.target.value) selectLayoutElement(event.target.value);
+});
+$("#layoutOffsetX").addEventListener("change", (event) =>
+  updateSelectedLayoutOffset("x", event.target.value),
+);
+$("#layoutOffsetY").addEventListener("change", (event) =>
+  updateSelectedLayoutOffset("y", event.target.value),
+);
+$("#layoutFontSize").addEventListener("change", (event) => {
+  const value = event.target.value === "" ? null : Number(event.target.value);
+  if (value !== null && !Number.isFinite(value)) return;
+  updateSelectedLayoutValue("font_size", value);
+});
+$("#layoutFontFamily").addEventListener("change", (event) =>
+  updateSelectedLayoutValue("font_family", event.target.value),
+);
+$("#layoutVisibilityButton").addEventListener(
+  "click",
+  toggleSelectedLayoutVisibility,
+);
+$("#layoutResetElementButton").addEventListener(
+  "click",
+  resetSelectedLayoutElement,
+);
+document.addEventListener("pointermove", moveLayoutDrag);
+document.addEventListener("pointerup", endLayoutDrag);
+document.addEventListener("pointercancel", endLayoutDrag);
 $("#resetButton").addEventListener("click", resetDefault);
 $("#undoButton").addEventListener("click", () => historyAction("undo"));
 $("#redoButton").addEventListener("click", () => historyAction("redo"));
@@ -1288,6 +1778,7 @@ document.querySelectorAll(".figure-tab").forEach((button) => {
 });
 window.addEventListener("beforeunload", () => {
   app.previewUrls.forEach((url) => URL.revokeObjectURL(url));
+  if (app.layout.objectUrl) URL.revokeObjectURL(app.layout.objectUrl);
 });
 
 renderNavigator();

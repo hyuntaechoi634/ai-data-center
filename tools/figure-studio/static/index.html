@@ -87,6 +87,7 @@
                 <span id="updatedAt" class="quiet"></span>
               </div>
               <div class="version-header-controls" aria-label="Version controls">
+                <button id="layoutEditButton" class="header-action layout-action" type="button">Edit layout</button>
                 <span class="version-label">Version</span>
                 <button id="undoButton" class="header-action" type="button" disabled>Undo</button>
                 <button id="redoButton" class="header-action" type="button" disabled>Redo</button>
@@ -150,6 +151,84 @@
       <div class="spinner"></div>
       <strong id="busyTitle">Working on the figure</strong>
       <span id="busyDetail">The agent is editing and rendering the requested revision.</span>
+    </div>
+  </div>
+
+  <div id="layoutEditor" class="layout-editor hidden" role="dialog" aria-modal="true" aria-labelledby="layoutEditorTitle">
+    <div class="layout-editor-shell">
+      <header class="layout-editor-header">
+        <div>
+          <h2 id="layoutEditorTitle">Edit figure layout</h2>
+          <p id="layoutEditorScope">Move and format presentation elements without changing data.</p>
+        </div>
+        <button id="layoutCloseButton" class="layout-close-button" type="button" aria-label="Close layout editor">×</button>
+      </header>
+      <div class="layout-editor-body">
+        <section class="layout-preview-column" aria-label="Interactive figure preview">
+          <div class="layout-toolbar">
+            <label>
+              Show
+              <select id="layoutKindFilter">
+                <option value="text">Text</option>
+                <option value="axis">Plots</option>
+                <option value="all">All elements</option>
+              </select>
+            </label>
+            <label class="layout-search-label">
+              Find
+              <input id="layoutSearch" type="search" placeholder="Label or tick text">
+            </label>
+            <span id="layoutElementCount" class="layout-element-count"></span>
+          </div>
+          <div id="layoutViewport" class="layout-viewport">
+            <div id="layoutCanvas" class="layout-canvas">
+              <img id="layoutImage" alt="Interactive figure layout preview">
+              <div id="layoutOverlayLayer" class="layout-overlay-layer"></div>
+            </div>
+          </div>
+        </section>
+        <aside class="layout-inspector" aria-label="Selected element settings">
+          <div class="layout-inspector-heading">
+            <span id="layoutSelectedRole" class="layout-selected-role">Select an element</span>
+            <strong id="layoutSelectedLabel">Click a box on the figure</strong>
+          </div>
+          <label class="layout-field">
+            Component
+            <select id="layoutElementSelect" disabled>
+              <option value="">Select an element</option>
+            </select>
+          </label>
+          <div class="layout-coordinate-grid">
+            <label class="layout-field">
+              X offset
+              <input id="layoutOffsetX" type="number" step="1" disabled>
+            </label>
+            <label class="layout-field">
+              Y offset
+              <input id="layoutOffsetY" type="number" step="1" disabled>
+            </label>
+          </div>
+          <label class="layout-field">
+            Font size
+            <input id="layoutFontSize" type="number" min="5" max="72" step="0.5" disabled>
+          </label>
+          <label class="layout-field">
+            Font family
+            <select id="layoutFontFamily" disabled>
+              <option value="">Keep current font</option>
+            </select>
+          </label>
+          <div class="layout-element-actions">
+            <button id="layoutVisibilityButton" type="button" disabled>Hide element</button>
+            <button id="layoutResetElementButton" type="button" disabled>Reset element</button>
+          </div>
+          <p class="layout-safety-note">Changes affect layout and typography only. The plotted data and values remain unchanged.</p>
+          <div class="layout-editor-actions">
+            <button id="layoutCancelButton" type="button">Cancel</button>
+            <button id="layoutApplyButton" class="primary" type="button" disabled>Apply changes</button>
+          </div>
+        </aside>
+      </div>
     </div>
   </div>
 

@@ -391,6 +391,12 @@ class SessionStore:
         if not source.is_file() or source.is_symlink():
             raise SessionError(f"The default image for {figure_id} is unavailable")
         shutil.copy2(source, output / f"{manifest['output_stem']}.jpg")
+        layout_source = self.template / "defaults" / f"{figure_id}.layout.json"
+        if not layout_source.is_file() or layout_source.is_symlink():
+            raise SessionError(f"The layout catalog for {figure_id} is unavailable")
+        layout_output = root / "layout"
+        layout_output.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(layout_source, layout_output / "elements.json")
         atomic_json(root / "project.json", manifest)
 
     def create(self, owner: str = "", figure_id: str = DEFAULT_FIGURE_ID) -> dict:

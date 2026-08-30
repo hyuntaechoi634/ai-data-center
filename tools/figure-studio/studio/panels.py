@@ -206,6 +206,13 @@ def panel_catalog(figure_id: str) -> list[dict]:
     ]
 
 
+def figure_canvas_px(figure_id: str) -> tuple[int, int] | None:
+    configuration = FIGURE_PANELS.get(figure_id)
+    if configuration is None:
+        return None
+    return tuple(configuration["canvas_px"])
+
+
 def panel_data_sources(figure_id: str, panel_id: str) -> tuple[Path, ...]:
     validate_panel_id(figure_id, panel_id)
     return tuple(

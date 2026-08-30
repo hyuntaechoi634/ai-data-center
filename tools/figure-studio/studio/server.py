@@ -21,6 +21,12 @@ from .billing import BillingStatusReader
 from .catalog import DEFAULT_FIGURE_ID, figure_catalog
 from .chat_jobs import ChatJob, ChatJobError, ChatJobManager
 from .github_pr import ProposalError
+from .layout import (
+    LayoutError,
+    load_layout_catalog,
+    prepare_layout_update,
+    write_layout_update,
+)
 from .panels import (
     PanelError,
     capture_panel_snapshot,
@@ -699,6 +705,36 @@ class FigureStudioHandler(BaseHTTPRequestHandler):
                 self._json_response(200, {"ok": True, "state": self._decorate_state(state)})
                 return
             if (
+                len(parts) == 5
+                and parts[:2] == ["api", "sessions"]
+                and parts[3] == "layout"
+                and parts[4] in {"current", "default"}
+            ):
+                if not self._require_owner(parts[2]):
+                    return
+                with self.app.store.lock(parts[2]):
+                    state = self.app.store.state(parts[2])
+                    location = self.app.store.session_dir(parts[2])
+                    collection = parts[4]
+                    root = (
+                        location / "workspace"
+                        if collection == "current"
+                        else location / "baseline"
+                    )
+                    layout = load_layout_catalog(root, state["figure_id"])
+                    decorated = self._decorate_state(state)
+                    preview_url = decorated.get(f"{collection}_preview_url")
+                self._json_response(
+                    200,
+                    {
+                        "ok": True,
+                        "layout": layout,
+                        "preview_url": preview_url,
+                        "collection": collection,
+                    },
+                )
+                return
+            if (
                 len(parts) == 6
                 and parts[:2] == ["api", "sessions"]
                 and parts[3] == "artifacts"
@@ -865,6 +901,104 @@ class FigureStudioHandler(BaseHTTPRequestHandler):
                     state = self.app.store.redo(session_id)
                     self._json_response(200, {"ok": True, "state": self._decorate_state(state)})
                     return
+                if action == "layout":
+                    if not self._require_rate("layout-edit", 30, 3600):
+                        return
+                    if not self.app.jobs.acquire(blocking=False):
+                        self._json_response(
+                            429,
+                            {
+                                "ok": False,
+                                "error": "Another figure job is running. Try again shortly",
+                            },
+                        )
+                        return
+                    revision_id: str | None = None
+                    warnings: list[str] = []
+                    try:
+                        current_state = self.app.store.state(session_id)
+                        panel_id = validate_panel_id(
+                            current_state["figure_id"], payload.get("panel_id")
+                        )
+                        update = prepare_layout_update(
+                            self.app.store.workspace(session_id),
+                            current_state["figure_id"],
+                            payload.get("changes"),
+                            panel_id=panel_id,
+                        )
+                        if not update.changed:
+                            self._json_response(
+                                200,
+                                {
+                                    "ok": True,
+                                    "changed": False,
+                                    "state": self._decorate_state(current_state),
+                                },
+                            )
+                            return
+                        panel_snapshot = None
+                        if panel_id:
+                            panel_snapshot = capture_panel_snapshot(
+                                self.app.store.figure_output_path(session_id),
+                                current_state["figure_id"],
+                            )
+                        revision_id = self.app.store.snapshot(
+                            session_id, "State before interactive layout edit"
+                        )
+                        write_layout_update(update)
+                        warnings.extend(
+                            self.app.store.verify_and_restore_sources(session_id)
+                        )
+                        result = render_project(
+                            self.app.store.workspace(session_id), ["jpg"]
+                        )
+                        warnings.extend(
+                            self.app.store.verify_and_restore_sources(session_id)
+                        )
+                        if panel_id and panel_snapshot is not None:
+                            selected_changed = validate_panel_revision(
+                                panel_snapshot,
+                                self.app.store.figure_output_path(session_id),
+                                panel_id,
+                            )
+                            if not selected_changed:
+                                warnings.append(
+                                    f"Panel {panel_id.upper()} rendered without a visible pixel change."
+                                )
+                        response = (
+                            f"Applied interactive layout changes to "
+                            f"{update.changed_elements} element"
+                            f"{'s' if update.changed_elements != 1 else ''}."
+                        )
+                        self.app.store.update_result(
+                            session_id, response, result.log, warnings
+                        )
+                        revision_id = None
+                        state = self.app.store.state(session_id)
+                        self._json_response(
+                            200,
+                            {
+                                "ok": True,
+                                "changed": True,
+                                "state": self._decorate_state(state),
+                            },
+                        )
+                    except Exception:
+                        if revision_id:
+                            try:
+                                self.app.store.restore_snapshot(
+                                    session_id, revision_id, discard=True
+                                )
+                            except Exception:
+                                traceback.print_exc()
+                        raise
+                    finally:
+                        try:
+                            self.app.store.verify_and_restore_sources(session_id)
+                        except Exception:
+                            traceback.print_exc()
+                        self.app.jobs.release()
+                    return
                 if action == "pull-request":
                     if not self._require_rate("pull-request", 4, 3600):
                         return
@@ -993,7 +1127,14 @@ class FigureStudioHandler(BaseHTTPRequestHandler):
                     self._json_response(202, {"ok": True, "job": job.public()})
                     return
             self.send_error(404)
-        except (SessionError, RenderError, PanelError, ProposalError, ChatJobError) as exc:
+        except (
+            SessionError,
+            RenderError,
+            PanelError,
+            LayoutError,
+            ProposalError,
+            ChatJobError,
+        ) as exc:
             if self.app.require_cloudflare_access and isinstance(exc, RenderError):
                 traceback.print_exc()
                 error = "The generated figure did not render successfully"

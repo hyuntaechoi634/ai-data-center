@@ -6,6 +6,7 @@ from pathlib import Path
 import selectors
 import shutil
 import signal
+import stat
 import subprocess
 import time
 
@@ -36,9 +37,15 @@ def _workspace_usage(workspace: Path) -> tuple[int, int]:
         ]
         for name in names:
             path = current_path / name
-            if path.is_file() and not path.is_symlink():
+            try:
+                metadata = path.lstat()
+            except FileNotFoundError:
+                # Figure wrappers create and retire a canonical JPG while the
+                # renderer is running. A quota scan may cross that rename.
+                continue
+            if stat.S_ISREG(metadata.st_mode):
                 files += 1
-                total += path.stat().st_size
+                total += metadata.st_size
     return files, total
 
 
