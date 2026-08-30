@@ -258,9 +258,9 @@ def main() -> None:
               zorder=5)
     policy_gap = (block_centres["ref"] + block_centres["nz2050co2"]) / 2
     ax.annotate("2025 clean capacity", xy=(policy_gap, stock25),
-                xytext=(0, 5), textcoords="offset points", ha="center",
-                va="bottom", fontsize=FS["small"], color="0.30", zorder=6,
-                path_effects=[pe.withStroke(linewidth=3.2,
+                xytext=(0, 2), textcoords="offset points", ha="center",
+                va="bottom", fontsize=10.5, color="0.30", zorder=6,
+                path_effects=[pe.withStroke(linewidth=2.3,
                                             foreground="white")])
     for pol, disp in POLICIES:
         ax.text(block_centres[pol], 1.03, disp,

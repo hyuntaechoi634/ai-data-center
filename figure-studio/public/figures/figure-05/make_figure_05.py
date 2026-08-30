@@ -108,7 +108,9 @@ def main():
             vals = cd[(cd.demand == dem) & (cd.year == year)].set_index("eff").dabs
             m, lo, hi = float(vals["Medium"]), float(vals.min()), float(vals.max())
             ax.bar(x, m, width=0.6, color=NZ_RAMP[dem], zorder=3)
-            ax.plot([x, x], [lo, hi], color="0.2", lw=1.2, zorder=5)
+            ax.errorbar(x, m, yerr=[[m - lo], [hi - m]], fmt="none",
+                        ecolor="0.2", elinewidth=1.2, capsize=5.0,
+                        capthick=1.2, zorder=5)
             tops.append(hi); bots.append(min(lo, 0.0))
             xticks.append(x); xtlabs.append(dem.replace("Medium", "Med"))
             x += 0.8
@@ -140,8 +142,10 @@ def main():
                         for f in ("Low", "Medium", "High")]
                 m = vals[1]
                 ax.bar(x + off, m, width=0.32, color=col, zorder=3)
-                ax.plot([x + off] * 2, [min(vals), max(vals)], color="0.2",
-                        lw=1.2, zorder=5)
+                lo, hi = min(vals), max(vals)
+                ax.errorbar(x + off, m, yerr=[[m - lo], [hi - m]],
+                            fmt="none", ecolor="0.2", elinewidth=1.2,
+                            capsize=5.0, capthick=1.2, zorder=5)
                 tops.append(max(vals))
             xticks.append(x)
             xtlabs.append(dem.replace("Medium", "Med"))
@@ -169,7 +173,7 @@ def main():
         ax.text(0.09, yy, lab, transform=ax.transAxes, va="center",
                 fontsize=FS["ann"], color="0.15", zorder=6)
 
-    # ---------- c: regional heatmap (span bottom) ----------
+    # ---------- d: regional heatmap ----------
     ax = fig.add_subplot(gs[1, 1])
     rpn = rp[rp.policy == "nz2050co2"].copy()
     RMAP12 = {"USA": "United States", "China": "China", "Canada": "Canada",
