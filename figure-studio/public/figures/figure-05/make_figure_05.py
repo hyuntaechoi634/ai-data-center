@@ -101,7 +101,7 @@ def main():
     cd = c[c.demand.isin(DEMANDS)].copy()
     cd["dabs"] = cd.apply(lambda r: r.price_USDtCO2
                           - base_c.loc[(r.eff, r.year)], axis=1)
-    x = 0.0; xticks, xtlabs, tops, bots = [], [], [], []
+    x = 0.0; xticks, xtlabs = [], []
     for year in (2030, 2040, 2050):
         x0 = x
         for dem in DEMANDS:
@@ -111,7 +111,6 @@ def main():
             ax.errorbar(x, m, yerr=[[m - lo], [hi - m]], fmt="none",
                         ecolor="0.2", elinewidth=1.2, capsize=5.0,
                         capthick=1.2, zorder=5)
-            tops.append(hi); bots.append(min(lo, 0.0))
             xticks.append(x); xtlabs.append(dem.replace("Medium", "Med"))
             x += 0.8
         ax.text((x0 + x - 0.8) / 2, -0.082, "demand",
@@ -124,7 +123,8 @@ def main():
     ax.axhline(0, color="0.6", lw=0.8, zorder=1)
     ax.set_xticks(xticks); ax.set_xticklabels(xtlabs, fontsize=FS["tick"])
     ax.set_xlim(-0.55, x - 0.7 - 0.25)
-    ax.set_ylim(min(bots) * 1.4 if min(bots) < 0 else 0, max(tops) * 1.22)
+    ax.set_ylim(0, 18)
+    ax.set_yticks([3, 6, 9, 12, 15, 18])
     ax.set_ylabel("Additional CO$_2$ price\n(2020\\$ / tCO$_2$)", fontsize=FS["label"])
     ax.text(-0.16, 1.05, "b", transform=ax.transAxes, fontsize=FS["letter"],
             fontweight="bold")
