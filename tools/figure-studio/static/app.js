@@ -537,15 +537,16 @@ function renderActionAvailability() {
   const showCurrent = hasCurrentRevision(state);
   const panel = selectedPanelRecord(state);
   const revising = Boolean(app.activeJobId);
+  const layoutEditing = app.layout.open;
   const sendButton = $("#sendButton");
-  $("#undoButton").disabled = !state?.can_undo || app.busy;
-  $("#redoButton").disabled = !state?.can_redo || app.busy;
-  $("#resetButton").disabled = !showCurrent || app.busy;
-  $("#layoutEditButton").disabled = !state || app.busy;
+  $("#undoButton").disabled = !state?.can_undo || app.busy || layoutEditing;
+  $("#redoButton").disabled = !state?.can_redo || app.busy || layoutEditing;
+  $("#resetButton").disabled = !showCurrent || app.busy || layoutEditing;
+  $("#layoutEditButton").disabled = !state || app.busy || layoutEditing;
   $("#layoutEditButton").title = "Move, resize, and style individual figure elements";
   sendButton.disabled = revising
     ? app.cancelling
-    : !state?.agent_available || app.busy;
+    : !state?.agent_available || app.busy || layoutEditing;
   sendButton.classList.toggle("is-cancel", revising);
   sendButton.querySelector("span").textContent = revising ? "×" : "↑";
   sendButton.setAttribute(
@@ -554,7 +555,7 @@ function renderActionAvailability() {
   );
   sendButton.title = revising ? "Cancel revision (Esc)" : "Send message";
   const downloadProjectButton = $("#downloadProject");
-  downloadProjectButton.disabled = !state || app.busy;
+  downloadProjectButton.disabled = !state || app.busy || layoutEditing;
   downloadProjectButton.textContent = panel ? "Panel data & code" : "Data & code";
   downloadProjectButton.title = panel
     ? `Download the current ${panelScopeLabel(panel.id)} image, source code, and referenced inputs`
@@ -564,11 +565,12 @@ function renderActionAvailability() {
   pullRequestButton.textContent =
     pullRequest.mode === "owner-admin-immediate-merge" ? "Apply PR" : "Propose PR";
   pullRequestButton.disabled =
-    !showCurrent || !pullRequest.available || app.busy;
+    !showCurrent || !pullRequest.available || app.busy || layoutEditing;
   pullRequestButton.title =
     pullRequest.message || "Submit a private proposal for owner review";
-  $("#modelSelect").disabled = !state?.agent_available || app.busy;
-  $("#effortSelect").disabled = !state?.agent_available || app.busy;
+  $("#modelSelect").disabled = !state?.agent_available || app.busy || layoutEditing;
+  $("#effortSelect").disabled = !state?.agent_available || app.busy || layoutEditing;
+  $("#promptInput").disabled = layoutEditing;
   renderAgentStatus();
 
   const panelFigure = (collection) => {
@@ -586,7 +588,7 @@ function renderActionAvailability() {
     ["#downloadCurrentFigure", panelFigure("current")],
   ].forEach(([selector, figure]) => {
     const button = $(selector);
-    button.disabled = !figure || app.busy;
+    button.disabled = !figure || app.busy || layoutEditing;
     button.dataset.path = figure?.url || "";
     button.dataset.name = figure?.download_name || "figure.jpg";
   });
@@ -594,6 +596,7 @@ function renderActionAvailability() {
 
 function renderSelectedPreviews(state = app.state) {
   if (!state) return;
+  if (app.layout.open) return;
   const panel = selectedPanelRecord(state);
   const panelId = panel?.id || "";
   const generation = ++app.previewGeneration;
@@ -738,6 +741,7 @@ async function refreshBillingAfter(finishedAt) {
 
 function selectPanel(panelId) {
   if (app.busy || !app.state || app.state.figure_id !== app.figureId) return;
+  if (app.layout.open) closeLayoutEditor();
   const normalized = String(panelId || "").toLowerCase();
   const available = new Set(
     (app.state.panels || [])
@@ -755,6 +759,7 @@ function selectPanel(panelId) {
 
 async function selectFigure(figureId) {
   if (!FIGURE_IDS.includes(figureId) || app.busy) return;
+  if (app.layout.open) closeLayoutEditor();
   app.figureId = figureId;
   app.sessionId = app.sessionIds[figureId] || "";
   app.state = null;
@@ -1209,6 +1214,21 @@ function layoutElementById(elementId) {
   ) || null;
 }
 
+function initialLayoutElementId() {
+  const elements = layoutElements().filter((element) => !element.hidden);
+  const preferred =
+    elements.find(
+      (element) => element.kind === "text" && element.id.endsWith(":y-label"),
+    ) ||
+    elements.find(
+      (element) => element.kind === "text" && element.id.endsWith(":x-label"),
+    ) ||
+    elements.find((element) => element.kind === "text") ||
+    elements.find((element) => element.kind === "axis") ||
+    elements[0];
+  return preferred?.id || "";
+}
+
 function layoutPendingRecord(element, create = false) {
   let record = app.layout.pending.get(element.id);
   if (!record && create) {
@@ -1288,7 +1308,7 @@ function renderLayoutOverlays() {
   const layer = $("#layoutOverlayLayer");
   const elements = layoutFilteredElements();
   if (!elements.some((element) => element.id === app.layout.selectedId)) {
-    app.layout.selectedId = "";
+    app.layout.selectedId = initialLayoutElementId();
   }
   layer.replaceChildren();
   elements.forEach((element) => {
@@ -1626,15 +1646,23 @@ async function openLayoutEditor() {
     populateLayoutFonts(payload.layout.font_families);
     const canvas = $("#layoutCanvas");
     canvas.style.aspectRatio = `${payload.layout.canvas_px[0]} / ${payload.layout.canvas_px[1]}`;
+    app.previewGeneration += 1;
+    const currentStage = $("#currentStage");
+    currentStage.classList.remove("is-empty");
+    currentStage.classList.add("layout-editing");
+    currentStage.replaceChildren(canvas);
+    $("#currentCard").classList.add("layout-edit-mode");
+    $("#layoutControlPanel").classList.add("editing");
+    $("#layoutEditButton").classList.add("hidden");
+    $("#layoutEditor").classList.remove("hidden");
     const image = $("#layoutImage");
     image.onload = renderLayoutOverlays;
     image.src = app.layout.objectUrl;
     $("#layoutSearch").value = "";
     $("#layoutKindFilter").value = "all";
     setLayoutPreviewStatus("Preview ready");
-    $("#layoutEditor").classList.remove("hidden");
-    document.body.classList.add("layout-editor-open");
     renderLayoutOverlays();
+    renderActionAvailability();
   } catch (error) {
     showToast(error.message, 9000);
   } finally {
@@ -1644,6 +1672,7 @@ async function openLayoutEditor() {
 
 function closeLayoutEditor() {
   if (!app.layout.open || app.busy) return;
+  const canvas = $("#layoutCanvas");
   app.layout.open = false;
   window.clearTimeout(app.layout.previewTimer);
   app.layout.previewTimer = 0;
@@ -1659,8 +1688,14 @@ function closeLayoutEditor() {
   }
   $("#layoutImage").removeAttribute("src");
   $("#layoutOverlayLayer").replaceChildren();
+  $("#layoutCanvasHome").appendChild(canvas);
+  $("#currentStage").classList.remove("layout-editing");
+  $("#currentCard").classList.remove("layout-edit-mode");
+  $("#layoutControlPanel").classList.remove("editing");
   $("#layoutEditor").classList.add("hidden");
-  document.body.classList.remove("layout-editor-open");
+  $("#layoutEditButton").classList.remove("hidden");
+  renderSelectedPreviews();
+  renderActionAvailability();
 }
 
 function serializedLayoutChanges() {
