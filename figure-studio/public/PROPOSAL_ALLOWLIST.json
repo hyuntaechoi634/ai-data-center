@@ -2,7 +2,7 @@
   "allowed_sha256": {
     "figures/figure-01/CAPTION.md": "1b3b7e3483a9800d45be130dbb7d2c057f5cbcff592402d996082df7d0e221a5",
     "figures/figure-01/make_figure.py": "441b780d4cd573f0194e518387446914f451f148c19dc3d6185981851544fe48",
-    "figures/figure-01/make_figure_01.py": "d10b757961980fa656d14ae102f7bf7ce355e25410722377c7038f246ee01411",
+    "figures/figure-01/make_figure_01.py": "420f8995675ca17aae33188840549cb8ba0e2321a7d0fa5511be253b92a9012e",
     "figures/figure-02/CAPTION.md": "80044508f1cdd27faa8a391b3652534da7703a648063e2a1657fdb3d858d0334",
     "figures/figure-02/make_figure.py": "d67bc1e6d899493fb68d6cb14e4fe7c7643a4b954e8faeebbeaa48c9d1ff3176",
     "figures/figure-02/make_figure_02.py": "f4fce642ccb48eb7f6dd187c161c0ec6138cc5cb5c1c62c46add5f8c6ae75483",

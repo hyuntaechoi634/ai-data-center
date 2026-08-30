@@ -341,8 +341,8 @@ def main() -> None:
             ins.spines[["left", "bottom"]].set_linewidth(0.6)
         ax.set_xlim(2015, 2050)
         ax.set_xticks([2015, 2020, 2030, 2040, 2050])
-        ax.set_ylim(0, 27500)
-        ax.set_yticks([0, 5000, 10000, 15000, 20000])
+        ax.set_ylim(0, 30000)
+        ax.set_yticks(np.arange(0, 30001, 5000))
         ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: fmt(v)))
         ax.set_ylabel(ylab, fontsize=13.5)
         ax.text(-0.24 if letter == "c" else -0.20, 1.12, letter,
