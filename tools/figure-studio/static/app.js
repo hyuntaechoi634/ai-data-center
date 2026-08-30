@@ -58,6 +58,7 @@ const app = {
   layout: {
     open: false,
     data: null,
+    baseData: null,
     baseBlob: null,
     objectUrl: "",
     selectedId: "",
@@ -549,7 +550,11 @@ function renderActionAvailability() {
   const sendButton = $("#sendButton");
   $("#undoButton").disabled = !state?.can_undo || app.busy || layoutChanging;
   $("#redoButton").disabled = !state?.can_redo || app.busy || layoutChanging;
-  $("#resetButton").disabled = !showCurrent || app.busy || layoutChanging;
+  $("#resetButton").disabled = (
+    (!showCurrent && !hasUnappliedLayoutChanges()) ||
+    app.busy ||
+    app.layout.previewing
+  );
   sendButton.disabled = revising
     ? app.cancelling
     : !state?.agent_available || app.busy || layoutChanging;
@@ -1091,25 +1096,43 @@ async function removeUpload(name) {
 }
 
 async function resetDefault() {
-  if (!hasCurrentRevision() || app.busy) return;
+  const hasRevision = hasCurrentRevision();
+  const hasUnappliedChanges = hasUnappliedLayoutChanges();
   if (
-    !window.confirm(
-      "Return the figure and code to the default version? Uploaded files will be kept and this version can be restored with Undo.",
-    )
+    (!hasRevision && !hasUnappliedChanges) ||
+    app.busy ||
+    app.layout.previewing
+  ) return;
+  const confirmation = hasRevision
+    ? "Return the figure and code to the default version? Uploaded files will be kept and this version can be restored with Undo."
+    : "Discard the unapplied figure-element changes and return to the default figure?";
+  if (
+    !window.confirm(confirmation)
   ) {
     return;
   }
+  if (hasUnappliedChanges) discardLayoutChanges();
+  if (!hasRevision) {
+    showToast("Unapplied changes discarded. The default figure is restored.");
+    return;
+  }
   setBusy(true, "Returning to default", "Saving the current revision in version history.");
+  let reopenLayout = false;
   try {
     await api(`/api/sessions/${app.sessionId}/reset`, {
       method: "POST",
       body: JSON.stringify({ keep_uploads: true }),
     });
+    if (app.layout.open) {
+      closeLayoutEditorAfterWork();
+      reopenLayout = true;
+    }
     showToast("The default figure has been restored.");
   } catch (error) {
     showToast(error.message, 8000);
   } finally {
     setBusy(false);
+    if (reopenLayout) await openLayoutEditor();
   }
 }
 
@@ -1301,7 +1324,7 @@ function layoutFilteredElements() {
 }
 
 function hasCommittedLayoutOverride(element) {
-  const override = element?.override;
+  const override = baseLayoutElementById(element?.id)?.override;
   return Boolean(
     override &&
     typeof override === "object" &&
@@ -1312,6 +1335,16 @@ function hasCommittedLayoutOverride(element) {
 
 function hasIncompleteLayoutDraft() {
   return app.layout.fontSizeDraftDirty || app.layout.textDraftDirty;
+}
+
+function hasUnappliedLayoutChanges() {
+  return Boolean(app.layout.pending.size || hasIncompleteLayoutDraft());
+}
+
+function baseLayoutElementById(elementId) {
+  return (app.layout.baseData?.elements || []).find(
+    (element) => element.id === elementId,
+  ) || null;
 }
 
 function layoutScopeBBox() {
@@ -1637,6 +1670,7 @@ function installLayoutImage(blob) {
 
 function restoreCommittedLayoutImage() {
   invalidateLayoutPreview();
+  if (app.layout.baseData) app.layout.data = app.layout.baseData;
   if (app.layout.baseBlob) installLayoutImage(app.layout.baseBlob);
   setLayoutPreviewStatus("Preview ready");
   renderLayoutOverlays();
@@ -1670,6 +1704,12 @@ async function renderPendingLayoutPreview() {
       authenticatedUrl(payload.preview_url, { v: generation }),
     );
     if (!app.layout.open || generation !== app.layout.previewGeneration) return;
+    if (
+      payload.layout?.figure_id === app.state?.figure_id &&
+      Array.isArray(payload.layout?.elements)
+    ) {
+      app.layout.data = payload.layout;
+    }
     installLayoutImage(blob);
     setLayoutPreviewStatus("Preview updated");
   } catch (error) {
@@ -1956,6 +1996,7 @@ async function openLayoutEditor() {
     app.layout.baseBlob = blob;
     app.layout.objectUrl = URL.createObjectURL(blob);
     app.layout.data = payload.layout;
+    app.layout.baseData = payload.layout;
     app.layout.selectedId = "";
     app.layout.pending = new Map();
     app.layout.drag = null;
@@ -2003,6 +2044,7 @@ function closeLayoutEditor() {
   app.layout.previewQueued = false;
   app.layout.previewGeneration += 1;
   app.layout.data = null;
+  app.layout.baseData = null;
   app.layout.baseBlob = null;
   app.layout.selectedId = "";
   app.layout.pending = new Map();

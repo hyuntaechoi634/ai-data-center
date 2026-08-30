@@ -1064,6 +1064,9 @@ class FigureStudioHandler(BaseHTTPRequestHandler):
                             or source.stat().st_size > 50 * 1024 * 1024
                         ):
                             raise LayoutError("The layout preview was not generated")
+                        preview_layout = load_layout_catalog(
+                            temporary, current_state["figure_id"]
+                        )
                         token = secrets.token_hex(12)
                         preview_root = location / "layout-previews"
                         preview_root.mkdir(mode=0o700, exist_ok=True)
@@ -1083,6 +1086,7 @@ class FigureStudioHandler(BaseHTTPRequestHandler):
                                 "preview_url": (
                                     f"/api/sessions/{session_id}/layout-preview/{token}"
                                 ),
+                                "layout": preview_layout,
                             },
                         )
                     finally:

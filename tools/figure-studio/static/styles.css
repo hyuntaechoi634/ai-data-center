@@ -1237,6 +1237,10 @@ body.layout-editor-open {
   background: transparent;
 }
 
+.layout-element-box.text {
+  z-index: 4;
+}
+
 .layout-element-box.mark {
   z-index: 3;
   border-color: transparent;
@@ -1257,6 +1261,16 @@ body.layout-editor-open {
   border: 2px solid var(--accent);
   outline: 2px solid white;
   background: rgba(23, 107, 80, 0.12);
+}
+
+.layout-element-box.axis:hover,
+.layout-element-box.axis:focus-visible,
+.layout-element-box.axis.selected {
+  z-index: 1;
+}
+
+.layout-element-box.axis.selected {
+  background: transparent;
 }
 
 .layout-element-box.pending {
