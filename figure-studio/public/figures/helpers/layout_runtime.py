@@ -468,8 +468,37 @@ def _group_bbox_px(
 ) -> list[float] | None:
     boxes: list[Bbox] = []
     for artist in artists:
+        bbox: Bbox | None = None
         try:
-            bbox = artist.get_window_extent(renderer)
+            candidate = artist.get_window_extent(renderer)
+            candidate_values = (
+                candidate.x0,
+                candidate.y0,
+                candidate.x1,
+                candidate.y1,
+            )
+            if all(math.isfinite(float(value)) for value in candidate_values):
+                bbox = candidate
+        except Exception:
+            pass
+        if bbox is None:
+            segments = _line_segments(artist)
+            points = [point for segment in segments for point in segment]
+            if points:
+                try:
+                    transformed = artist.get_transform().transform(points)
+                    if hasattr(transformed, "tolist"):
+                        transformed = transformed.tolist()
+                    xs = [float(point[0]) for point in transformed]
+                    ys = [float(point[1]) for point in transformed]
+                    values = (*xs, *ys)
+                    if values and all(math.isfinite(value) for value in values):
+                        bbox = Bbox.from_extents(min(xs), min(ys), max(xs), max(ys))
+                except Exception:
+                    pass
+        if bbox is None:
+            continue
+        try:
             values = (bbox.x0, bbox.y0, bbox.x1, bbox.y1)
         except Exception:
             continue
