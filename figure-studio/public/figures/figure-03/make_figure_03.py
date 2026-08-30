@@ -13,8 +13,8 @@ annotations, mechanics in the caption.
       manufacturing sensitivity against the 1.5 C budget;
       efficiency groups ordered High -> Low; embodied drawn contiguously
       (solid lower bound + hatched upper increment).
-  c | Emission intensity of electricity; common model history and two policy
-      trajectories over individual AR6 scenario paths.
+  c | Emission intensity of electricity from the canonical BaseX query;
+      common model history and two policy means over individual AR6 paths.
 
 Data-center emissions are attributed with region-specific gross electricity
 intensities; panel c separately reports the global-average grid intensity.
@@ -53,7 +53,7 @@ C_AI = "#a04000"          # panel b: AI training
 C_INFB = "#cf7a45"        # panel b: AI inference
 C_CONV = "#e8c4a8"
 C_EMB = "#8a5a32"
-B15_50, B15_67, B2C_50 = 130.0, 80.0, 1050.0  # Forster 2025 Table 8, from start of 2025
+B15_50, B15_67, B2C_50 = 130.0, 80.0, 1050.0  # Forster 2026 Table 8, from start of 2026
 EMB_LO, EMB_HI = 0.15, 0.40
 
 FS = dict(tick=17, label=19, title=21, letter=28, ann=17, small=17)
@@ -259,10 +259,9 @@ def main() -> None:
                 continue
             ax.plot(grp6.year, grp6.ef, color=_c6, lw=0.45, alpha=0.14,
                     zorder=1)
-    # All scenarios share the same model history and 2025 anchor.  Draw that
-    # section once, then branch into the two policy trajectories to avoid one
-    # coincident coloured line obscuring the other.  The non-comparable 2021
-    # base-year point is intentionally omitted (caption and Methods).
+    # All scenarios share the same BaseX-query history and 2025 anchor. Draw
+    # that section once, then branch into the two policy means to avoid one
+    # coincident coloured line obscuring the other.
     hist = (gef[gef.year.between(2005, 2025)]
             .groupby("year")["gross_EF"].mean().sort_index())
     ax.plot(hist.index, hist, color=C_HIST, lw=2.0, zorder=4)
