@@ -47,6 +47,8 @@ class BillingStatusReader:
         return {
             "available": False,
             "spent_usd": None,
+            "estimated": False,
+            "cost_source": "unavailable",
             "limit_usd": fallback,
             "limit_verified": False,
             "currency": "USD",
@@ -83,7 +85,10 @@ class BillingStatusReader:
         updated_at = str(payload.get("updated_at", ""))
         currency = str(payload.get("currency", "")).upper()
         scope = str(payload.get("scope", ""))
+        cost_source = str(payload.get("cost_source", "organization-costs"))
         if spent is None or currency != "USD" or scope not in {"organization", "project"}:
+            return self._base("The API billing cache is invalid")
+        if cost_source not in {"organization-costs", "usage-estimate"}:
             return self._base("The API billing cache is invalid")
         try:
             updated = datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
@@ -102,11 +107,18 @@ class BillingStatusReader:
         message = "Current OpenAI API month-to-date cost"
         if stale:
             message = "OpenAI API billing cache is stale"
+        elif cost_source == "usage-estimate":
+            message = (
+                "Estimated month-to-date API cost while the OpenAI cost ledger "
+                "is pending"
+            )
         elif limit is not None and not verified:
             message = "Current API cost with an unverified local display limit"
         return {
             "available": not stale,
             "spent_usd": spent,
+            "estimated": cost_source == "usage-estimate",
+            "cost_source": cost_source,
             "limit_usd": limit,
             "limit_verified": verified,
             "currency": "USD",

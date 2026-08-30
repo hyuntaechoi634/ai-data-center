@@ -246,7 +246,7 @@ button:disabled {
 }
 
 .comparison-grid.panel-mode {
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .figure-card {
@@ -771,6 +771,14 @@ button:disabled {
   background: var(--accent-dark);
 }
 
+.send-button.is-cancel {
+  background: var(--danger);
+}
+
+.send-button.is-cancel:hover:not(:disabled) {
+  background: #772b25;
+}
+
 .top-tools {
   display: grid;
   min-width: 0;
@@ -1058,7 +1066,8 @@ button:disabled {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .comparison-grid {
+  .comparison-grid,
+  .comparison-grid.panel-mode {
     grid-template-columns: minmax(0, 1fr);
   }
 }
@@ -1068,7 +1077,8 @@ button:disabled {
     padding: 0.65rem 0.65rem 2rem;
   }
 
-  .comparison-grid {
+  .comparison-grid,
+  .comparison-grid.panel-mode {
     grid-template-columns: minmax(0, 1fr);
   }
 

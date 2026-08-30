@@ -123,8 +123,20 @@ class ProposalQueue:
             else None
         )
 
+    def _manifest_root(self, baseline: Path | None = None) -> Path:
+        if baseline is None:
+            return self.template
+        manifest_path = baseline / PUBLIC_EXPORT_MANIFEST
+        try:
+            manifest_path.lstat()
+        except FileNotFoundError:
+            return self.template
+        except OSError:
+            return baseline
+        return baseline
+
     def _manifest(self, baseline: Path | None = None) -> PublicExportManifest:
-        manifest = PublicExportManifest.load(baseline or self.template)
+        manifest = PublicExportManifest.load(self._manifest_root(baseline))
         if self.repository and manifest.repository != self.repository:
             raise ProposalError("The configured repository does not match the public export")
         if manifest.base_branch != self.base_branch:
@@ -269,7 +281,7 @@ class ProposalQueue:
                     record["content_file"] = f"files/{name}"
                 records.append(record)
 
-            manifest_path = baseline / PUBLIC_EXPORT_MANIFEST
+            manifest_path = self._manifest_root(baseline) / PUBLIC_EXPORT_MANIFEST
             payload = {
                 "schema_version": 1,
                 "proposal_id": proposal_id,

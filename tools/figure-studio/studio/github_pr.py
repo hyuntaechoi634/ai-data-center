@@ -209,19 +209,40 @@ def collect_proposal_files(
     if figure_root not in roots:
         raise ProposalError("The selected figure is not in the public export")
 
-    baseline_files: dict[str, Path] = {}
-    workspace_files: dict[str, Path] = {}
+    baseline_text_files: dict[str, Path] = {}
+    workspace_text_files: dict[str, Path] = {}
     for root in roots:
         for path in _iter_text_files(baseline / root):
             relative = path.relative_to(baseline)
-            baseline_files[relative.as_posix()] = path
+            baseline_text_files[relative.as_posix()] = path
         for path in _iter_text_files(workspace / root):
             relative = path.relative_to(workspace)
-            if relative.as_posix() not in manifest.allowed_files:
-                raise ProposalError(
-                    f"The revision contains an unreviewed public path: {relative.as_posix()}"
-                )
-            workspace_files[relative.as_posix()] = path
+            workspace_text_files[relative.as_posix()] = path
+
+    all_paths = set(baseline_text_files) | set(workspace_text_files)
+    for relative in sorted(all_paths - manifest.allowed_files):
+        before = baseline_text_files.get(relative)
+        after = workspace_text_files.get(relative)
+        if (
+            before is None
+            or after is None
+            or before.stat().st_size != after.stat().st_size
+            or _hash(before) != _hash(after)
+        ):
+            raise ProposalError(
+                f"The revision contains an unreviewed public path: {relative}"
+            )
+
+    baseline_files = {
+        relative: path
+        for relative, path in baseline_text_files.items()
+        if relative in manifest.allowed_files
+    }
+    workspace_files = {
+        relative: path
+        for relative, path in workspace_text_files.items()
+        if relative in manifest.allowed_files
+    }
 
     for relative, path in baseline_files.items():
         expected = manifest.baseline_sha256.get(relative)

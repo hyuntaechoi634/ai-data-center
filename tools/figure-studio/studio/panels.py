@@ -80,6 +80,106 @@ FIGURE_PANELS: dict[str, dict] = {
 }
 
 
+PANEL_DATA_SOURCES: dict[str, dict[str, tuple[str, ...]]] = {
+    "figure-01": {
+        "a": ("results/derived/figure-data/v7_service.csv",),
+        "b": (
+            "results/derived/figure-data/scenario_electricity_timeseries.csv",
+            "results/derived/figure-data/v7_master.csv",
+        ),
+        "c": (
+            "results/derived/figure-data/scenario_electricity_timeseries.csv",
+            "figures/figure-01/outlooks_literature.csv",
+            "figures/figure-01/outlooks_literature_2050.csv",
+        ),
+        "d": (
+            "results/derived/figure-data/scenario_electricity_timeseries.csv",
+            "figures/figure-01/outlooks_literature.csv",
+        ),
+        "e": ("results/derived/figure-data/scenario_electricity_timeseries.csv",),
+    },
+    "figure-02": {
+        "a": (
+            "results/derived/figure-data/fig_capacity_additions_historical.csv",
+            "results/derived/figure-data/fig_capacity_additions_model.csv",
+            "results/derived/figure-data/v7_capacity.csv",
+            "figures/source-data/fig_clean_capacity_history.csv",
+            "figures/source-data/fig_clean_capacity_alignment.csv",
+            "figures/source-data/fig_clean_capacity_alignment_by_technology.csv",
+        ),
+        "b": (
+            "results/derived/figure-data/fig_capacity_additions_historical.csv",
+            "results/derived/figure-data/fig_capacity_additions_model.csv",
+            "results/derived/figure-data/v7_capacity.csv",
+            "figures/source-data/fig_clean_capacity_history.csv",
+            "figures/source-data/fig_clean_capacity_alignment.csv",
+            "figures/source-data/fig_clean_capacity_alignment_by_technology.csv",
+        ),
+        "c": (
+            "results/derived/figure-data/v7_capacity.csv",
+            "figures/source-data/fig_clean_capacity_history.csv",
+            "figures/source-data/fig_clean_capacity_alignment.csv",
+            "figures/source-data/fig_clean_capacity_alignment_by_technology.csv",
+        ),
+        "d": ("results/derived/figure-data/v7_genmix.csv",),
+        "e": ("results/derived/figure-data/v7_elec_enduse.csv",),
+    },
+    "figure-03": {
+        "a": ("results/derived/figure-data/fig3_dc_co2_regional.csv",),
+        "b": ("results/derived/figure-data/fig3_dc_co2_regional.csv",),
+        "c": (
+            "results/derived/figure-data/fig3_gridEF_net.csv",
+            "figures/source-data/ar6_selected_rows.csv.gz",
+        ),
+    },
+    "figure-04": {
+        panel_id: ("results/derived/figure-data/fig_water_footprint.csv",)
+        for panel_id in ("a", "b", "c")
+    },
+    "figure-05": {
+        "a": ("results/derived/figure-data/carbon_price_v91.csv",),
+        "b": ("results/derived/figure-data/carbon_price_v91.csv",),
+        "c": ("results/derived/figure-data/solved_regional_prices_all.csv",),
+        "d": ("results/derived/figure-data/solved_regional_prices_all.csv",),
+    },
+    "figure-06": {
+        "a": (
+            "results/derived/figure-data/v7_regional.csv",
+            "results/derived/figure-data/fig_region_elec_dc_v3.csv",
+            "figures/source-data/ne_110m_admin_0_countries.zip",
+            "figures/source-data/iso_GCAM_regID.csv",
+            "figures/source-data/GCAM_region_names.csv",
+        ),
+        "b": (
+            "results/derived/figure-data/fig_water_footprint.csv",
+            "results/derived/figure-data/v7_region_total_water.csv",
+            "figures/source-data/ne_110m_admin_0_countries.zip",
+            "figures/source-data/iso_GCAM_regID.csv",
+            "figures/source-data/GCAM_region_names.csv",
+        ),
+        "c": (
+            "results/derived/figure-data/fig_water_footprint.csv",
+            "results/derived/figure-data/v7_region_total_water.csv",
+            "figures/source-data/ne_110m_admin_0_countries.zip",
+            "figures/source-data/iso_GCAM_regID.csv",
+            "figures/source-data/GCAM_region_names.csv",
+        ),
+        "d": (
+            "results/derived/figure-data/v7_regional.csv",
+            "results/derived/figure-data/fig_region_elec_dc_v3.csv",
+        ),
+        "e": (
+            "results/derived/figure-data/fig_water_footprint.csv",
+            "results/derived/figure-data/v7_region_total_water.csv",
+        ),
+        "f": (
+            "results/derived/figure-data/fig_water_footprint.csv",
+            "results/derived/figure-data/v7_region_total_water.csv",
+        ),
+    },
+}
+
+
 @dataclass(frozen=True)
 class PanelSnapshot:
     figure_id: str
@@ -104,6 +204,14 @@ def panel_catalog(figure_id: str) -> list[dict]:
         }
         for panel in configuration["panels"]
     ]
+
+
+def panel_data_sources(figure_id: str, panel_id: str) -> tuple[Path, ...]:
+    validate_panel_id(figure_id, panel_id)
+    return tuple(
+        Path(relative)
+        for relative in PANEL_DATA_SOURCES.get(figure_id, {}).get(panel_id, ())
+    )
 
 
 def validate_panel_id(figure_id: str, value: object | None) -> str | None:

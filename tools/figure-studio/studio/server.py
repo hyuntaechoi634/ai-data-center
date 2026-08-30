@@ -9,15 +9,17 @@ import mimetypes
 import os
 from pathlib import Path
 import re
+import subprocess
 import threading
 import time
 import traceback
 from urllib.parse import parse_qs, quote, unquote, urlparse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from .agent import AgentError, build_figure_agent
+from .agent import AgentCancelled, AgentError, build_figure_agent
 from .billing import BillingStatusReader
 from .catalog import DEFAULT_FIGURE_ID, figure_catalog
+from .chat_jobs import ChatJob, ChatJobError, ChatJobManager
 from .github_pr import ProposalError
 from .panels import (
     PanelError,
@@ -95,6 +97,7 @@ class FigureStudioApplication:
         )
         self.agent = build_figure_agent(external_mode=require_cloudflare_access)
         self.billing = BillingStatusReader()
+        self.chat_jobs = ChatJobManager()
         if require_cloudflare_access and not self.agent.available():
             raise AgentError(
                 "Cloudflare Access mode requires a dedicated OpenAI project key file"
@@ -134,6 +137,8 @@ class FigureStudioApplication:
         state["pull_request"] = self.proposals.configuration(identity)
         state["api_billing"] = self.billing.status()
         state["available_figures"] = figure_catalog()
+        active_job = self.chat_jobs.active(session_id)
+        state["active_chat_job"] = active_job.public() if active_job else None
         for panel in state.get("panels", []):
             panel_id = quote(str(panel.get("id", "")), safe="")
             panel["default_preview_url"] = (
@@ -146,7 +151,271 @@ class FigureStudioApplication:
                 if panel.get("current_available")
                 else None
             )
+            panel["download_url"] = (
+                f"/api/sessions/{session_id}/download/panel/{panel_id}.zip"
+                if panel.get("default_available")
+                else None
+            )
         return state
+
+    @staticmethod
+    def _cancelled(cancel_event: threading.Event) -> None:
+        if cancel_event.is_set():
+            raise AgentCancelled()
+
+    @staticmethod
+    def _trigger_billing_refresh() -> None:
+        unit = os.environ.get("FIGURE_STUDIO_BILLING_REFRESH_UNIT", "").strip()
+        if unit != "figure-studio-billing.service":
+            return
+        try:
+            subprocess.run(
+                ["systemctl", "--user", "start", "--no-block", unit],
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=5,
+                check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            traceback.print_exc()
+
+    def _run_chat_job(self, job: ChatJob, request_payload: dict) -> None:
+        warnings: list[str] = []
+        revision_id: str | None = None
+        panel_id: str | None = None
+        message_recorded = False
+        terminal_status = "failed"
+        terminal_stage = "Revision failed"
+        terminal_error = ""
+        try:
+            with self.store.lock(job.session_id):
+                try:
+                    self.chat_jobs.update(job, "in_progress", "Preparing the revision")
+                    self._cancelled(job.cancel_event)
+                    message = str(request_payload.get("message", "")).strip()
+                    formats = normalize_formats(request_payload.get("formats"))
+                    model, effort = self.agent.resolve_settings(
+                        request_payload.get("model"), request_payload.get("effort")
+                    )
+                    current_state = self.store.state(job.session_id)
+                    panel_id = validate_panel_id(
+                        current_state["figure_id"], request_payload.get("panel_id")
+                    )
+                    panel_snapshot = None
+                    if panel_id:
+                        panel_snapshot = capture_panel_snapshot(
+                            self.store.figure_output_path(job.session_id),
+                            current_state["figure_id"],
+                        )
+                    scope = f"Panel {panel_id.upper()}: " if panel_id else ""
+                    revision_id = self.store.snapshot(
+                        job.session_id,
+                        f"State before chat: {scope}{message[:80]}",
+                    )
+                    history = self.store.chat_context(job.session_id)
+                    latest = history[-1] if history else {}
+                    resumes_orphaned_request = (
+                        latest.get("role") == "user"
+                        and str(latest.get("text", "")).strip() == message
+                        and (latest.get("panel_id") or None) == panel_id
+                    )
+                    if resumes_orphaned_request:
+                        history = history[:-1]
+                        message_recorded = True
+                    else:
+                        self.store.add_message(
+                            job.session_id, "user", message, panel_id=panel_id
+                        )
+                        message_recorded = True
+                    current_state = self.store.state(job.session_id)
+                    upload_names = [item["path"] for item in current_state["uploads"]]
+                    self.chat_jobs.update(job, "in_progress", "Waiting for the figure agent")
+                    agent_result = self.agent.run(
+                        self.store.workspace(job.session_id),
+                        message,
+                        formats,
+                        upload_names,
+                        history,
+                        model=model,
+                        effort=effort,
+                        panel_id=panel_id,
+                        figure_id=current_state["figure_id"],
+                        cancel_event=job.cancel_event,
+                        on_response_id=lambda response_id: self.chat_jobs.set_response_id(
+                            job, response_id
+                        ),
+                    )
+                    self._cancelled(job.cancel_event)
+                    if not agent_result.changed:
+                        if revision_id:
+                            self.store.restore_snapshot(
+                                job.session_id, revision_id, discard=True
+                            )
+                            revision_id = None
+                        warnings.extend(
+                            self.store.verify_and_restore_sources(job.session_id)
+                        )
+                        response = str(agent_result.response).replace(chr(0xB7), ", ")
+                        self.store.add_message(
+                            job.session_id, "assistant", response, panel_id=panel_id
+                        )
+                        self.store.update_result(
+                            job.session_id,
+                            response,
+                            "No files changed because the current figure already satisfied the request.",
+                            warnings,
+                        )
+                    else:
+                        warnings.extend(
+                            self.store.verify_and_restore_sources(job.session_id)
+                        )
+                        self._cancelled(job.cancel_event)
+                        self.chat_jobs.update(job, "in_progress", "Rendering the revised figure")
+                        render_result = render_project(
+                            self.store.workspace(job.session_id), formats
+                        )
+                        self._cancelled(job.cancel_event)
+                        warnings.extend(
+                            self.store.verify_and_restore_sources(job.session_id)
+                        )
+                        if panel_id and panel_snapshot is not None:
+                            self.chat_jobs.update(
+                                job, "in_progress", "Checking the selected panel"
+                            )
+                            selected_changed = validate_panel_revision(
+                                panel_snapshot,
+                                self.store.figure_output_path(job.session_id),
+                                panel_id,
+                            )
+                            if not selected_changed:
+                                warnings.append(
+                                    f"Panel {panel_id.upper()} rendered without a visible pixel change."
+                                )
+                        self._cancelled(job.cancel_event)
+                        response = str(agent_result.response).replace(chr(0xB7), ", ")
+                        self.store.add_message(
+                            job.session_id, "assistant", response, panel_id=panel_id
+                        )
+                        self.store.update_result(
+                            job.session_id, response, render_result.log, warnings
+                        )
+                    terminal_status = "completed"
+                    terminal_stage = "Revision completed"
+                except AgentCancelled:
+                    if revision_id:
+                        self.store.restore_snapshot(
+                            job.session_id, revision_id, discard=True
+                        )
+                        revision_id = None
+                    warnings.extend(
+                        self.store.verify_and_restore_sources(job.session_id)
+                    )
+                    if not message_recorded:
+                        current_state = self.store.state(job.session_id)
+                        panel_id = validate_panel_id(
+                            current_state["figure_id"], request_payload.get("panel_id")
+                        )
+                        self.store.add_message(
+                            job.session_id,
+                            "user",
+                            str(request_payload.get("message", "")).strip(),
+                            panel_id=panel_id,
+                        )
+                        message_recorded = True
+                    response = "Revision cancelled. No figure changes were kept."
+                    self.store.add_message(
+                        job.session_id, "assistant", response, panel_id=panel_id
+                    )
+                    self.store.update_result(
+                        job.session_id, response, "Revision cancelled by the user.", warnings
+                    )
+                    terminal_status = "cancelled"
+                    terminal_stage = "Revision cancelled"
+                except (AgentError, RenderError, PanelError) as exc:
+                    if revision_id:
+                        try:
+                            self.store.restore_snapshot(
+                                job.session_id, revision_id, discard=True
+                            )
+                        except Exception:
+                            traceback.print_exc()
+                    warnings.extend(
+                        self.store.verify_and_restore_sources(job.session_id)
+                    )
+                    if self.require_cloudflare_access and not isinstance(exc, PanelError):
+                        traceback.print_exc()
+                        public_error = (
+                            "The revision could not be completed safely. "
+                            "Retry once or contact the project owner"
+                        )
+                    else:
+                        public_error = str(exc)
+                    response = f"The revision could not be completed. {public_error}"
+                    self.store.add_message(
+                        job.session_id, "assistant", response, panel_id=panel_id
+                    )
+                    self.store.update_result(
+                        job.session_id, response, public_error, warnings
+                    )
+                    terminal_error = public_error
+                except Exception:
+                    traceback.print_exc()
+                    if revision_id:
+                        try:
+                            self.store.restore_snapshot(
+                                job.session_id, revision_id, discard=True
+                            )
+                        except Exception:
+                            traceback.print_exc()
+                    warnings.extend(
+                        self.store.verify_and_restore_sources(job.session_id)
+                    )
+                    terminal_error = "The revision could not be completed safely"
+                    response = f"The revision could not be completed. {terminal_error}"
+                    self.store.add_message(
+                        job.session_id, "assistant", response, panel_id=panel_id
+                    )
+                    self.store.update_result(
+                        job.session_id, response, terminal_error, warnings
+                    )
+                finally:
+                    try:
+                        self.store.verify_and_restore_sources(job.session_id)
+                    except Exception:
+                        traceback.print_exc()
+        finally:
+            try:
+                self.chat_jobs.finish(
+                    job, terminal_status, terminal_stage, terminal_error
+                )
+            finally:
+                self.jobs.release()
+                self._trigger_billing_refresh()
+
+    def start_chat_job(self, session_id: str, request_payload: dict) -> ChatJob:
+        if not self.jobs.acquire(blocking=False):
+            raise ChatJobError("Another figure job is running. Try again shortly")
+        try:
+            job = self.chat_jobs.create(session_id)
+        except Exception:
+            self.jobs.release()
+            raise
+        thread = threading.Thread(
+            target=self._run_chat_job,
+            args=(job, dict(request_payload)),
+            name=f"figure-chat-{job.job_id[-8:]}",
+            daemon=True,
+        )
+        try:
+            thread.start()
+        except Exception:
+            self.chat_jobs.finish(
+                job, "failed", "Revision failed", "The revision job could not start"
+            )
+            self.jobs.release()
+            raise
+        return job
 
 
 class FigureStudioHandler(BaseHTTPRequestHandler):
@@ -407,6 +676,21 @@ class FigureStudioHandler(BaseHTTPRequestHandler):
                     {"ok": True, "api_billing": self.app.billing.status()},
                 )
                 return
+            if (
+                len(parts) == 5
+                and parts[:2] == ["api", "sessions"]
+                and parts[3] == "jobs"
+            ):
+                if not self._require_owner(parts[2]):
+                    return
+                job = self.app.chat_jobs.get(parts[2], parts[4])
+                payload = {"ok": True, "job": job.public()}
+                if job.terminal:
+                    with self.app.store.lock(parts[2]):
+                        state = self.app.store.state(parts[2])
+                    payload["state"] = self._decorate_state(state)
+                self._json_response(200, payload)
+                return
             if len(parts) == 3 and parts[:2] == ["api", "sessions"]:
                 if not self._require_owner(parts[2]):
                     return
@@ -461,8 +745,32 @@ class FigureStudioHandler(BaseHTTPRequestHandler):
                 finally:
                     self.app.jobs.release()
                 return
+            if (
+                len(parts) == 6
+                and parts[:2] == ["api", "sessions"]
+                and parts[3:5] == ["download", "panel"]
+                and parts[5].endswith(".zip")
+            ):
+                if not self._require_owner(parts[2]):
+                    return
+                if not self._require_rate("panel-export", 20, 3600):
+                    return
+                if not self.app.jobs.acquire(blocking=False):
+                    self._json_response(
+                        429,
+                        {"ok": False, "error": "Another figure job is running. Try again shortly"},
+                    )
+                    return
+                try:
+                    panel_id = parts[5][:-4]
+                    with self.app.store.lock(parts[2]):
+                        export = self.app.store.export_panel_zip(parts[2], panel_id)
+                        self._send_file(export, export.name)
+                finally:
+                    self.app.jobs.release()
+                return
             self.send_error(404)
-        except SessionError as exc:
+        except (SessionError, ChatJobError) as exc:
             self._json_response(404, {"ok": False, "error": str(exc)})
         except Exception as exc:
             traceback.print_exc()
@@ -503,6 +811,19 @@ class FigureStudioHandler(BaseHTTPRequestHandler):
                     return
                 state = self.app.store.create(owner=owner, figure_id=figure_id)
                 self._json_response(201, {"ok": True, "state": self._decorate_state(state)})
+                return
+            if (
+                len(parts) == 6
+                and parts[:2] == ["api", "sessions"]
+                and parts[3] == "jobs"
+                and parts[5] == "cancel"
+            ):
+                if not self._require_owner(parts[2]):
+                    return
+                if not self._require_rate("agent-cancel", 20, 3600):
+                    return
+                job = self.app.chat_jobs.cancel(parts[2], parts[4])
+                self._json_response(202, {"ok": True, "job": job.public()})
                 return
             if len(parts) != 4 or parts[:2] != ["api", "sessions"]:
                 self.send_error(404)
@@ -648,129 +969,31 @@ class FigureStudioHandler(BaseHTTPRequestHandler):
                 if action == "chat":
                     if not self._require_rate("agent", 10, 3600):
                         return
-                    if not self.app.jobs.acquire(blocking=False):
-                        self._json_response(
-                            429,
-                            {"ok": False, "error": "Another figure job is running. Try again shortly"},
-                        )
-                        return
-                    warnings: list[str] = []
-                    revision_id: str | None = None
-                    panel_id: str | None = None
+                    message = str(payload.get("message", "")).strip()
+                    if not message:
+                        raise SessionError("Please enter a figure request")
+                    if len(message) > 12000:
+                        raise SessionError("The chat request exceeds 12,000 characters")
+                    normalize_formats(payload.get("formats"))
                     try:
-                        message = str(payload.get("message", "")).strip()
-                        if not message:
-                            raise SessionError("Please enter a figure request")
-                        if len(message) > 12000:
-                            raise SessionError("The chat request exceeds 12,000 characters")
-                        formats = normalize_formats(payload.get("formats"))
-                        try:
-                            model, effort = self.app.agent.resolve_settings(
-                                payload.get("model"), payload.get("effort")
-                            )
-                        except AgentError as exc:
-                            raise SessionError(str(exc)) from exc
-                        current_state = self.app.store.state(session_id)
-                        panel_id = validate_panel_id(
-                            current_state["figure_id"], payload.get("panel_id")
+                        self.app.agent.resolve_settings(
+                            payload.get("model"), payload.get("effort")
                         )
-                        panel_snapshot = None
-                        if panel_id:
-                            panel_snapshot = capture_panel_snapshot(
-                                self.app.store.figure_output_path(session_id),
-                                current_state["figure_id"],
-                            )
-                        scope = f"Panel {panel_id.upper()}: " if panel_id else ""
-                        revision_id = self.app.store.snapshot(
-                            session_id,
-                            f"State before chat: {scope}{message[:80]}",
-                        )
-                        history = self.app.store.chat_context(session_id)
-                        self.app.store.add_message(
-                            session_id, "user", message, panel_id=panel_id
-                        )
-                        current_state = self.app.store.state(session_id)
-                        upload_names = [item["path"] for item in current_state["uploads"]]
-                        agent_result = self.app.agent.run(
-                            self.app.store.workspace(session_id),
-                            message,
-                            formats,
-                            upload_names,
-                            history,
-                            model=model,
-                            effort=effort,
-                            panel_id=panel_id,
-                            figure_id=current_state["figure_id"],
-                        )
-                        warnings.extend(self.app.store.verify_and_restore_sources(session_id))
-                        render_result = render_project(
-                            self.app.store.workspace(session_id), formats
-                        )
-                        warnings.extend(self.app.store.verify_and_restore_sources(session_id))
-                        if panel_id and panel_snapshot is not None:
-                            selected_changed = validate_panel_revision(
-                                panel_snapshot,
-                                self.app.store.figure_output_path(session_id),
-                                panel_id,
-                            )
-                            if not selected_changed:
-                                warnings.append(
-                                    f"Panel {panel_id.upper()} rendered without a visible pixel change."
-                                )
-                        response = agent_result.response
-                        self.app.store.add_message(
-                            session_id, "assistant", response, panel_id=panel_id
-                        )
-                        self.app.store.update_result(
-                            session_id, response, render_result.log, warnings
-                        )
-                        state = self.app.store.state(session_id)
-                        self._json_response(
-                            200,
-                            {"ok": True, "state": self._decorate_state(state)},
-                        )
-                    except (AgentError, RenderError, PanelError) as exc:
-                        if panel_id and revision_id:
-                            try:
-                                self.app.store.restore_snapshot(
-                                    session_id, revision_id, discard=True
-                                )
-                            except Exception:
-                                traceback.print_exc()
-                        warnings.extend(self.app.store.verify_and_restore_sources(session_id))
-                        if self.app.require_cloudflare_access and not isinstance(
-                            exc, PanelError
-                        ):
-                            traceback.print_exc()
-                            public_error = (
-                                "The revision could not be completed safely. "
-                                "Retry once or contact the project owner"
-                            )
-                        else:
-                            public_error = str(exc)
-                        response = f"The revision could not be completed. {public_error}"
-                        self.app.store.add_message(
-                            session_id, "assistant", response, panel_id=panel_id
-                        )
-                        self.app.store.update_result(session_id, response, public_error, warnings)
-                        state = self.app.store.state(session_id)
-                        self._json_response(
-                            422,
-                            {
-                                "ok": False,
-                                "error": public_error,
-                                "state": self._decorate_state(state),
-                            },
-                        )
-                    finally:
-                        try:
-                            self.app.store.verify_and_restore_sources(session_id)
-                        except Exception:
-                            traceback.print_exc()
-                        self.app.jobs.release()
+                    except AgentError as exc:
+                        raise SessionError(str(exc)) from exc
+                    current_state = self.app.store.state(session_id)
+                    validate_panel_id(
+                        current_state["figure_id"], payload.get("panel_id")
+                    )
+                    try:
+                        job = self.app.start_chat_job(session_id, payload)
+                    except ChatJobError as exc:
+                        self._json_response(429, {"ok": False, "error": str(exc)})
+                        return
+                    self._json_response(202, {"ok": True, "job": job.public()})
                     return
             self.send_error(404)
-        except (SessionError, RenderError, PanelError, ProposalError) as exc:
+        except (SessionError, RenderError, PanelError, ProposalError, ChatJobError) as exc:
             if self.app.require_cloudflare_access and isinstance(exc, RenderError):
                 traceback.print_exc()
                 error = "The generated figure did not render successfully"

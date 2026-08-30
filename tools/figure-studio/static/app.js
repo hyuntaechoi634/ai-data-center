@@ -43,6 +43,11 @@ const app = {
   token: sessionStorage.getItem("figureStudioToken") || "",
   state: null,
   busy: false,
+  activeJobId: "",
+  activeJobSessionId: "",
+  monitoringJobId: "",
+  cancelling: false,
+  jobStage: "",
   dragDepth: 0,
   previewUrls: new Map(),
   previewGeneration: 0,
@@ -107,7 +112,10 @@ async function api(path, options = {}, mayRetry = true) {
     renderState();
   }
   if (!response.ok || payload.ok === false) {
-    throw new Error(payload.error || "The request failed");
+    const error = new Error(payload.error || "The request failed");
+    error.status = response.status;
+    error.payload = payload;
+    throw error;
   }
   return payload;
 }
@@ -425,18 +433,26 @@ function renderAgentControls(state) {
 
 function renderAgentStatus() {
   const agent = $("#agentBadge");
-  if (app.busy) {
+  if (app.activeJobId) {
+    agent.textContent = app.cancelling ? "Stopping" : "Working";
+    agent.className = "agent-status working";
+    agent.title = app.jobStage || "The figure revision is running";
+  } else if (app.busy) {
     agent.textContent = "Working";
     agent.className = "agent-status working";
+    agent.title = "Figure Studio is working";
   } else if (app.state?.agent_available) {
     agent.textContent = "Ready";
     agent.className = "agent-status ready";
+    agent.title = "The figure agent is ready";
   } else if (app.state) {
     agent.textContent = "Unavailable";
     agent.className = "agent-status unavailable";
+    agent.title = "The figure agent is unavailable";
   } else {
     agent.textContent = "Checking";
     agent.className = "agent-status";
+    agent.title = "Checking the figure agent";
   }
 }
 
@@ -444,6 +460,8 @@ function renderBilling(status = app.state?.api_billing) {
   const badge = $("#billingBadge");
   const spent = Number(status?.spent_usd);
   const limit = Number(status?.limit_usd);
+  const estimated = status?.estimated === true;
+  const spendPrefix = estimated ? "~$" : "$";
   const hasSpent =
     status?.spent_usd !== null &&
     status?.spent_usd !== undefined &&
@@ -465,9 +483,9 @@ function renderBilling(status = app.state?.api_billing) {
   }
   badge.classList.remove("hidden");
   if (hasSpent && hasLimit) {
-    badge.textContent = `API $${spent.toFixed(2)} / $${limit.toFixed(2)}`;
+    badge.textContent = `API ${spendPrefix}${spent.toFixed(2)} / $${limit.toFixed(2)}`;
   } else if (hasSpent) {
-    badge.textContent = `API $${spent.toFixed(2)}`;
+    badge.textContent = `API ${spendPrefix}${spent.toFixed(2)}`;
   } else {
     badge.textContent = `API -- / $${limit.toFixed(2)}`;
   }
@@ -479,7 +497,11 @@ function renderBilling(status = app.state?.api_billing) {
   }
   if (status?.stale || !status?.available) badge.classList.add("stale");
   const details = [status?.message || "OpenAI API billing"];
-  if (hasSpent) details.push(`Exact spend $${spent.toFixed(6)}`);
+  if (hasSpent) {
+    details.push(
+      `${estimated ? "Estimated" : "Reported"} spend $${spent.toFixed(6)}`,
+    );
+  }
   if (hasLimit) {
     details.push(
       `${status?.limit_verified ? "Verified" : "Unverified"} limit $${limit.toFixed(2)}`,
@@ -501,11 +523,28 @@ function renderBilling(status = app.state?.api_billing) {
 function renderActionAvailability() {
   const state = app.state;
   const showCurrent = hasCurrentRevision(state);
+  const panel = selectedPanelRecord(state);
+  const revising = Boolean(app.activeJobId);
+  const sendButton = $("#sendButton");
   $("#undoButton").disabled = !state?.can_undo || app.busy;
   $("#redoButton").disabled = !state?.can_redo || app.busy;
   $("#resetButton").disabled = !showCurrent || app.busy;
-  $("#sendButton").disabled = !state?.agent_available || app.busy;
-  $("#downloadProject").disabled = !state || app.busy;
+  sendButton.disabled = revising
+    ? app.cancelling
+    : !state?.agent_available || app.busy;
+  sendButton.classList.toggle("is-cancel", revising);
+  sendButton.querySelector("span").textContent = revising ? "×" : "↑";
+  sendButton.setAttribute(
+    "aria-label",
+    revising ? "Cancel revision" : "Send message",
+  );
+  sendButton.title = revising ? "Cancel revision (Esc)" : "Send message";
+  const downloadProjectButton = $("#downloadProject");
+  downloadProjectButton.disabled = !state || app.busy;
+  downloadProjectButton.textContent = panel ? "Panel data & code" : "Data & code";
+  downloadProjectButton.title = panel
+    ? `Download the current ${panelScopeLabel(panel.id)} image, source code, and referenced inputs`
+    : "Download the complete figure project";
   const pullRequest = state?.pull_request || {};
   const pullRequestButton = $("#pullRequestButton");
   pullRequestButton.textContent =
@@ -518,9 +557,19 @@ function renderActionAvailability() {
   $("#effortSelect").disabled = !state?.agent_available || app.busy;
   renderAgentStatus();
 
+  const panelFigure = (collection) => {
+    if (!panel) return jpgArtifact(collection);
+    if (collection === "current" && !showCurrent) return null;
+    const url = panel[`${collection}_preview_url`];
+    if (!url) return null;
+    return {
+      url,
+      download_name: `${state.figure_id}-${panel.id}-${collection}.jpg`,
+    };
+  };
   [
-    ["#downloadDefaultFigure", jpgArtifact("default")],
-    ["#downloadCurrentFigure", jpgArtifact("current")],
+    ["#downloadDefaultFigure", panelFigure("default")],
+    ["#downloadCurrentFigure", panelFigure("current")],
   ].forEach(([selector, figure]) => {
     const button = $(selector);
     button.disabled = !figure || app.busy;
@@ -607,6 +656,35 @@ function renderState() {
   renderUploads(state.uploads || []);
   renderMessages(state.messages || []);
 
+  const activeJob = state.active_chat_job;
+  if (activeJob && !["completed", "cancelled", "failed"].includes(activeJob.status)) {
+    const latestMessage = (state.messages || []).at(-1);
+    const resumedReply = latestMessage?.role === "user"
+      ? appendChatMessage(
+          {
+            role: "assistant",
+            text: activeJob.stage || "The figure revision is still running.",
+            panel_id: latestMessage.panel_id || null,
+          },
+          true,
+        )
+      : null;
+    app.activeJobId = activeJob.id;
+    app.activeJobSessionId = state.session_id;
+    app.jobStage = activeJob.stage || "Revision in progress";
+    app.cancelling = activeJob.status === "cancelling";
+    setBusy(
+      true,
+      app.cancelling ? "Stopping the revision" : "Generating a new revision",
+      app.jobStage,
+      false,
+    );
+    window.setTimeout(
+      () => monitorChatJob(activeJob.id, state.session_id, resumedReply),
+      0,
+    );
+  }
+
   const warnings = state.warnings || [];
   const warningBox = $("#warningBox");
   warningBox.textContent = warnings.join("\n");
@@ -616,13 +694,31 @@ function renderState() {
 }
 
 async function refreshBilling() {
-  if (!app.state) return;
+  if (!app.state) return null;
   try {
     const payload = await api("/api/billing", {}, false);
     app.state.api_billing = payload.api_billing;
     renderBilling(payload.api_billing);
+    return payload.api_billing;
   } catch (_) {
-    return;
+    return null;
+  }
+}
+
+function delay(milliseconds) {
+  return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+}
+
+async function refreshBillingAfter(finishedAt) {
+  const target = Date.parse(finishedAt || "");
+  const delays = [0, 2000, 3000, 5000, 8000, 12000];
+  for (const wait of delays) {
+    if (wait) await delay(wait);
+    const status = await refreshBilling();
+    const updated = Date.parse(status?.updated_at || "");
+    if (Number.isFinite(target) && Number.isFinite(updated) && updated >= target) {
+      return;
+    }
   }
 }
 
@@ -638,6 +734,7 @@ function selectPanel(panelId) {
   app.panelSelections[app.figureId] = normalized;
   localStorage.setItem("figureStudioPanels", JSON.stringify(app.panelSelections));
   renderNavigator();
+  renderActionAvailability();
   renderSelectedPreviews();
   $("#promptInput").focus();
 }
@@ -690,7 +787,7 @@ async function selectFigure(figureId) {
   } catch (error) {
     showToast(error.message, 8000);
   } finally {
-    setBusy(false);
+    if (!app.activeJobId) setBusy(false);
     autoResizePrompt();
   }
 }
@@ -715,6 +812,7 @@ async function sendChat() {
     return;
   }
   const panelId = selectedPanelId();
+  const priorMessageCount = (app.state?.messages || []).length;
   input.value = "";
   autoResizePrompt();
   appendChatMessage({ role: "user", text: message, panel_id: panelId || null });
@@ -739,7 +837,8 @@ async function sendChat() {
     false,
   );
   try {
-    await api(`/api/sessions/${app.sessionId}/chat`, {
+    const sessionId = app.sessionId;
+    const payload = await api(`/api/sessions/${sessionId}/chat`, {
       method: "POST",
       body: JSON.stringify({
         message,
@@ -749,16 +848,146 @@ async function sendChat() {
         panel_id: panelId || null,
       }),
     });
+    app.activeJobId = payload.job.id;
+    app.activeJobSessionId = sessionId;
+    app.jobStage = payload.job.stage || "Revision queued";
+    renderActionAvailability();
+    await monitorChatJob(payload.job.id, sessionId, pendingReply);
   } catch (error) {
+    let recovered = false;
+    try {
+      const session = await api(`/api/sessions/${app.sessionId}`, {}, false);
+      const serverMessages = session.state.messages || [];
+      const requestReachedServer = serverMessages
+        .slice(priorMessageCount)
+        .some((item) => item.role === "user" && item.text === message);
+      recovered = Boolean(session.state.active_chat_job) || requestReachedServer;
+      if (recovered && !session.state.active_chat_job) setBusy(false);
+    } catch (_) {
+      recovered = false;
+    }
+    if (recovered) return;
     if (pendingReply.isConnected) {
       pendingReply.classList.remove("pending");
       pendingReply.querySelector(".typing-dots")?.remove();
       const text = pendingReply.querySelector(".message-text");
       if (text) text.textContent = `I couldn’t complete that revision. ${error.message}`;
+    } else {
+      appendChatMessage({
+        role: "assistant",
+        text: `I couldn’t complete that revision. ${error.message}`,
+        panel_id: panelId || null,
+      });
     }
-  } finally {
+    showToast(error.message, 8000);
     setBusy(false);
     input.focus();
+  }
+}
+
+function updatePendingReply(pendingReply, job) {
+  if (!pendingReply?.isConnected) return;
+  const text = pendingReply.querySelector(".message-text");
+  if (!text) return;
+  text.textContent = job.status === "cancelling"
+    ? "Stopping the revision and restoring the previous figure."
+    : job.stage || "The figure revision is still running.";
+}
+
+async function monitorChatJob(jobId, sessionId = app.sessionId, pendingReply = null) {
+  if (!jobId || app.monitoringJobId === jobId) return;
+  app.monitoringJobId = jobId;
+  app.activeJobId = jobId;
+  app.activeJobSessionId = sessionId;
+  let terminalJob = null;
+  let warnedAboutConnection = false;
+  try {
+    while (
+      app.activeJobId === jobId &&
+      app.activeJobSessionId === sessionId
+    ) {
+      let payload;
+      try {
+        payload = await api(
+          `/api/sessions/${sessionId}/jobs/${jobId}`,
+          {},
+          false,
+        );
+        warnedAboutConnection = false;
+      } catch (error) {
+        if (error.status === 404) {
+          try {
+            await api(`/api/sessions/${sessionId}`, {}, false);
+          } catch (_) {
+            // The session error is reported below using the original job error.
+          }
+          showToast("The revision status is no longer available. The figure was reloaded.", 8000);
+          break;
+        }
+        if (!warnedAboutConnection) {
+          showToast("Connection interrupted. Figure Studio will keep checking the revision.", 8000);
+          warnedAboutConnection = true;
+        }
+        await delay(2000);
+        continue;
+      }
+
+      const job = payload.job;
+      app.jobStage = job.stage || "Revision in progress";
+      app.cancelling = job.status === "cancelling";
+      updatePendingReply(pendingReply, job);
+      setBusy(
+        true,
+        app.cancelling ? "Stopping the revision" : "Generating a new revision",
+        app.jobStage,
+        false,
+      );
+      if (["completed", "cancelled", "failed"].includes(job.status)) {
+        terminalJob = job;
+        if (job.status === "cancelled") {
+          showToast("Revision cancelled. No figure changes were kept.");
+        } else if (job.status === "failed") {
+          showToast(job.error || "The revision could not be completed.", 9000);
+        }
+        break;
+      }
+      await delay(1500);
+    }
+  } finally {
+    if (app.monitoringJobId === jobId) app.monitoringJobId = "";
+    if (app.activeJobId === jobId) {
+      app.activeJobId = "";
+      app.activeJobSessionId = "";
+      app.jobStage = "";
+      app.cancelling = false;
+    }
+    setBusy(false);
+    $("#promptInput").focus();
+    if (terminalJob) {
+      void refreshBillingAfter(terminalJob.finished_at);
+    }
+  }
+}
+
+async function cancelActiveChat() {
+  if (!app.activeJobId || app.cancelling) return;
+  const jobId = app.activeJobId;
+  const sessionId = app.activeJobSessionId || app.sessionId;
+  app.cancelling = true;
+  app.jobStage = "Stopping the revision";
+  setBusy(true, "Stopping the revision", app.jobStage, false);
+  try {
+    const payload = await api(
+      `/api/sessions/${sessionId}/jobs/${jobId}/cancel`,
+      { method: "POST", body: "{}" },
+      false,
+    );
+    app.jobStage = payload.job.stage || app.jobStage;
+    showToast("Stopping the revision and restoring the previous figure.");
+  } catch (error) {
+    app.cancelling = false;
+    showToast(error.message, 8000);
+    renderActionAvailability();
   }
 }
 
@@ -864,19 +1093,26 @@ async function historyAction(action) {
 
 async function downloadProject() {
   if (!app.state || app.busy) return;
+  const panel = selectedPanelRecord();
   setBusy(
     true,
-    "Packaging data and code",
-    "Collecting source data, uploads, derived data, code, the JPG, chat history, and checksums.",
+    panel ? `Packaging ${panelScopeLabel(panel.id)}` : "Packaging data and code",
+    panel
+      ? "Collecting the selected panel image, active figure code, referenced inputs, panel conversation, and checksums."
+      : "Collecting source data, uploads, derived data, code, the JPG, chat history, and checksums.",
   );
   try {
-    const response = await fetch(app.state.download_url, { headers: authHeaders() });
+    const path = panel?.download_url || app.state.download_url;
+    if (!path) throw new Error("The selected panel package is unavailable");
+    const response = await fetch(path, { headers: authHeaders() });
     if (!response.ok) throw new Error("The data and code package could not be created");
     const blob = await response.blob();
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `figure-studio-${app.figureId}-${app.sessionId}.zip`;
+    link.download = panel
+      ? `${app.figureId}-panel-${panel.id}.zip`
+      : `figure-studio-${app.figureId}-${app.sessionId}.zip`;
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -1001,7 +1237,18 @@ $("#promptInput").addEventListener("keydown", (event) => {
   }
 });
 
-$("#sendButton").addEventListener("click", sendChat);
+$("#sendButton").addEventListener("click", () => {
+  if (app.activeJobId) {
+    cancelActiveChat();
+  } else {
+    sendChat();
+  }
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape" || !app.activeJobId || event.repeat) return;
+  event.preventDefault();
+  cancelActiveChat();
+});
 $("#modelSelect").addEventListener("change", (event) => {
   app.model = event.target.value;
   localStorage.setItem("figureStudioModel", app.model);

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import difflib
 import hashlib
 import json
 import mimetypes
@@ -19,6 +20,7 @@ from .panels import (
     PanelError,
     ensure_panel_previews,
     panel_catalog,
+    panel_data_sources,
     validate_panel_id,
 )
 
@@ -42,6 +44,31 @@ MAX_WORKSPACE_BYTES = 300 * 1024 * 1024
 MAX_WORKSPACE_FILES = 2000
 MAX_PROJECT_JSON = 1024 * 1024
 RASTER_PREVIEWS = {"png", "jpg", "jpeg", "webp", "gif"}
+REFERENCE_TEXT_SUFFIXES = {
+    ".py",
+    ".json",
+    ".md",
+    ".txt",
+    ".toml",
+    ".yaml",
+    ".yml",
+}
+TEMPLATE_REVISION_PATHS = (
+    Path("defaults"),
+    Path("results/derived/figure-data"),
+    Path("figures/source-data"),
+    Path("figures/figure-01"),
+    Path("figures/figure-02"),
+    Path("figures/figure-03"),
+    Path("figures/figure-04"),
+    Path("figures/figure-05"),
+    Path("figures/figure-06"),
+    Path("figures/helpers"),
+    Path("AGENTS.md"),
+    Path("README.md"),
+    Path("render.py"),
+    Path("requirements.txt"),
+)
 
 
 class SessionError(RuntimeError):
@@ -231,10 +258,10 @@ def remove_local_path(path: Path) -> None:
 
 def replace_project(source: Path, destination: Path) -> None:
     parent = destination.parent.resolve()
-    if parent == Path("/") or destination.name != "workspace":
+    if parent == Path("/") or destination.name not in {"baseline", "workspace"}:
         raise SessionError("Refusing to replace an unexpected workspace path")
-    replacement = parent / f".workspace-replacement-{secrets.token_hex(5)}"
-    retired = parent / f".workspace-retired-{secrets.token_hex(5)}"
+    replacement = parent / f".{destination.name}-replacement-{secrets.token_hex(5)}"
+    retired = parent / f".{destination.name}-retired-{secrets.token_hex(5)}"
     copy_project(source, replacement)
     if destination.exists():
         destination.rename(retired)
@@ -262,6 +289,10 @@ class SessionStore:
         self._locks_guard = threading.Lock()
         if not (self.template / "project.json").is_file():
             raise SessionError(f"Invalid template at {self.template}")
+        self.template_revision = tree_fingerprint(
+            self.template,
+            TEMPLATE_REVISION_PATHS,
+        )
 
     def lock(self, session_id: str) -> threading.RLock:
         self._validate_id(session_id)
@@ -392,10 +423,46 @@ class SessionStore:
             "latest_render_log": "",
             "latest_warnings": [],
             "active_uploads": [],
+            "template_revision": self.template_revision,
         }
         atomic_json(location / "session.json", metadata)
         enforce_tree_quota(location)
         return self.state(session_id)
+
+    def _refresh_untouched_session(
+        self,
+        location: Path,
+        metadata: dict,
+    ) -> tuple[dict, bool]:
+        if metadata.get("template_revision") == self.template_revision:
+            return metadata, False
+        untouched = (
+            not metadata.get("messages")
+            and not metadata.get("undo_stack")
+            and not metadata.get("redo_stack")
+            and not metadata.get("active_uploads")
+            and int(metadata.get("revision_counter", 0) or 0) == 0
+        )
+        if not untouched:
+            return metadata, True
+        figure_id = str(metadata.get("figure_id", ""))
+        if figure_id not in FIGURE_PROJECTS:
+            return metadata, True
+
+        prepared = location / f".template-refresh-{secrets.token_hex(5)}"
+        try:
+            copy_project(self.template, prepared)
+            self._configure_project(prepared, figure_id)
+            replace_project(prepared, location / "baseline")
+            replace_project(prepared, location / "workspace")
+        finally:
+            remove_local_path(prepared)
+        for export in iter_regular_files(location / "exports"):
+            export.unlink()
+        metadata["template_revision"] = self.template_revision
+        metadata["template_refreshed_at"] = utcnow()
+        self.save(str(metadata["session_id"]), metadata)
+        return self.load(str(metadata["session_id"])), False
 
     @staticmethod
     def _load_project(path: Path) -> dict:
@@ -452,6 +519,12 @@ class SessionStore:
         enforce_workspace_quota(workspace)
         baseline = location / "baseline"
         metadata = self.load(session_id)
+        metadata, template_update_available = self._refresh_untouched_session(
+            location,
+            metadata,
+        )
+        workspace = location / "workspace"
+        baseline = location / "baseline"
         project = self._load_project(workspace / "project.json")
         figure_id = str(
             metadata.get("figure_id")
@@ -531,6 +604,7 @@ class SessionStore:
             "warnings": metadata.get("latest_warnings", []),
             "updated_at": metadata.get("updated_at"),
             "panels": panels,
+            "template_update_available": template_update_available,
             "pull_requests": metadata.get("pull_requests", []),
         }
 
@@ -1065,6 +1139,211 @@ class SessionStore:
             )
             archive.writestr(
                 "figure-project/CHECKSUMS.json",
+                json.dumps(checksums, indent=2, ensure_ascii=False) + "\n",
+            )
+        export.chmod(0o600)
+        return export
+
+    def export_panel_zip(self, session_id: str, raw_panel_id: object) -> Path:
+        location = self.session_dir(session_id)
+        workspace = self.workspace(session_id)
+        metadata = self.load(session_id)
+        figure_id = str(metadata.get("figure_id", ""))
+        try:
+            panel_id = validate_panel_id(figure_id, raw_panel_id)
+        except PanelError as exc:
+            raise SessionError(str(exc)) from exc
+        if panel_id is None:
+            raise SessionError("The selected panel is invalid")
+        removed = remove_unsafe_nodes(workspace)
+        if removed:
+            raise SessionError(
+                "Unsafe links or special files were removed. Review the project before export"
+            )
+        enforce_tree_quota(location)
+
+        source_figure = self.figure_output_path(session_id, "current")
+        panel_image = self.resolve_panel_artifact(session_id, "current", panel_id)
+        project = self._load_project(workspace / "project.json")
+        entrypoint = Path(str(project.get("entrypoint", "")))
+        active_figure = entrypoint.parent
+        if (
+            len(active_figure.parts) != 2
+            or active_figure.parts[0] != "figures"
+            or active_figure.parts[1] != figure_id
+        ):
+            raise SessionError("The active figure directory is invalid")
+
+        included: dict[str, Path] = {}
+
+        def include(relative: Path) -> None:
+            candidate = workspace / relative
+            if not candidate.is_file() or candidate.is_symlink():
+                return
+            rel = relative.as_posix()
+            if (
+                "\\" in rel
+                or ":" in rel
+                or any(ord(character) < 32 for character in rel)
+                or any(part in {"", ".", ".."} for part in relative.parts)
+            ):
+                raise SessionError("The project contains a filename that is unsafe for ZIP export")
+            included[rel] = candidate
+
+        for relative in (
+            Path("AGENTS.md"),
+            Path("README.md"),
+            Path("project.json"),
+            Path("render.py"),
+            Path("provenance.json"),
+        ):
+            include(relative)
+
+        output_stem = str(project.get("output_stem", ""))
+        source_roots = (active_figure, Path("figures/helpers"))
+        for root in source_roots:
+            for path in iter_regular_files(workspace / root):
+                relative = path.relative_to(workspace)
+                if "__pycache__" in relative.parts or ".matplotlib-cache" in relative.parts:
+                    continue
+                if (
+                    "panels" in relative.parts
+                    or relative.name in {"make_panels.py", "PANELS.md"}
+                ):
+                    continue
+                if path.suffix.lower() not in REFERENCE_TEXT_SUFFIXES:
+                    continue
+                if (
+                    path.stem == output_stem
+                    and path.suffix.lower().lstrip(".") in RASTER_PREVIEWS | {"pdf", "svg"}
+                ):
+                    continue
+                if "panels" in relative.parts and path.suffix.lower() in {
+                    ".jpg",
+                    ".jpeg",
+                    ".png",
+                    ".webp",
+                }:
+                    continue
+                include(relative)
+
+        for relative in panel_data_sources(figure_id, panel_id):
+            include(relative)
+
+        reference_parts: list[str] = []
+        baseline = location / "baseline"
+        for root in source_roots:
+            for current_path in iter_regular_files(workspace / root):
+                relative = current_path.relative_to(workspace)
+                if current_path.suffix.lower() not in REFERENCE_TEXT_SUFFIXES:
+                    continue
+                baseline_path = baseline / relative
+                try:
+                    current_lines = current_path.read_text(encoding="utf-8").splitlines()
+                    baseline_lines = (
+                        baseline_path.read_text(encoding="utf-8").splitlines()
+                        if baseline_path.is_file()
+                        else []
+                    )
+                except (OSError, UnicodeDecodeError):
+                    continue
+                reference_parts.extend(
+                    line[2:]
+                    for line in difflib.ndiff(baseline_lines, current_lines)
+                    if line.startswith("+ ")
+                )
+        panel_messages = [
+            message
+            for message in metadata.get("messages", [])
+            if message.get("panel_id") == panel_id
+        ]
+        reference_parts.extend(str(message.get("text", "")) for message in panel_messages)
+        references = "\n".join(reference_parts)
+
+        data_roots = (
+            Path("results/derived/figure-data"),
+            Path("figures/source-data"),
+            Path("uploads"),
+            Path("data/derived"),
+            active_figure,
+        )
+        for root in data_roots:
+            for path in iter_regular_files(workspace / root):
+                relative = path.relative_to(workspace)
+                if path.suffix.lower() in REFERENCE_TEXT_SUFFIXES:
+                    continue
+                if path.name.startswith(f"{figure_id}-") and path.suffix.lower() in {
+                    ".jpg",
+                    ".jpeg",
+                    ".png",
+                    ".webp",
+                }:
+                    continue
+                if path.name in references or relative.as_posix() in references:
+                    include(relative)
+
+        panel_record = next(
+            (panel for panel in panel_catalog(figure_id) if panel["id"] == panel_id),
+            None,
+        )
+        if panel_record is None:
+            raise SessionError("The selected panel is invalid")
+
+        export = location / "exports" / f"{figure_id}-panel-{panel_id}.zip"
+        export.parent.mkdir(parents=True, exist_ok=True)
+        if export.exists():
+            export.unlink()
+        checksums: list[dict] = []
+        data_files = sorted(
+            rel
+            for rel in included
+            if Path(rel).suffix.lower() not in REFERENCE_TEXT_SUFFIXES
+        )
+        with zipfile.ZipFile(export, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+            panel_name = f"{figure_id}-{panel_id}.jpg"
+            archive.write(panel_image, f"panel-project/{panel_name}")
+            checksums.append(
+                {
+                    "path": panel_name,
+                    "bytes": panel_image.stat().st_size,
+                    "sha256": hash_file(panel_image),
+                }
+            )
+            for rel, path in sorted(included.items()):
+                archive.write(path, f"panel-project/{rel}")
+                checksums.append(
+                    {"path": rel, "bytes": path.stat().st_size, "sha256": hash_file(path)}
+                )
+            archive.writestr(
+                "panel-project/PANEL_EXPORT.json",
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "session_id": session_id,
+                        "figure_id": figure_id,
+                        "panel": panel_record,
+                        "panel_image": panel_name,
+                        "derivation": "pixel crop of the current full figure",
+                        "source_full_figure": {
+                            "name": source_figure.name,
+                            "bytes": source_figure.stat().st_size,
+                            "sha256": hash_file(source_figure),
+                        },
+                        "data_files": data_files,
+                        "exported_at": utcnow(),
+                        "messages": panel_messages,
+                        "note": (
+                            "The selected panel image is packaged with the active figure "
+                            "renderer and the input files referenced by that renderer."
+                        ),
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                )
+                + "\n",
+            )
+            archive.writestr(
+                "panel-project/CHECKSUMS.json",
                 json.dumps(checksums, indent=2, ensure_ascii=False) + "\n",
             )
         export.chmod(0o600)

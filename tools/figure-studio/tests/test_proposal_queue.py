@@ -105,6 +105,23 @@ class ProposalQueueTests(unittest.TestCase):
         self.assertEqual(len(files), 1)
         self.assertEqual(files[0].content, b"print('revised')\n")
 
+    def test_pre_export_session_uses_the_reviewed_template_manifest(self) -> None:
+        (self.session / "baseline" / "PUBLIC_EXPORT.json").unlink()
+        result = self.queue.submit(
+            self.session,
+            "figure-01",
+            None,
+            "Propose a revision from an existing session",
+            "author@example.org",
+        )
+        self.assertEqual(result.status, "pending-owner-review")
+        payload = json.loads(
+            (
+                self.queue_root / result.proposal_id / "proposal.json"
+            ).read_text(encoding="utf-8")
+        )
+        self.assertEqual(payload["base_commit"], BASE_COMMIT)
+
     def test_owner_publish_is_separate_and_marks_bundle(self) -> None:
         queued = self.queue.submit(
             self.session,

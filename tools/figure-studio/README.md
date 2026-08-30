@@ -67,7 +67,7 @@ The composer reads sanitized month-to-date cost and hard-limit values from a
 mode-600 cache. A separate owner process refreshes it with an OpenAI Admin key:
 
 ```bash
-python tools/figure-studio/refresh_openai_billing.py --expected-limit-usd 10
+python tools/figure-studio/refresh_openai_billing.py --expected-limit-usd 30
 ```
 
 The web service never receives the Admin key. It marks stale or unverified

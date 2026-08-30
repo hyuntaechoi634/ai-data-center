@@ -116,6 +116,28 @@ class GitHubProposalTests(unittest.TestCase):
                 self.baseline, self.workspace, "figure-01", self.manifest
             )
 
+    def test_ignores_only_unchanged_internal_text_files(self) -> None:
+        for location in (self.baseline, self.workspace):
+            (location / "figures" / "figure-01" / "internal_helper.py").write_text(
+                "INTERNAL = True\n", encoding="utf-8"
+            )
+        revised = b"print('revised')\n"
+        (self.workspace / "figures" / "figure-01" / "make_figure.py").write_bytes(
+            revised
+        )
+        files = collect_proposal_files(
+            self.baseline, self.workspace, "figure-01", self.manifest
+        )
+        self.assertEqual([item.content for item in files], [revised])
+
+        (self.workspace / "figures" / "figure-01" / "internal_helper.py").write_text(
+            "INTERNAL = False\n", encoding="utf-8"
+        )
+        with self.assertRaisesRegex(ProposalError, "unreviewed public path"):
+            collect_proposal_files(
+                self.baseline, self.workspace, "figure-01", self.manifest
+            )
+
     def test_creates_draft_pr_from_pinned_base(self) -> None:
         calls: list[tuple[str, str, dict | None]] = []
 
