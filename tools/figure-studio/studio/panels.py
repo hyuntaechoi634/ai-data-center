@@ -7,8 +7,6 @@ from pathlib import Path
 import shutil
 import tempfile
 
-from PIL import Image
-
 
 class PanelError(RuntimeError):
     pass
@@ -241,6 +239,8 @@ def panel_filename(figure_id: str, panel_id: str) -> str:
 
 
 def _safe_rgb(path: Path) -> Image.Image:
+    from PIL import Image
+
     if not path.is_file() or path.is_symlink():
         raise PanelError("The full figure preview is unavailable")
     if path.stat().st_size > 50 * 1024 * 1024:
