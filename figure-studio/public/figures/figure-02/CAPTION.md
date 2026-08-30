@@ -1,12 +1,17 @@
 # Figure 2 caption
 
 **Fig. 2 | Power-system response to data center growth.** **a**,**b**,
-Tracked global gross nameplate capacity commissioned from 2011 to 2024,
+Tracked global nameplate capacity commissioned from 2011 to 2024,
 followed by modeled annualized gross generation-equivalent capacity additions
 under the reference power system (**a**) and net-zero CO₂ by 2050 (**b**).
 Bars show High demand at Medium efficiency, whiskers span the Low and High
-efficiency assumptions, and the dark line shows total clean capacity on the
-right axis. Historical additions are unit-level start-year sums from Global
+efficiency assumptions, and the dark line shows total clean
+generation-equivalent capacity on the right axis. Its 2000–2025 history uses
+Ember generation by source converted with the same capacity factors as the
+GCAM figure bridge, followed by the GCAM projection from 2030. The independent
+history differs from GCAM by at most 1.2% across the 2005–2021 calibration
+anchors and by 3.8% in the first future period, 2025. Historical additions are
+unit-level start-year sums from Global
 Energy Monitor's August 2026 Global Integrated Power Tracker. Modeled
 additions identify new construction cohorts using electricity generation by
 generation technology, cooling technology and vintage, convert generation to
@@ -15,8 +20,8 @@ five-year model period. Because hydropower is not vintaged in this GCAM
 representation, its modeled additions use positive changes in inferred
 capacity stock. **c**, Total generation-equivalent clean capacity in 2050 for
 the nine demand-by-efficiency scenarios under each policy, stacked by
-technology. The dashed line marks 5,529 GW of observed renewable and nuclear
-capacity in 2025. **d**, Electricity generation in 2050 at Medium efficiency,
+technology. The dashed line marks 4,011 GW of external clean
+generation-equivalent capacity in 2025. **d**, Electricity generation in 2050 at Medium efficiency,
 with whiskers spanning the three efficiency assumptions. **e**, Electricity
 consumption by end-use sector in 2050. Data centers comprise conventional,
 training and inference electricity, and buildings exclude data center

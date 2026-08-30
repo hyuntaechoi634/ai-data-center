@@ -32,6 +32,7 @@ OUT_JPG = HERE / "figure-02.jpg"
 import os as _os
 D = Path(_os.environ.get(
     "FIG_DATA_DIR", str(ROOT / "results/derived/figure-data")))
+S = ROOT / "figures/source-data"
 AGX = ROOT / "analysis/agentic-extreme-demand"
 
 DEMANDS = ["Low", "Medium", "High"]
@@ -75,7 +76,15 @@ def load():
     cap = pd.read_csv(D / "v7_capacity.csv")
     gen = pd.read_csv(D / "v7_genmix.csv")
     use = pd.read_csv(D / "v7_elec_enduse.csv")
-    return H, M, cap, gen, use
+    clean_hist = pd.read_csv(S / "fig_clean_capacity_history.csv")
+    expected = {
+        "year", "electricity_source", "tech_class", "generation_TWh",
+        "capacity_factor", "generation_equivalent_capacity_GW", "source",
+    }
+    if set(clean_hist.columns) != expected or set(clean_hist.year) != set(
+            range(2000, 2026)):
+        raise ValueError("historical clean-capacity source has an invalid schema")
+    return H, M, cap, gen, use, clean_hist
 
 
 def clean_stock(cap, scenario, policy, year):
@@ -86,7 +95,7 @@ def clean_stock(cap, scenario, policy, year):
 
 
 def main() -> None:
-    H, M, cap, gen, use = load()
+    H, M, cap, gen, use, clean_hist = load()
 
     fig = plt.figure(figsize=(15.6, 15.6))
     gs = fig.add_gridspec(4, 6, height_ratios=[1.0, 0.92, 0.98, 0.145],
@@ -101,9 +110,11 @@ def main() -> None:
     hp = hp.reindex(columns=[t for t in ORDER if t in hp.columns]).fillna(0.0)
     hp = hp.loc[[y for y in hp.index if 2011 <= y <= 2024]]
 
-    CLEAN_STOCK_MAX = float(
+    historical_clean_stock = clean_hist.groupby(
+        "year").generation_equivalent_capacity_GW.sum()
+    CLEAN_STOCK_MAX = max(float(historical_clean_stock.max()), float(
         cap[(cap.scenario == BAR_SCEN) & cap.tech_class.isin(CLEAN_ADD)]
-        .groupby(["policy", "year"]).capacity_GW.sum().max())
+        .groupby(["policy", "year"]).capacity_GW.sum().max()))
     for k, (pol, disp) in enumerate(POLICIES):
         ax = fig.add_subplot(gs[0, 3 * k:3 * k + 3])
         style(ax)
@@ -143,13 +154,15 @@ def main() -> None:
                         yerr=[[(whi - wlo) / 2], [(whi - wlo) / 2]],
                         fmt="none", ecolor="0.1", elinewidth=1.1,
                         capsize=4.5, capthick=1.1, zorder=6)
-        # Total clean-capacity stock on the second y-axis. Historical model
-        # years and projections are connected linearly rather than drawn as
-        # period steps.
-        stk = cap[(cap.scenario == BAR_SCEN) & (cap.policy == pol)
-                  & cap.tech_class.isin(CLEAN_ADD)]
-        stk = stk.groupby("year").capacity_GW.sum()
-        stk = stk.loc[(stk.index >= 2010) & (stk.index <= 2050)]
+        # Total clean-capacity equivalent on the second y-axis. Independent
+        # Ember history is converted with the same factors as the GCAM bridge;
+        # the audited GCAM projection starts in 2030.
+        projected_stock = cap[(cap.scenario == BAR_SCEN) & (cap.policy == pol)
+                              & cap.tech_class.isin(CLEAN_ADD)]
+        projected_stock = projected_stock.groupby("year").capacity_GW.sum()
+        projected_stock = projected_stock.loc[
+            (projected_stock.index >= 2030) & (projected_stock.index <= 2050)]
+        stk = pd.concat([historical_clean_stock, projected_stock])
         ax2 = ax.twinx()
         ax2.plot(stk.index, stk.values, color="0.15", lw=1.9, zorder=5,
                  marker="o", ms=3.6, mfc="0.15", mec="0.15", mew=0.0,
@@ -164,18 +177,18 @@ def main() -> None:
                            fontsize=FS["label"])
         else:
             ax2.tick_params(labelright=False)
-        ax.axvspan(2011, 2025, color="#eceff1", zorder=0)
-        ax.hlines(0, 2011, 2050.5, color="0.2", lw=1.0, zorder=4)
+        ax.axvspan(2000, 2025, color="#eceff1", zorder=0)
+        ax.hlines(0, 2000, 2050.5, color="0.2", lw=1.0, zorder=4)
         ax.axvline(2025, ymin=0, ymax=0.82, color="0.45", lw=1.0,
                    ls=(0, (4, 3)), zorder=4)
-        ax.set_xlim(2011, 2051.5)
-        ax.set_xticks([2015, 2020, 2025, 2030, 2035, 2040, 2045, 2050])
+        ax.set_xlim(2000, 2051.5)
+        ax.set_xticks([2000, 2010, 2020, 2030, 2040, 2050])
         ax.set_ylim(0, 1650)
         ax.yaxis.set_major_formatter(CM)
         ax.set_title(disp, fontsize=FS["title"],
                      color=C_REF if pol == "ref" else C_NZ, pad=8)
         if k == 0:
-            ax.set_ylabel("Gross capacity additions\n(GW yr$^{-1}$)",
+            ax.set_ylabel("Capacity additions\n(GW per year)",
                           fontsize=FS["label"])
             ax.text(-0.14, 1.10, "a", transform=ax.transAxes,
                     fontsize=FS["letter"], fontweight="bold")
@@ -192,12 +205,9 @@ def main() -> None:
     # panel now shows the 2050 clean stock itself, stacked by technology.)
     ax = fig.add_subplot(gs[1, :])
     style(ax)
-    # Observed 2025 benchmark, not the model's own 2025 value. IRENA
-    # Renewable Capacity Statistics 2026 reports 5,149 GW of renewables at
-    # end-2025; IAEA PRIS gives about 380 GW of operating nuclear. Existing
-    # power-sector CCS is small enough not to move the rounded total.
-    OBSERVED_2025 = 5529.0
-    stock25 = OBSERVED_2025
+    # Independent 2025 benchmark in the same generation-equivalent metric as
+    # the model bars. It is generated from Ember with the GCAM bridge factors.
+    stock25 = float(historical_clean_stock.loc[2025])
     CLEAN_ORDER = [t for t in ORDER if t not in ("coal", "gas")]
 
     def clean_by_tech(scenario, policy):
