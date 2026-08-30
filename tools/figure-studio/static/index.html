@@ -110,33 +110,15 @@
 
       <div class="conversation-row">
         <section id="layoutControlPanel" class="layout-control-panel" aria-label="Direct figure element editing">
-          <button id="layoutEditButton" class="layout-launch-button" type="button">
-            <span class="layout-launch-icon" aria-hidden="true">
-              <i></i><i></i><i></i><i></i>
-            </span>
-            <span class="layout-launch-copy">
-              <strong>Edit figure elements</strong>
-              <small>Move, resize, change fonts and colors</small>
-            </span>
-          </button>
-
-          <div id="layoutEditor" class="layout-inline-editor hidden" aria-label="Figure element controls">
+          <div id="layoutEditor" class="layout-inline-editor" aria-label="Figure element controls">
             <div class="layout-inline-header">
               <span>
-                <strong>Edit figure elements</strong>
-                <small>Click an element in Current above</small>
+                <strong>Figure element controls</strong>
+                <small>Click or drag an element in Current</small>
               </span>
-              <button id="layoutCloseButton" class="layout-close-button" type="button" aria-label="Close figure element editor">×</button>
             </div>
-            <div class="layout-toolbar">
-              <select id="layoutKindFilter" aria-label="Element type">
-                <option value="all">All editable elements</option>
-                <option value="text">Text and labels</option>
-                <option value="axis">Plot areas</option>
-                <option value="mark">Bars, lines and whiskers</option>
-              </select>
-              <input id="layoutSearch" type="search" aria-label="Find an element" placeholder="Find an element">
-              <span id="layoutPreviewStatus" class="layout-preview-status">Preview ready</span>
+            <div class="layout-inline-status-row">
+              <span id="layoutPreviewStatus" class="layout-preview-status">Loading editable elements</span>
               <span id="layoutElementCount" class="layout-element-count"></span>
             </div>
             <div class="layout-inspector" aria-label="Selected element settings">
@@ -144,16 +126,7 @@
                 Select text, a plot, a bar, a line or a whisker directly in Current.
               </div>
               <div id="layoutInspectorControls" class="layout-inspector-controls hidden">
-                <div id="layoutPositionControls" class="layout-coordinate-grid">
-                  <label class="layout-field">
-                    X offset
-                    <input id="layoutOffsetX" type="number" step="1" disabled>
-                  </label>
-                  <label class="layout-field">
-                    Y offset
-                    <input id="layoutOffsetY" type="number" step="1" disabled>
-                  </label>
-                </div>
+                <p id="layoutSelectionHint" class="layout-selection-hint"></p>
                 <div id="layoutTypographyControls" class="layout-control-group">
                   <label class="layout-field">
                     Font size
@@ -180,7 +153,7 @@
               </div>
               <p class="layout-safety-note">Data values remain locked.</p>
               <div class="layout-editor-actions">
-                <button id="layoutCancelButton" type="button">Cancel</button>
+                <button id="layoutCancelButton" type="button">Cancel changes</button>
                 <button id="layoutApplyButton" class="primary" type="button" disabled>Apply changes</button>
               </div>
             </div>

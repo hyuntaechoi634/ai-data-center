@@ -537,16 +537,14 @@ function renderActionAvailability() {
   const showCurrent = hasCurrentRevision(state);
   const panel = selectedPanelRecord(state);
   const revising = Boolean(app.activeJobId);
-  const layoutEditing = app.layout.open;
+  const layoutChanging = Boolean(app.layout.pending.size || app.layout.previewing);
   const sendButton = $("#sendButton");
-  $("#undoButton").disabled = !state?.can_undo || app.busy || layoutEditing;
-  $("#redoButton").disabled = !state?.can_redo || app.busy || layoutEditing;
-  $("#resetButton").disabled = !showCurrent || app.busy || layoutEditing;
-  $("#layoutEditButton").disabled = !state || app.busy || layoutEditing;
-  $("#layoutEditButton").title = "Move, resize, and style individual figure elements";
+  $("#undoButton").disabled = !state?.can_undo || app.busy || layoutChanging;
+  $("#redoButton").disabled = !state?.can_redo || app.busy || layoutChanging;
+  $("#resetButton").disabled = !showCurrent || app.busy || layoutChanging;
   sendButton.disabled = revising
     ? app.cancelling
-    : !state?.agent_available || app.busy || layoutEditing;
+    : !state?.agent_available || app.busy || layoutChanging;
   sendButton.classList.toggle("is-cancel", revising);
   sendButton.querySelector("span").textContent = revising ? "×" : "↑";
   sendButton.setAttribute(
@@ -555,7 +553,7 @@ function renderActionAvailability() {
   );
   sendButton.title = revising ? "Cancel revision (Esc)" : "Send message";
   const downloadProjectButton = $("#downloadProject");
-  downloadProjectButton.disabled = !state || app.busy || layoutEditing;
+  downloadProjectButton.disabled = !state || app.busy || layoutChanging;
   downloadProjectButton.textContent = panel ? "Panel data & code" : "Data & code";
   downloadProjectButton.title = panel
     ? `Download the current ${panelScopeLabel(panel.id)} image, source code, and referenced inputs`
@@ -565,12 +563,12 @@ function renderActionAvailability() {
   pullRequestButton.textContent =
     pullRequest.mode === "owner-admin-immediate-merge" ? "Apply PR" : "Propose PR";
   pullRequestButton.disabled =
-    !showCurrent || !pullRequest.available || app.busy || layoutEditing;
+    !showCurrent || !pullRequest.available || app.busy || layoutChanging;
   pullRequestButton.title =
     pullRequest.message || "Submit a private proposal for owner review";
-  $("#modelSelect").disabled = !state?.agent_available || app.busy || layoutEditing;
-  $("#effortSelect").disabled = !state?.agent_available || app.busy || layoutEditing;
-  $("#promptInput").disabled = layoutEditing;
+  $("#modelSelect").disabled = !state?.agent_available || app.busy || layoutChanging;
+  $("#effortSelect").disabled = !state?.agent_available || app.busy || layoutChanging;
+  $("#promptInput").disabled = layoutChanging;
   renderAgentStatus();
 
   const panelFigure = (collection) => {
@@ -588,7 +586,7 @@ function renderActionAvailability() {
     ["#downloadCurrentFigure", panelFigure("current")],
   ].forEach(([selector, figure]) => {
     const button = $(selector);
-    button.disabled = !figure || app.busy || layoutEditing;
+    button.disabled = !figure || app.busy || layoutChanging;
     button.dataset.path = figure?.url || "";
     button.dataset.name = figure?.download_name || "figure.jpg";
   });
@@ -754,7 +752,9 @@ function selectPanel(panelId) {
   renderNavigator();
   renderActionAvailability();
   renderSelectedPreviews();
-  $("#promptInput").focus();
+  window.setTimeout(() => {
+    if (!app.busy && selectedPanelId() === normalized) openLayoutEditor();
+  }, 0);
 }
 
 async function selectFigure(figureId) {
@@ -808,6 +808,7 @@ async function selectFigure(figureId) {
   } finally {
     if (!app.activeJobId) setBusy(false);
     autoResizePrompt();
+    if (app.state && !app.activeJobId) await openLayoutEditor();
   }
 }
 
@@ -1271,15 +1272,7 @@ function layoutVisualState(element) {
 }
 
 function layoutFilteredElements() {
-  const kind = $("#layoutKindFilter").value;
-  const query = $("#layoutSearch").value.trim().toLowerCase();
-  return layoutElements().filter((element) => {
-    if (kind !== "all" && element.kind !== kind) return false;
-    if (!query) return true;
-    return `${element.role} ${element.label} ${element.id}`
-      .toLowerCase()
-      .includes(query);
-  });
+  return layoutElements();
 }
 
 function positionLayoutBox(box, element) {
@@ -1343,8 +1336,6 @@ function selectLayoutElement(elementId) {
 function renderLayoutInspector() {
   const element = layoutElementById(app.layout.selectedId);
   const controls = [
-    "#layoutOffsetX",
-    "#layoutOffsetY",
     "#layoutFontSize",
     "#layoutFontFamily",
     "#layoutColor",
@@ -1355,8 +1346,7 @@ function renderLayoutInspector() {
   $("#layoutInspectorEmpty").classList.toggle("hidden", Boolean(element));
   $("#layoutInspectorControls").classList.toggle("hidden", !element);
   if (!element) {
-    $("#layoutOffsetX").value = "";
-    $("#layoutOffsetY").value = "";
+    $("#layoutSelectionHint").textContent = "";
     $("#layoutFontSize").value = "";
     $("#layoutFontFamily").value = "";
     $("#layoutColor").value = "#176b50";
@@ -1366,9 +1356,14 @@ function renderLayoutInspector() {
     return;
   }
   const isMark = element.kind === "mark";
-  $("#layoutPositionControls").classList.toggle("hidden", isMark);
-  $("#layoutTypographyControls").classList.toggle("hidden", isMark);
+  const isText = element.kind === "text";
+  $("#layoutTypographyControls").classList.toggle("hidden", !isText);
   $("#layoutColorField").classList.toggle("hidden", !isMark);
+  $("#layoutSelectionHint").textContent = isMark
+    ? "Change the selected mark color or visibility."
+    : isText
+      ? "Drag the selected text in Current, or adjust its typography."
+      : "Drag the selected plot in Current to reposition it.";
   $("#layoutVisibilityButton").disabled = false;
   $("#layoutResetElementButton").disabled = false;
   const pending = layoutPendingRecord(element);
@@ -1383,13 +1378,9 @@ function renderLayoutInspector() {
     $("#layoutColor").disabled = false;
     $("#layoutColor").value = safeColor;
     $("#layoutColorValue").textContent = safeColor.toUpperCase();
-  } else {
-    $("#layoutOffsetX").disabled = false;
-    $("#layoutOffsetY").disabled = false;
+  } else if (isText) {
     $("#layoutFontSize").disabled = false;
     $("#layoutFontFamily").disabled = false;
-    $("#layoutOffsetX").value = String(Math.round(visual.offset_px.x * 100) / 100);
-    $("#layoutOffsetY").value = String(Math.round(visual.offset_px.y * 100) / 100);
     const size = pending && !pending.reset && pending.touched.has("font_size")
       ? pending.font_size
       : element.font_size;
@@ -1412,6 +1403,8 @@ function renderLayoutApplyAvailability() {
   $("#layoutApplyButton").disabled = (
     app.busy || app.layout.previewing || !app.layout.pending.size
   );
+  $("#layoutCancelButton").disabled = app.busy || !app.layout.pending.size;
+  renderActionAvailability();
 }
 
 function setLayoutPreviewStatus(message, state = "") {
@@ -1490,18 +1483,6 @@ function updateSelectedLayoutValue(field, value) {
   scheduleLayoutPreview();
 }
 
-function updateSelectedLayoutOffset(axis, rawValue) {
-  const element = layoutElementById(app.layout.selectedId);
-  const parsed = Number(rawValue);
-  if (!element || !Number.isFinite(parsed)) return;
-  const pending = layoutPendingRecord(element, true);
-  pending.reset = false;
-  pending.touched.add("offset_px");
-  pending.offset_px[axis] = Math.round(parsed * 100) / 100;
-  renderLayoutOverlays();
-  scheduleLayoutPreview();
-}
-
 function toggleSelectedLayoutVisibility() {
   const element = layoutElementById(app.layout.selectedId);
   if (!element) return;
@@ -1541,16 +1522,15 @@ function startLayoutDrag(event) {
     renderLayoutOverlays();
     return;
   }
-  const pending = layoutPendingRecord(element, true);
-  pending.reset = false;
-  pending.touched.add("offset_px");
+  const visual = layoutVisualState(element);
   app.layout.drag = {
     pointerId: event.pointerId,
     elementId,
     startX: event.clientX,
     startY: event.clientY,
-    offsetX: pending.offset_px.x,
-    offsetY: pending.offset_px.y,
+    offsetX: visual.offset_px.x,
+    offsetY: visual.offset_px.y,
+    moved: false,
   };
   event.currentTarget.setPointerCapture?.(event.pointerId);
   renderLayoutOverlays();
@@ -1565,18 +1545,25 @@ function moveLayoutDrag(event) {
   const rect = $("#layoutCanvas").getBoundingClientRect();
   const scale = rect.width / app.layout.data.canvas_px[0];
   if (!(scale > 0)) return;
+  const pointerDx = event.clientX - drag.startX;
+  const pointerDy = event.clientY - drag.startY;
+  if (!drag.moved && Math.hypot(pointerDx, pointerDy) < 1) return;
   const pending = layoutPendingRecord(element, true);
+  pending.reset = false;
+  pending.touched.add("offset_px");
+  drag.moved = true;
   pending.offset_px = {
-    x: Math.round((drag.offsetX + (event.clientX - drag.startX) / scale) * 100) / 100,
-    y: Math.round((drag.offsetY + (event.clientY - drag.startY) / scale) * 100) / 100,
+    x: Math.round((drag.offsetX + pointerDx / scale) * 100) / 100,
+    y: Math.round((drag.offsetY + pointerDy / scale) * 100) / 100,
   };
   renderLayoutOverlays();
 }
 
 function endLayoutDrag(event) {
   if (!app.layout.drag || app.layout.drag.pointerId !== event.pointerId) return;
+  const moved = app.layout.drag.moved;
   app.layout.drag = null;
-  scheduleLayoutPreview();
+  if (moved) scheduleLayoutPreview();
 }
 
 function handleLayoutElementKeydown(event) {
@@ -1625,7 +1612,12 @@ function populateLayoutFonts(fonts) {
 
 async function openLayoutEditor() {
   if (!app.state || app.busy) return;
-  setBusy(true, "Opening the layout editor", "Loading selectable figure elements.");
+  setBusy(
+    true,
+    "Opening the layout editor",
+    "Loading selectable figure elements.",
+    false,
+  );
   try {
     const payload = await api(
       `/api/sessions/${app.sessionId}/layout/current`,
@@ -1653,13 +1645,9 @@ async function openLayoutEditor() {
     currentStage.replaceChildren(canvas);
     $("#currentCard").classList.add("layout-edit-mode");
     $("#layoutControlPanel").classList.add("editing");
-    $("#layoutEditButton").classList.add("hidden");
-    $("#layoutEditor").classList.remove("hidden");
     const image = $("#layoutImage");
     image.onload = renderLayoutOverlays;
     image.src = app.layout.objectUrl;
-    $("#layoutSearch").value = "";
-    $("#layoutKindFilter").value = "all";
     setLayoutPreviewStatus("Preview ready");
     renderLayoutOverlays();
     renderActionAvailability();
@@ -1692,10 +1680,16 @@ function closeLayoutEditor() {
   $("#currentStage").classList.remove("layout-editing");
   $("#currentCard").classList.remove("layout-edit-mode");
   $("#layoutControlPanel").classList.remove("editing");
-  $("#layoutEditor").classList.add("hidden");
-  $("#layoutEditButton").classList.remove("hidden");
+  setLayoutPreviewStatus("Loading editable elements");
+  renderLayoutInspector();
   renderSelectedPreviews();
   renderActionAvailability();
+}
+
+async function cancelLayoutChanges() {
+  if (!app.layout.open || app.busy || !app.layout.pending.size) return;
+  closeLayoutEditor();
+  await openLayoutEditor();
 }
 
 function serializedLayoutChanges() {
@@ -1725,6 +1719,7 @@ async function applyLayoutChanges() {
     "Applying layout changes",
     "Rendering the figure and checking the selected panel boundary.",
   );
+  let reopen = false;
   try {
     const payload = await api(`/api/sessions/${app.sessionId}/layout`, {
       method: "POST",
@@ -1734,6 +1729,7 @@ async function applyLayoutChanges() {
       }),
     });
     closeLayoutEditorAfterWork();
+    reopen = true;
     showToast(
       payload.changed
         ? "Layout changes applied. Undo is available in Version."
@@ -1745,6 +1741,7 @@ async function applyLayoutChanges() {
   } finally {
     setBusy(false);
     renderLayoutApplyAvailability();
+    if (reopen) await openLayoutEditor();
   }
 }
 
@@ -1820,9 +1817,9 @@ $("#sendButton").addEventListener("click", () => {
 });
 document.addEventListener("keydown", (event) => {
   if (event.key !== "Escape" || event.repeat) return;
-  if (app.layout.open && !app.busy) {
+  if (app.layout.open && app.layout.pending.size && !app.busy) {
     event.preventDefault();
-    closeLayoutEditor();
+    cancelLayoutChanges();
     return;
   }
   if (app.activeJobId) {
@@ -1849,18 +1846,8 @@ $("#downloadCurrentFigure").addEventListener("click", (event) =>
 );
 $("#downloadProject").addEventListener("click", downloadProject);
 $("#pullRequestButton").addEventListener("click", createPullRequest);
-$("#layoutEditButton").addEventListener("click", openLayoutEditor);
-$("#layoutCloseButton").addEventListener("click", closeLayoutEditor);
-$("#layoutCancelButton").addEventListener("click", closeLayoutEditor);
+$("#layoutCancelButton").addEventListener("click", cancelLayoutChanges);
 $("#layoutApplyButton").addEventListener("click", applyLayoutChanges);
-$("#layoutKindFilter").addEventListener("change", renderLayoutOverlays);
-$("#layoutSearch").addEventListener("input", renderLayoutOverlays);
-$("#layoutOffsetX").addEventListener("input", (event) =>
-  updateSelectedLayoutOffset("x", event.target.value),
-);
-$("#layoutOffsetY").addEventListener("input", (event) =>
-  updateSelectedLayoutOffset("y", event.target.value),
-);
 $("#layoutFontSize").addEventListener("input", (event) => {
   const value = event.target.value === "" ? null : Number(event.target.value);
   if (value !== null && !Number.isFinite(value)) return;
