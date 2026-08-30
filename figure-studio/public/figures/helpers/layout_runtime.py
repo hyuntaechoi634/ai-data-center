@@ -349,11 +349,15 @@ def install_layout_runtime(
 
 def install_entrypoint_layout(figure_dir: Path, figure_id: str) -> None:
     """Install layout support when a public figure entrypoint runs directly."""
-    output_dir = Path(os.environ.get("FIG_OUTPUT_DIR", str(figure_dir)))
+    project_root = (
+        figure_dir.parents[1]
+        if figure_dir.parent.name == "figures"
+        else figure_dir
+    )
     catalog_path = Path(
         os.environ.get(
             "FIG_LAYOUT_CATALOG",
-            str(output_dir / f"{figure_id}.layout.json"),
+            str(project_root / "layout" / "elements.json"),
         )
     )
     install_layout_runtime(
