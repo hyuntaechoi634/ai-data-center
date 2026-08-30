@@ -9,6 +9,8 @@ import mimetypes
 import os
 from pathlib import Path
 import re
+import secrets
+import shutil
 import subprocess
 import threading
 import time
@@ -35,7 +37,7 @@ from .panels import (
 )
 from .proposal_queue import ProposalQueue
 from .rendering import RenderError, normalize_formats, render_project
-from .sessions import SessionError, SessionStore
+from .sessions import SessionError, SessionStore, copy_project, remove_local_path
 
 
 MAX_JSON_REQUEST = 40 * 1024 * 1024
@@ -43,6 +45,7 @@ EMAIL = re.compile(r"^[^\s@]{1,128}@[^\s@]{1,190}$")
 ACTIVE_CONTENT = {"html", "htm", "svg", "xml", "js", "mjs"}
 INLINE_RASTER = {"png", "jpg", "jpeg", "webp", "gif"}
 SAFE_DOWNLOAD_NAME = re.compile(r"[^A-Za-z0-9._()@+-]+")
+PREVIEW_TOKEN = re.compile(r"^[0-9a-f]{24}$")
 LOCAL_HOST = re.compile(
     r"^(?:127\.0\.0\.1|localhost)(?::[0-9]{1,5})?$|^\[::1\](?::[0-9]{1,5})?$",
     re.IGNORECASE,
@@ -735,6 +738,21 @@ class FigureStudioHandler(BaseHTTPRequestHandler):
                 )
                 return
             if (
+                len(parts) == 5
+                and parts[:2] == ["api", "sessions"]
+                and parts[3] == "layout-preview"
+                and PREVIEW_TOKEN.fullmatch(parts[4])
+            ):
+                if not self._require_owner(parts[2]):
+                    return
+                location = self.app.store.session_dir(parts[2])
+                target = location / "layout-previews" / f"{parts[4]}.jpg"
+                if not target.is_file() or target.is_symlink():
+                    self.send_error(404)
+                    return
+                self._send_file(target)
+                return
+            if (
                 len(parts) == 6
                 and parts[:2] == ["api", "sessions"]
                 and parts[3] == "artifacts"
@@ -997,6 +1015,79 @@ class FigureStudioHandler(BaseHTTPRequestHandler):
                             self.app.store.verify_and_restore_sources(session_id)
                         except Exception:
                             traceback.print_exc()
+                        self.app.jobs.release()
+                    return
+                if action == "layout-preview":
+                    if not self._require_rate("layout-preview", 240, 3600):
+                        return
+                    if not self.app.jobs.acquire(blocking=False):
+                        self._json_response(
+                            429,
+                            {
+                                "ok": False,
+                                "error": "Another figure job is running. Try again shortly",
+                            },
+                        )
+                        return
+                    temporary: Path | None = None
+                    try:
+                        current_state = self.app.store.state(session_id)
+                        panel_id = validate_panel_id(
+                            current_state["figure_id"], payload.get("panel_id")
+                        )
+                        location = self.app.store.session_dir(session_id)
+                        temporary = location / (
+                            f".layout-preview-workspace-{secrets.token_hex(8)}"
+                        )
+                        copy_project(self.app.store.workspace(session_id), temporary)
+                        update = prepare_layout_update(
+                            temporary,
+                            current_state["figure_id"],
+                            payload.get("changes"),
+                            panel_id=panel_id,
+                        )
+                        if update.changed:
+                            write_layout_update(update)
+                        render_project(temporary, ["jpg"], timeout=240)
+                        project = json.loads(
+                            (temporary / "project.json").read_text(encoding="utf-8")
+                        )
+                        stem = str(project.get("output_stem", ""))
+                        if not re.fullmatch(
+                            r"[A-Za-z0-9][A-Za-z0-9._-]{0,79}", stem
+                        ):
+                            raise LayoutError("The layout preview output is invalid")
+                        source = temporary / "outputs" / "current" / f"{stem}.jpg"
+                        if (
+                            not source.is_file()
+                            or source.is_symlink()
+                            or source.stat().st_size > 50 * 1024 * 1024
+                        ):
+                            raise LayoutError("The layout preview was not generated")
+                        token = secrets.token_hex(12)
+                        preview_root = location / "layout-previews"
+                        preview_root.mkdir(mode=0o700, exist_ok=True)
+                        target = preview_root / f"{token}.jpg"
+                        staged = preview_root / f".{token}.tmp"
+                        shutil.copy2(source, staged)
+                        staged.replace(target)
+                        for prior in preview_root.iterdir():
+                            if prior != target and (
+                                prior.is_file() or prior.is_symlink()
+                            ):
+                                prior.unlink()
+                        self._json_response(
+                            200,
+                            {
+                                "ok": True,
+                                "preview_url": (
+                                    f"/api/sessions/{session_id}/layout-preview/{token}"
+                                ),
+                            },
+                        )
+                    finally:
+                        if temporary is not None:
+                            remove_local_path(temporary)
                         self.app.jobs.release()
                     return
                 if action == "pull-request":

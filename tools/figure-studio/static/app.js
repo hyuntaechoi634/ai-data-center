@@ -62,6 +62,10 @@ const app = {
     selectedId: "",
     pending: new Map(),
     drag: null,
+    previewTimer: 0,
+    previewing: false,
+    previewQueued: false,
+    previewGeneration: 0,
   },
 };
 
@@ -538,9 +542,7 @@ function renderActionAvailability() {
   $("#redoButton").disabled = !state?.can_redo || app.busy;
   $("#resetButton").disabled = !showCurrent || app.busy;
   $("#layoutEditButton").disabled = !state || app.busy;
-  $("#layoutEditButton").title = panel
-    ? `Edit layout elements assigned to ${panelScopeLabel(panel.id)}`
-    : "Move, hide, and format figure elements";
+  $("#layoutEditButton").title = "Edit figure layout";
   sendButton.disabled = revising
     ? app.cancelling
     : !state?.agent_available || app.busy;
@@ -1221,6 +1223,7 @@ function layoutPendingRecord(element, create = false) {
       hidden: Boolean(element.hidden),
       font_size: element.override?.font_size ?? null,
       font_family: element.override?.font_family || "",
+      color: element.override?.color || element.color || "",
     };
     app.layout.pending.set(element.id, record);
   }
@@ -1275,34 +1278,13 @@ function positionLayoutBox(box, element) {
   box.classList.toggle("is-reset", Boolean(app.layout.pending.get(element.id)?.reset));
 }
 
-function renderLayoutElementList(elements) {
-  const select = $("#layoutElementSelect");
-  const prior = app.layout.selectedId;
-  const options = [
-    (() => {
-      const option = document.createElement("option");
-      option.value = "";
-      option.textContent = "Select an element";
-      return option;
-    })(),
-    ...elements.map((element) => {
-      const option = document.createElement("option");
-      option.value = element.id;
-      option.textContent = `${element.role}: ${element.label}`;
-      return option;
-    }),
-  ];
-  select.replaceChildren(...options);
-  const selectedStillVisible = elements.some((element) => element.id === prior);
-  if (!selectedStillVisible) app.layout.selectedId = "";
-  select.value = app.layout.selectedId;
-  select.disabled = !elements.length;
-}
-
 function renderLayoutOverlays() {
   if (!app.layout.data) return;
   const layer = $("#layoutOverlayLayer");
   const elements = layoutFilteredElements();
+  if (!elements.some((element) => element.id === app.layout.selectedId)) {
+    app.layout.selectedId = "";
+  }
   layer.replaceChildren();
   elements.forEach((element) => {
     const box = document.createElement("button");
@@ -1319,7 +1301,6 @@ function renderLayoutOverlays() {
     box.addEventListener("keydown", handleLayoutElementKeydown);
     layer.appendChild(box);
   });
-  renderLayoutElementList(elements);
   $("#layoutElementCount").textContent = `${elements.length} element${elements.length === 1 ? "" : "s"}`;
   renderLayoutInspector();
 }
@@ -1341,40 +1322,61 @@ function renderLayoutInspector() {
     "#layoutOffsetY",
     "#layoutFontSize",
     "#layoutFontFamily",
+    "#layoutColor",
     "#layoutVisibilityButton",
     "#layoutResetElementButton",
   ];
-  controls.forEach((selector) => {
-    $(selector).disabled = !element;
-  });
+  controls.forEach((selector) => { $(selector).disabled = true; });
+  $("#layoutInspectorEmpty").classList.toggle("hidden", Boolean(element));
+  $("#layoutInspectorControls").classList.toggle("hidden", !element);
   if (!element) {
-    $("#layoutSelectedRole").textContent = "Select an element";
-    $("#layoutSelectedLabel").textContent = "Click a box on the figure";
     $("#layoutOffsetX").value = "";
     $("#layoutOffsetY").value = "";
     $("#layoutFontSize").value = "";
     $("#layoutFontFamily").value = "";
+    $("#layoutColor").value = "#176b50";
+    $("#layoutColorValue").textContent = "#176B50";
     $("#layoutVisibilityButton").textContent = "Hide element";
     renderLayoutApplyAvailability();
     return;
   }
+  const isMark = element.kind === "mark";
+  $("#layoutPositionControls").classList.toggle("hidden", isMark);
+  $("#layoutTypographyControls").classList.toggle("hidden", isMark);
+  $("#layoutColorField").classList.toggle("hidden", !isMark);
+  $("#layoutVisibilityButton").disabled = false;
+  $("#layoutResetElementButton").disabled = false;
   const pending = layoutPendingRecord(element);
   const visual = layoutVisualState(element);
-  $("#layoutSelectedRole").textContent = element.role;
-  $("#layoutSelectedLabel").textContent = element.label;
-  $("#layoutOffsetX").value = String(Math.round(visual.offset_px.x * 100) / 100);
-  $("#layoutOffsetY").value = String(Math.round(visual.offset_px.y * 100) / 100);
-  const size = pending && !pending.reset && pending.touched.has("font_size")
-    ? pending.font_size
-    : element.font_size;
-  $("#layoutFontSize").value = Number.isFinite(Number(size)) ? String(size) : "";
-  const family = pending && !pending.reset && pending.touched.has("font_family")
-    ? pending.font_family
-    : element.font_family;
-  const fontSelect = $("#layoutFontFamily");
-  fontSelect.value = [...fontSelect.options].some((option) => option.value === family)
-    ? family
-    : "";
+  if (isMark) {
+    const color = pending && !pending.reset && pending.touched.has("color")
+      ? pending.color
+      : element.color;
+    const safeColor = /^#[0-9a-f]{6}$/i.test(color || "")
+      ? color.toLowerCase()
+      : "#176b50";
+    $("#layoutColor").disabled = false;
+    $("#layoutColor").value = safeColor;
+    $("#layoutColorValue").textContent = safeColor.toUpperCase();
+  } else {
+    $("#layoutOffsetX").disabled = false;
+    $("#layoutOffsetY").disabled = false;
+    $("#layoutFontSize").disabled = false;
+    $("#layoutFontFamily").disabled = false;
+    $("#layoutOffsetX").value = String(Math.round(visual.offset_px.x * 100) / 100);
+    $("#layoutOffsetY").value = String(Math.round(visual.offset_px.y * 100) / 100);
+    const size = pending && !pending.reset && pending.touched.has("font_size")
+      ? pending.font_size
+      : element.font_size;
+    $("#layoutFontSize").value = Number.isFinite(Number(size)) ? String(size) : "";
+    const family = pending && !pending.reset && pending.touched.has("font_family")
+      ? pending.font_family
+      : element.font_family;
+    const fontSelect = $("#layoutFontFamily");
+    fontSelect.value = [...fontSelect.options].some((option) => option.value === family)
+      ? family
+      : "";
+  }
   $("#layoutVisibilityButton").textContent = visual.hidden
     ? "Show element"
     : "Hide element";
@@ -1382,7 +1384,74 @@ function renderLayoutInspector() {
 }
 
 function renderLayoutApplyAvailability() {
-  $("#layoutApplyButton").disabled = app.busy || !app.layout.pending.size;
+  $("#layoutApplyButton").disabled = (
+    app.busy || app.layout.previewing || !app.layout.pending.size
+  );
+}
+
+function setLayoutPreviewStatus(message, state = "") {
+  const status = $("#layoutPreviewStatus");
+  status.textContent = message;
+  status.classList.toggle("rendering", state === "rendering");
+  status.classList.toggle("error", state === "error");
+}
+
+function scheduleLayoutPreview(delay = 320) {
+  if (!app.layout.open || !app.layout.pending.size) return;
+  window.clearTimeout(app.layout.previewTimer);
+  setLayoutPreviewStatus("Updating preview", "rendering");
+  app.layout.previewTimer = window.setTimeout(() => {
+    app.layout.previewTimer = 0;
+    renderPendingLayoutPreview();
+  }, delay);
+}
+
+async function renderPendingLayoutPreview() {
+  if (!app.layout.open || !app.layout.pending.size) return;
+  if (app.layout.previewing) {
+    app.layout.previewQueued = true;
+    return;
+  }
+  const changes = serializedLayoutChanges().filter(
+    (change) => change.reset || Object.keys(change).length > 1,
+  );
+  if (!changes.length) return;
+  app.layout.previewing = true;
+  app.layout.previewQueued = false;
+  const generation = ++app.layout.previewGeneration;
+  setLayoutPreviewStatus("Rendering preview", "rendering");
+  renderLayoutApplyAvailability();
+  try {
+    const payload = await api(`/api/sessions/${app.sessionId}/layout-preview`, {
+      method: "POST",
+      body: JSON.stringify({
+        changes,
+        panel_id: selectedPanelId() || null,
+      }),
+    });
+    const blob = await protectedBlob(
+      authenticatedUrl(payload.preview_url, { v: generation }),
+    );
+    if (!app.layout.open || generation !== app.layout.previewGeneration) return;
+    const objectUrl = URL.createObjectURL(blob);
+    if (app.layout.objectUrl) URL.revokeObjectURL(app.layout.objectUrl);
+    app.layout.objectUrl = objectUrl;
+    const image = $("#layoutImage");
+    image.onload = renderLayoutOverlays;
+    image.src = objectUrl;
+    setLayoutPreviewStatus("Preview updated");
+  } catch (error) {
+    if (app.layout.open && generation === app.layout.previewGeneration) {
+      setLayoutPreviewStatus("Preview unavailable", "error");
+    }
+  } finally {
+    app.layout.previewing = false;
+    renderLayoutApplyAvailability();
+    if (app.layout.open && app.layout.previewQueued) {
+      app.layout.previewQueued = false;
+      scheduleLayoutPreview(80);
+    }
+  }
 }
 
 function updateSelectedLayoutValue(field, value) {
@@ -1393,6 +1462,7 @@ function updateSelectedLayoutValue(field, value) {
   pending.touched.add(field);
   pending[field] = value;
   renderLayoutOverlays();
+  scheduleLayoutPreview();
 }
 
 function updateSelectedLayoutOffset(axis, rawValue) {
@@ -1404,6 +1474,7 @@ function updateSelectedLayoutOffset(axis, rawValue) {
   pending.touched.add("offset_px");
   pending.offset_px[axis] = Math.round(parsed * 100) / 100;
   renderLayoutOverlays();
+  scheduleLayoutPreview();
 }
 
 function toggleSelectedLayoutVisibility() {
@@ -1414,6 +1485,7 @@ function toggleSelectedLayoutVisibility() {
   pending.touched.add("hidden");
   pending.hidden = !layoutVisualState(element).hidden;
   renderLayoutOverlays();
+  scheduleLayoutPreview();
 }
 
 function resetSelectedLayoutElement() {
@@ -1427,8 +1499,10 @@ function resetSelectedLayoutElement() {
     hidden: false,
     font_size: null,
     font_family: "",
+    color: element.color || "",
   });
   renderLayoutOverlays();
+  scheduleLayoutPreview();
 }
 
 function startLayoutDrag(event) {
@@ -1438,6 +1512,10 @@ function startLayoutDrag(event) {
   if (!element) return;
   event.preventDefault();
   app.layout.selectedId = elementId;
+  if (element.kind === "mark") {
+    renderLayoutOverlays();
+    return;
+  }
   const pending = layoutPendingRecord(element, true);
   pending.reset = false;
   pending.touched.add("offset_px");
@@ -1473,6 +1551,7 @@ function moveLayoutDrag(event) {
 function endLayoutDrag(event) {
   if (!app.layout.drag || app.layout.drag.pointerId !== event.pointerId) return;
   app.layout.drag = null;
+  scheduleLayoutPreview();
 }
 
 function handleLayoutElementKeydown(event) {
@@ -1494,6 +1573,7 @@ function handleLayoutElementKeydown(event) {
   event.preventDefault();
   app.layout.selectedId = elementId;
   const element = layoutElementById(elementId);
+  if (!element || element.kind === "mark") return;
   const pending = layoutPendingRecord(element, true);
   const step = event.shiftKey ? 10 : 1;
   pending.reset = false;
@@ -1501,6 +1581,7 @@ function handleLayoutElementKeydown(event) {
   pending.offset_px.x += movement[0] * step;
   pending.offset_px.y += movement[1] * step;
   renderLayoutOverlays();
+  scheduleLayoutPreview();
 }
 
 function populateLayoutFonts(fonts) {
@@ -1536,18 +1617,16 @@ async function openLayoutEditor() {
     app.layout.pending = new Map();
     app.layout.drag = null;
     app.layout.open = true;
+    app.layout.previewQueued = false;
     populateLayoutFonts(payload.layout.font_families);
-    const panelId = selectedPanelId();
-    $("#layoutEditorScope").textContent = panelId
-      ? `Editing elements assigned to panel ${panelId.toUpperCase()}. Changes outside this panel will be rejected.`
-      : "Move and format presentation elements without changing data.";
     const canvas = $("#layoutCanvas");
     canvas.style.aspectRatio = `${payload.layout.canvas_px[0]} / ${payload.layout.canvas_px[1]}`;
     const image = $("#layoutImage");
     image.onload = renderLayoutOverlays;
     image.src = app.layout.objectUrl;
     $("#layoutSearch").value = "";
-    $("#layoutKindFilter").value = "text";
+    $("#layoutKindFilter").value = "axis";
+    setLayoutPreviewStatus("Preview ready");
     $("#layoutEditor").classList.remove("hidden");
     document.body.classList.add("layout-editor-open");
     renderLayoutOverlays();
@@ -1561,6 +1640,10 @@ async function openLayoutEditor() {
 function closeLayoutEditor() {
   if (!app.layout.open || app.busy) return;
   app.layout.open = false;
+  window.clearTimeout(app.layout.previewTimer);
+  app.layout.previewTimer = 0;
+  app.layout.previewQueued = false;
+  app.layout.previewGeneration += 1;
   app.layout.data = null;
   app.layout.selectedId = "";
   app.layout.pending = new Map();
@@ -1594,7 +1677,9 @@ async function applyLayoutChanges() {
   const changes = serializedLayoutChanges().filter(
     (change) => change.reset || Object.keys(change).length > 1,
   );
-  if (!changes.length || app.busy) return;
+  if (!changes.length || app.busy || app.layout.previewing) return;
+  window.clearTimeout(app.layout.previewTimer);
+  app.layout.previewTimer = 0;
   setBusy(
     true,
     "Applying layout changes",
@@ -1730,16 +1815,13 @@ $("#layoutCancelButton").addEventListener("click", closeLayoutEditor);
 $("#layoutApplyButton").addEventListener("click", applyLayoutChanges);
 $("#layoutKindFilter").addEventListener("change", renderLayoutOverlays);
 $("#layoutSearch").addEventListener("input", renderLayoutOverlays);
-$("#layoutElementSelect").addEventListener("change", (event) => {
-  if (event.target.value) selectLayoutElement(event.target.value);
-});
-$("#layoutOffsetX").addEventListener("change", (event) =>
+$("#layoutOffsetX").addEventListener("input", (event) =>
   updateSelectedLayoutOffset("x", event.target.value),
 );
-$("#layoutOffsetY").addEventListener("change", (event) =>
+$("#layoutOffsetY").addEventListener("input", (event) =>
   updateSelectedLayoutOffset("y", event.target.value),
 );
-$("#layoutFontSize").addEventListener("change", (event) => {
+$("#layoutFontSize").addEventListener("input", (event) => {
   const value = event.target.value === "" ? null : Number(event.target.value);
   if (value !== null && !Number.isFinite(value)) return;
   updateSelectedLayoutValue("font_size", value);
@@ -1747,6 +1829,11 @@ $("#layoutFontSize").addEventListener("change", (event) => {
 $("#layoutFontFamily").addEventListener("change", (event) =>
   updateSelectedLayoutValue("font_family", event.target.value),
 );
+$("#layoutColor").addEventListener("input", (event) => {
+  const value = String(event.target.value || "").toLowerCase();
+  $("#layoutColorValue").textContent = value.toUpperCase();
+  updateSelectedLayoutValue("color", value);
+});
 $("#layoutVisibilityButton").addEventListener(
   "click",
   toggleSelectedLayoutVisibility,

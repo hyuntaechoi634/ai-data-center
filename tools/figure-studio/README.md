@@ -16,6 +16,19 @@ The default local address is `http://127.0.0.1:8765`. The server refuses a
 non-loopback bind. Use the existing authenticated reverse tunnel for named
 collaborators.
 
+## Interactive layout editor
+
+The layout editor exposes plots, text, bars, lines and capped whiskers from the
+reviewed Matplotlib entrypoints. Text and plot regions may be repositioned or
+hidden, typography may be changed, and scientific marks may be hidden or
+recolored. Marks cannot be repositioned because that could misrepresent the
+underlying values.
+
+Pending controls render in a disposable sandbox copy and update only the
+editor preview. The session workspace, Current figure and Undo history remain
+unchanged until Apply changes succeeds. The resulting overrides are small
+reviewable JSON records included in the existing exact-path proposal boundary.
+
 ## Reviewed GitHub proposal workflow
 
 The integration branch is `cht/proj/figure-studio`. A collaborator can submit
@@ -84,6 +97,7 @@ requests.
 - `studio/billing.py` reads sanitized API billing status
 - `studio/agent.py` performs bounded figure-code revisions
 - `studio/rendering.py` invokes the network-disabled renderer
+- `studio/layout.py` validates reviewable interactive layout overrides
 - `static` contains the browser interface
 
 ## Tests

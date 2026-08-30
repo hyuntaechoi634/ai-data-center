@@ -8,13 +8,18 @@ saved canvas, while font sizes remain Matplotlib points.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import json
 import math
 import os
 from pathlib import Path
 from typing import Any
 
+from matplotlib.colors import to_hex
+from matplotlib.container import BarContainer, ErrorbarContainer
 from matplotlib.figure import Figure
+from matplotlib.lines import Line2D
+from matplotlib.patches import Patch
 from matplotlib.text import Text
 from matplotlib.transforms import Bbox, ScaledTranslation
 
@@ -23,6 +28,17 @@ SCHEMA_VERSION = 1
 MAX_ELEMENTS = 2000
 _INSTALLED = False
 _ORIGINAL_SAVEFIG = Figure.savefig
+
+
+@dataclass(frozen=True)
+class MarkRecord:
+    element_id: str
+    role: str
+    label: str
+    artists: tuple[Any, ...]
+    bbox_artists: tuple[Any, ...]
+    axis_index: int
+    color_mode: str
 
 
 def _finite_number(value: object, default: float = 0.0) -> float:
@@ -129,6 +145,161 @@ def _text_inventory(fig: Figure) -> list[tuple[str, str, Text, int | None]]:
     return records[:MAX_ELEMENTS]
 
 
+def _public_artist_label(artist: Any) -> str:
+    try:
+        label = " ".join(str(artist.get_label()).split())
+    except Exception:
+        return ""
+    return "" if not label or label.startswith("_") else label[:160]
+
+
+def _errorbar_artists(container: ErrorbarContainer) -> tuple[Any, ...]:
+    artists: list[Any] = []
+    try:
+        data_line, cap_lines, bar_lines = container.lines
+    except (AttributeError, TypeError, ValueError):
+        return ()
+    artists.extend(bar_lines or ())
+    artists.extend(cap_lines or ())
+    if data_line is not None:
+        artists.append(data_line)
+    return tuple(artist for artist in artists if artist is not None)
+
+
+def _legend_handles(axis: Any) -> list[tuple[Any, str]]:
+    legend = axis.get_legend()
+    if legend is None:
+        return []
+    handles = getattr(legend, "legend_handles", None)
+    if handles is None:
+        handles = getattr(legend, "legendHandles", ())
+    texts = legend.get_texts()
+    return [
+        (handle, " ".join(str(text.get_text()).split())[:160])
+        for handle, text in zip(handles or (), texts)
+    ]
+
+
+def _mark_inventory(fig: Figure) -> list[MarkRecord]:
+    """Collect deterministic bar, whisker, line and shape groups."""
+    records: list[MarkRecord] = []
+    seen: set[int] = set()
+
+    for axis_index, axis in enumerate(fig.axes):
+        prefix = f"axis-{axis_index:02d}"
+        legend_entries = _legend_handles(axis)
+        counters = {"bar": 0, "whisker": 0, "line": 0, "shape": 0, "legend": 0}
+
+        def add(
+            category: str,
+            role: str,
+            label: str,
+            artists: tuple[Any, ...],
+            color_mode: str,
+        ) -> None:
+            base_artists = tuple(
+                artist
+                for artist in artists
+                if artist is not None and id(artist) not in seen
+            )
+            if not base_artists:
+                return
+            for artist in base_artists:
+                seen.add(id(artist))
+            public_label = label or f"{role} {counters[category] + 1}"
+            linked = tuple(
+                handle
+                for handle, legend_label in legend_entries
+                if label and legend_label == label and id(handle) not in seen
+            )
+            for artist in linked:
+                seen.add(id(artist))
+            element_id = f"{prefix}:{category}-{counters[category]:02d}"
+            counters[category] += 1
+            records.append(
+                MarkRecord(
+                    element_id=element_id,
+                    role=role,
+                    label=public_label,
+                    artists=base_artists + linked,
+                    bbox_artists=base_artists,
+                    axis_index=axis_index,
+                    color_mode=color_mode,
+                )
+            )
+
+        for container in axis.containers:
+            if isinstance(container, BarContainer):
+                add(
+                    "bar",
+                    "Bars",
+                    _public_artist_label(container),
+                    tuple(container.patches),
+                    "face",
+                )
+            elif isinstance(container, ErrorbarContainer):
+                add(
+                    "whisker",
+                    "Capped whisker",
+                    _public_artist_label(container),
+                    _errorbar_artists(container),
+                    "stroke",
+                )
+
+        for collection in axis.collections:
+            if id(collection) in seen:
+                continue
+            class_name = collection.__class__.__name__
+            if "LineCollection" in class_name:
+                role, category, color_mode = "Range line", "line", "stroke"
+            elif "PathCollection" in class_name:
+                role, category, color_mode = "Markers", "shape", "face"
+            else:
+                role, category, color_mode = "Area", "shape", "face"
+            add(
+                category,
+                role,
+                _public_artist_label(collection),
+                (collection,),
+                color_mode,
+            )
+
+        for line in axis.lines:
+            if id(line) in seen or not isinstance(line, Line2D):
+                continue
+            add(
+                "line",
+                "Line",
+                _public_artist_label(line),
+                (line,),
+                "stroke",
+            )
+
+        for patch in axis.patches:
+            if id(patch) in seen or not isinstance(patch, Patch):
+                continue
+            add(
+                "shape",
+                "Shape",
+                _public_artist_label(patch),
+                (patch,),
+                "face",
+            )
+
+        for handle, label in legend_entries:
+            if id(handle) in seen:
+                continue
+            add(
+                "legend",
+                "Legend color",
+                label,
+                (handle,),
+                "face" if isinstance(handle, Patch) else "stroke",
+            )
+
+    return records[:MAX_ELEMENTS]
+
+
 def _axis_label(axis: Any, index: int) -> str:
     for candidate in (axis.get_title(), axis.get_ylabel(), axis.get_xlabel()):
         text = str(candidate).strip()
@@ -194,6 +365,25 @@ def _apply_text_override(
         artist.set_fontfamily(str(record["font_family"]))
 
 
+def _apply_mark_override(mark: MarkRecord, record: dict[str, Any]) -> None:
+    hidden = record.get("hidden") is True
+    color = str(record.get("color", ""))
+    for artist in mark.artists:
+        if hidden:
+            artist.set_visible(False)
+        if not color:
+            continue
+        try:
+            if mark.color_mode == "face" and hasattr(artist, "set_facecolor"):
+                artist.set_facecolor(color)
+            elif hasattr(artist, "set_color"):
+                artist.set_color(color)
+            elif hasattr(artist, "set_edgecolor"):
+                artist.set_edgecolor(color)
+        except (AttributeError, TypeError, ValueError):
+            continue
+
+
 def _bbox_px(artist: Any, renderer: Any, height: float) -> list[float] | None:
     try:
         bbox = artist.get_window_extent(renderer)
@@ -203,6 +393,64 @@ def _bbox_px(artist: Any, renderer: Any, height: float) -> list[float] | None:
     if not all(math.isfinite(float(value)) for value in values):
         return None
     return [round(float(value), 2) for value in values]
+
+
+def _group_bbox_px(
+    artists: tuple[Any, ...],
+    renderer: Any,
+    height: float,
+) -> list[float] | None:
+    boxes: list[Bbox] = []
+    for artist in artists:
+        try:
+            bbox = artist.get_window_extent(renderer)
+            values = (bbox.x0, bbox.y0, bbox.x1, bbox.y1)
+        except Exception:
+            continue
+        if all(math.isfinite(float(value)) for value in values):
+            boxes.append(bbox)
+    if not boxes:
+        return None
+    combined = Bbox.union(boxes)
+    return [
+        round(float(combined.x0), 2),
+        round(float(height - combined.y1), 2),
+        round(float(combined.x1), 2),
+        round(float(height - combined.y0), 2),
+    ]
+
+
+def _simple_color(value: Any) -> str:
+    if hasattr(value, "tolist"):
+        value = value.tolist()
+    while isinstance(value, (list, tuple)) and value and isinstance(
+        value[0], (list, tuple)
+    ):
+        value = value[0]
+    try:
+        return to_hex(value, keep_alpha=False).lower()
+    except (TypeError, ValueError):
+        return ""
+
+
+def _mark_color(mark: MarkRecord) -> str:
+    for artist in mark.bbox_artists:
+        getters = (
+            ("get_facecolor", "get_color", "get_edgecolor")
+            if mark.color_mode == "face"
+            else ("get_color", "get_edgecolor", "get_facecolor")
+        )
+        for getter_name in getters:
+            getter = getattr(artist, getter_name, None)
+            if getter is None:
+                continue
+            try:
+                color = _simple_color(getter())
+            except Exception:
+                continue
+            if color:
+                return color
+    return ""
 
 
 def _font_family(artist: Text) -> str:
@@ -220,6 +468,7 @@ def _write_catalog(
     save_dpi: float,
     axes: list[tuple[str, Any]],
     texts: list[tuple[str, str, Text, int | None]],
+    marks: list[MarkRecord],
     overrides: dict[str, dict[str, Any]],
 ) -> None:
     original_dpi = float(fig.dpi)
@@ -249,6 +498,30 @@ def _write_catalog(
                     },
                     "font_size": record.get("font_size"),
                     "font_family": record.get("font_family", ""),
+                    "hidden": record.get("hidden") is True,
+                    "override": record,
+                }
+            )
+        for mark in marks:
+            bbox = _group_bbox_px(mark.bbox_artists, renderer, height)
+            if bbox is None:
+                continue
+            record = overrides.get(mark.element_id, {})
+            elements.append(
+                {
+                    "id": mark.element_id,
+                    "kind": "mark",
+                    "role": mark.role,
+                    "label": mark.label,
+                    "axis_index": mark.axis_index,
+                    "bbox_px": bbox,
+                    "visible": any(
+                        bool(artist.get_visible()) for artist in mark.bbox_artists
+                    ),
+                    "offset_px": {"x": 0.0, "y": 0.0},
+                    "font_size": None,
+                    "font_family": "",
+                    "color": record.get("color") or _mark_color(mark),
                     "hidden": record.get("hidden") is True,
                     "override": record,
                 }
@@ -283,7 +556,7 @@ def _write_catalog(
             "figure_id": figure_id,
             "canvas_px": [round(width), round(height)],
             "dpi": save_dpi,
-            "elements": elements,
+            "elements": elements[:MAX_ELEMENTS],
         }
         path.parent.mkdir(parents=True, exist_ok=True)
         temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
@@ -314,6 +587,7 @@ def install_layout_runtime(
             save_dpi = float(fig.dpi)
         fig.canvas.draw()
         texts = _text_inventory(fig)
+        marks = _mark_inventory(fig)
         axes = [(f"axis-{index:02d}", axis) for index, axis in enumerate(fig.axes)]
         width = float(fig.get_figwidth() * save_dpi)
         height = float(fig.get_figheight() * save_dpi)
@@ -332,6 +606,8 @@ def install_layout_runtime(
                 overrides.get(element_id, {}),
                 save_dpi,
             )
+        for mark in marks:
+            _apply_mark_override(mark, overrides.get(mark.element_id, {}))
         result = _ORIGINAL_SAVEFIG(fig, *args, **kwargs)
         _write_catalog(
             catalog_path,
@@ -340,6 +616,7 @@ def install_layout_runtime(
             save_dpi,
             axes,
             texts,
+            marks,
             overrides,
         )
         return result

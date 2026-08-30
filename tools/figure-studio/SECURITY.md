@@ -5,6 +5,11 @@ external collaborators. The browser is untrusted. Uploaded files are data and
 are never executed. Generated plotting code runs in a network-disabled
 Bubblewrap workspace with resource limits.
 
+Interactive previews also render in disposable copies of the session
+workspace. Preview requests cannot mutate Current, create an Undo revision, or
+move individual scientific marks. Apply repeats the validated change against
+the real workspace and retains the existing panel-boundary check.
+
 OpenAI and GitHub credentials belong in separate, owned, mode-600 files outside
 the repository. Do not put tokens in environment values, browser storage,
 URLs, chat messages, session workspaces, or Git history. The web process must

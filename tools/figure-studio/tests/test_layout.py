@@ -39,6 +39,20 @@ class LayoutContractTests(unittest.TestCase):
                             "font_size": 15,
                             "font_family": "sans-serif",
                             "override": {},
+                        },
+                        {
+                            "id": "axis-00:whisker-00",
+                            "kind": "mark",
+                            "role": "Capped whisker",
+                            "label": "Capped whisker 1",
+                            "bbox_px": [220, 180, 250, 330],
+                            "visible": True,
+                            "hidden": False,
+                            "offset_px": {"x": 0, "y": 0},
+                            "font_size": None,
+                            "font_family": "",
+                            "color": "#333333",
+                            "override": {},
                         }
                     ],
                 }
@@ -83,6 +97,30 @@ class LayoutContractTests(unittest.TestCase):
                 self.workspace,
                 "figure-01",
                 [{"id": "axis-00:title", "font_family": "Remote Web Font"}],
+            )
+
+    def test_mark_color_is_reviewable_and_position_is_locked(self) -> None:
+        update = prepare_layout_update(
+            self.workspace,
+            "figure-01",
+            [{"id": "axis-00:whisker-00", "color": "#b31b34"}],
+            panel_id="a",
+        )
+        write_layout_update(update)
+        payload = json.loads(update.path.read_text(encoding="utf-8"))
+        self.assertEqual(
+            payload["elements"]["axis-00:whisker-00"]["color"], "#b31b34"
+        )
+        with self.assertRaisesRegex(LayoutError, "does not support"):
+            prepare_layout_update(
+                self.workspace,
+                "figure-01",
+                [
+                    {
+                        "id": "axis-00:whisker-00",
+                        "offset_px": {"x": 10, "y": 0},
+                    }
+                ],
             )
 
 

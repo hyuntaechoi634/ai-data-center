@@ -17,6 +17,7 @@ MAX_OVERRIDE_BYTES = 1024 * 1024
 MAX_ELEMENTS = 2000
 MAX_CHANGES = 120
 ELEMENT_ID = re.compile(r"^[A-Za-z0-9:_-]{1,120}$")
+HEX_COLOR = re.compile(r"^#[0-9A-Fa-f]{6}$")
 FONT_FAMILIES = (
     ("DejaVu Sans", "DejaVu Sans"),
     ("Liberation Sans", "Liberation Sans"),
@@ -132,7 +133,7 @@ def load_layout_catalog(root: Path, figure_id: str) -> dict[str, Any]:
             raise LayoutError("The layout element identifiers are invalid")
         seen.add(element_id)
         kind = str(raw.get("kind", ""))
-        if kind not in {"axis", "text"}:
+        if kind not in {"axis", "text", "mark"}:
             raise LayoutError("The layout element type is invalid")
         raw_bbox = raw.get("bbox_px")
         if not isinstance(raw_bbox, list) or len(raw_bbox) != 4:
@@ -148,6 +149,9 @@ def load_layout_catalog(root: Path, figure_id: str) -> dict[str, Any]:
         if font_size is not None:
             font_size = _number(font_size, "Font size")
         font_family = str(raw.get("font_family", ""))[:100]
+        color = str(raw.get("color", ""))
+        if color and not HEX_COLOR.fullmatch(color):
+            raise LayoutError("A layout element color is invalid")
         raw_offset = raw.get("offset_px")
         offset = {"x": 0.0, "y": 0.0}
         if isinstance(raw_offset, dict):
@@ -162,8 +166,12 @@ def load_layout_catalog(root: Path, figure_id: str) -> dict[str, Any]:
             {
                 "id": element_id,
                 "kind": kind,
-                "role": role[:80] or ("Plot" if kind == "axis" else "Text"),
-                "label": label[:240] or ("Plot" if kind == "axis" else "Text"),
+                "role": role[:80] or (
+                    "Plot" if kind == "axis" else "Mark" if kind == "mark" else "Text"
+                ),
+                "label": label[:240] or (
+                    "Plot" if kind == "axis" else "Mark" if kind == "mark" else "Text"
+                ),
                 "bbox_px": [round(value, 2) for value in bbox],
                 "panel_id": _panel_for_bbox(figure_id, bbox, (width, height)),
                 "visible": bool(raw.get("visible", True)),
@@ -174,6 +182,7 @@ def load_layout_catalog(root: Path, figure_id: str) -> dict[str, Any]:
                 },
                 "font_size": None if font_size is None else round(font_size, 3),
                 "font_family": font_family,
+                "color": color.lower(),
                 "override": override,
             }
         )
@@ -234,6 +243,14 @@ def prepare_layout_update(
             changed_ids.add(element_id)
             continue
 
+        allowed_fields = {"id", "reset", "hidden"}
+        if element["kind"] == "mark":
+            allowed_fields.add("color")
+        else:
+            allowed_fields.update({"offset_px", "font_size", "font_family"})
+        if set(raw_change) - allowed_fields:
+            raise LayoutError("The selected element does not support that setting")
+
         record = records.setdefault(element_id, {})
         if not isinstance(record, dict):
             record = {}
@@ -274,6 +291,14 @@ def prepare_layout_update(
                 raise LayoutError("The selected font family is unavailable")
             else:
                 record["font_family"] = font_family
+        if "color" in raw_change:
+            color = str(raw_change["color"] or "")
+            if not color:
+                record.pop("color", None)
+            elif not HEX_COLOR.fullmatch(color):
+                raise LayoutError("Choose a six-digit hexadecimal color")
+            else:
+                record["color"] = color.lower()
         if not record:
             records.pop(element_id, None)
         changed_ids.add(element_id)
