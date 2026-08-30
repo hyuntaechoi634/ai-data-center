@@ -26,6 +26,7 @@ from matplotlib.transforms import Bbox, ScaledTranslation
 
 SCHEMA_VERSION = 1
 MAX_ELEMENTS = 2000
+MAX_LABEL_TEXT = 240
 _INSTALLED = False
 _ORIGINAL_SAVEFIG = Figure.savefig
 
@@ -423,6 +424,8 @@ def _apply_text_override(
     record: dict[str, Any],
     save_dpi: float,
 ) -> None:
+    if isinstance(record.get("text"), str):
+        artist.set_text(record["text"])
     dx, dy = _offset(record)
     if dx or dy:
         artist.set_transform(
@@ -662,13 +665,15 @@ def _write_catalog(
             if bbox is None:
                 continue
             record = overrides.get(element_id, {})
-            label = " ".join(str(artist.get_text()).split())
+            artist_text = str(artist.get_text())[:MAX_LABEL_TEXT]
+            label = " ".join(artist_text.split())
             elements.append(
                 {
                     "id": element_id,
                     "kind": "text",
                     "role": role,
                     "label": label[:240],
+                    "text": artist_text,
                     "axis_index": axis_index,
                     "bbox_px": bbox,
                     "visible": bool(artist.get_visible()),

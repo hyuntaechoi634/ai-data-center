@@ -32,11 +32,26 @@ class LayoutContractTests(unittest.TestCase):
                             "kind": "text",
                             "role": "Title",
                             "label": "Low demand",
+                            "text": "Low demand",
                             "bbox_px": [200, 100, 400, 150],
                             "visible": True,
                             "hidden": False,
                             "offset_px": {"x": 0, "y": 0},
                             "font_size": 15,
+                            "font_family": "sans-serif",
+                            "override": {},
+                        },
+                        {
+                            "id": "axis-00:x-tick-00",
+                            "kind": "text",
+                            "role": "X tick",
+                            "label": "2025",
+                            "text": "2025",
+                            "bbox_px": [250, 400, 300, 430],
+                            "visible": True,
+                            "hidden": False,
+                            "offset_px": {"x": 0, "y": 0},
+                            "font_size": 12,
                             "font_family": "sans-serif",
                             "override": {},
                         },
@@ -71,6 +86,8 @@ class LayoutContractTests(unittest.TestCase):
     def test_reviewable_layout_update(self) -> None:
         catalog = load_layout_catalog(self.workspace, "figure-01")
         self.assertEqual(catalog["elements"][0]["panel_id"], "a")
+        self.assertTrue(catalog["elements"][0]["text_editable"])
+        self.assertFalse(catalog["elements"][1]["text_editable"])
         update = prepare_layout_update(
             self.workspace,
             "figure-01",
@@ -82,6 +99,7 @@ class LayoutContractTests(unittest.TestCase):
                     "font_family": "DejaVu Sans",
                     "font_weight": "bold",
                     "font_style": "italic",
+                    "text": "Revised title",
                 }
             ],
             panel_id="a",
@@ -97,6 +115,9 @@ class LayoutContractTests(unittest.TestCase):
         )
         self.assertEqual(
             payload["elements"]["axis-00:title"]["font_style"], "italic"
+        )
+        self.assertEqual(
+            payload["elements"]["axis-00:title"]["text"], "Revised title"
         )
 
     def test_unreviewed_font_is_rejected(self) -> None:
@@ -117,6 +138,18 @@ class LayoutContractTests(unittest.TestCase):
                 self.workspace,
                 "figure-01",
                 [{"id": "axis-00:title", "font_style": "slanted"}],
+            )
+        with self.assertRaisesRegex(LayoutError, "cannot be empty"):
+            prepare_layout_update(
+                self.workspace,
+                "figure-01",
+                [{"id": "axis-00:title", "text": "   "}],
+            )
+        with self.assertRaisesRegex(LayoutError, "does not support"):
+            prepare_layout_update(
+                self.workspace,
+                "figure-01",
+                [{"id": "axis-00:x-tick-00", "text": "2030"}],
             )
 
     def test_mark_color_is_reviewable_and_position_is_locked(self) -> None:

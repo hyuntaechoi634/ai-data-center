@@ -16,6 +16,7 @@ MAX_CATALOG_BYTES = 4 * 1024 * 1024
 MAX_OVERRIDE_BYTES = 1024 * 1024
 MAX_ELEMENTS = 2000
 MAX_CHANGES = 120
+MAX_LABEL_TEXT = 240
 ELEMENT_ID = re.compile(r"^[A-Za-z0-9:_-]{1,120}$")
 HEX_COLOR = re.compile(r"^#[0-9A-Fa-f]{6}$")
 FONT_FAMILIES = (
@@ -161,8 +162,19 @@ def load_layout_catalog(root: Path, figure_id: str) -> dict[str, Any]:
             raise LayoutError("A layout element boundary is invalid")
         if any(abs(value) > max(width, height) * 4 for value in bbox):
             raise LayoutError("A layout element boundary is outside the safe canvas")
-        label = " ".join(str(raw.get("label", "")).replace(chr(0xB7), ",").split())
         role = " ".join(str(raw.get("role", "")).split())
+        raw_text = raw.get("text", raw.get("label", "")) if kind == "text" else ""
+        text = (
+            str(raw_text)
+            .replace(chr(0xB7), ",")
+            .replace("\r\n", "\n")
+            .replace("\r", "\n")
+            .replace(chr(0), "")[:MAX_LABEL_TEXT]
+        )
+        label = " ".join(
+            str(raw.get("label", text)).replace(chr(0xB7), ",").split()
+        )
+        text_editable = kind == "text" and "tick" not in role.lower()
         font_size = raw.get("font_size")
         if font_size is not None:
             font_size = _number(font_size, "Font size")
@@ -192,6 +204,8 @@ def load_layout_catalog(root: Path, figure_id: str) -> dict[str, Any]:
                 "label": label[:240] or (
                     "Plot" if kind == "axis" else "Mark" if kind == "mark" else "Text"
                 ),
+                "text": text,
+                "text_editable": text_editable,
                 "bbox_px": [round(value, 2) for value in bbox],
                 "panel_id": _panel_for_bbox(figure_id, bbox, (width, height)),
                 "visible": bool(raw.get("visible", True)),
@@ -272,6 +286,8 @@ def prepare_layout_update(
             allowed_fields.update(
                 {"offset_px", "font_size", "font_family", "font_weight", "font_style"}
             )
+            if element["kind"] == "text" and element["text_editable"]:
+                allowed_fields.add("text")
         if set(raw_change) - allowed_fields:
             raise LayoutError("The selected element does not support that setting")
 
@@ -331,6 +347,27 @@ def prepare_layout_update(
                 raise LayoutError("The selected font style is unavailable")
             else:
                 record["font_style"] = font_style
+        if "text" in raw_change:
+            if not isinstance(raw_change["text"], str):
+                raise LayoutError("Label text must be text")
+            label_text = (
+                raw_change["text"]
+                .replace(chr(0xB7), ",")
+                .replace("\r\n", "\n")
+                .replace("\r", "\n")
+            )
+            if chr(0) in label_text or any(
+                ord(character) < 32 and character not in {"\n", "\t"}
+                for character in label_text
+            ):
+                raise LayoutError("Label text contains an unsupported character")
+            if not label_text.strip():
+                raise LayoutError("Label text cannot be empty; hide the element instead")
+            if len(label_text) > MAX_LABEL_TEXT:
+                raise LayoutError(
+                    f"Label text must be {MAX_LABEL_TEXT} characters or fewer"
+                )
+            record["text"] = label_text
         if "color" in raw_change:
             color = str(raw_change["color"] or "")
             if not color:

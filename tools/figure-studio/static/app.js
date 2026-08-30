@@ -69,6 +69,8 @@ const app = {
     previewGeneration: 0,
     fontSizeDraftValid: true,
     fontSizeDraftDirty: false,
+    textDraftValid: true,
+    textDraftDirty: false,
   },
 };
 
@@ -1266,6 +1268,7 @@ function layoutPendingRecord(element, create = false) {
       font_family: element.override?.font_family || "",
       font_weight: element.override?.font_weight || element.font_weight || "normal",
       font_style: element.override?.font_style || element.font_style || "normal",
+      text: element.override?.text ?? element.text ?? element.label ?? "",
       color: element.override?.color || element.color || "",
     };
     app.layout.pending.set(element.id, record);
@@ -1305,6 +1308,10 @@ function hasCommittedLayoutOverride(element) {
     !Array.isArray(override) &&
     Object.keys(override).length
   );
+}
+
+function hasIncompleteLayoutDraft() {
+  return app.layout.fontSizeDraftDirty || app.layout.textDraftDirty;
 }
 
 function layoutScopeBBox() {
@@ -1459,7 +1466,11 @@ function renderLayoutInspector() {
   const preserveFontFocus = (
     element?.kind === "text" && document.activeElement === $("#layoutFontSize")
   );
+  const preserveTextFocus = (
+    element?.text_editable && document.activeElement === $("#layoutText")
+  );
   const controls = [
+    "#layoutText",
     "#layoutFontSize",
     "#layoutFontFamily",
     "#layoutBoldButton",
@@ -1469,13 +1480,19 @@ function renderLayoutInspector() {
     "#layoutResetElementButton",
   ];
   controls.forEach((selector) => {
-    if (selector !== "#layoutFontSize" || !preserveFontFocus) {
+    const preserveFocusedInput = (
+      (selector === "#layoutFontSize" && preserveFontFocus) ||
+      (selector === "#layoutText" && preserveTextFocus)
+    );
+    if (!preserveFocusedInput) {
       $(selector).disabled = true;
     }
   });
   $("#layoutInspectorEmpty").classList.toggle("hidden", Boolean(element));
   $("#layoutInspectorControls").classList.toggle("hidden", !element);
   if (!element) {
+    $("#layoutText").value = "";
+    $("#layoutText").setCustomValidity("");
     $("#layoutFontSize").value = "";
     $("#layoutFontFamily").value = "";
     $("#layoutColor").value = "#176b50";
@@ -1485,19 +1502,28 @@ function renderLayoutInspector() {
     $("#layoutItalicButton").setAttribute("aria-pressed", "false");
     app.layout.fontSizeDraftValid = true;
     app.layout.fontSizeDraftDirty = false;
+    app.layout.textDraftValid = true;
+    app.layout.textDraftDirty = false;
     renderLayoutApplyAvailability();
     return;
   }
   const isMark = element.kind === "mark";
   const isText = element.kind === "text";
   $("#layoutTypographyControls").classList.toggle("hidden", !isText);
+  $("#layoutTextField").classList.toggle("hidden", !element.text_editable);
   $("#layoutColorField").classList.toggle("hidden", !isMark);
+  if (!element.text_editable) {
+    $("#layoutText").value = "";
+    $("#layoutText").setCustomValidity("");
+    app.layout.textDraftValid = true;
+    app.layout.textDraftDirty = false;
+  }
   $("#layoutVisibilityButton").disabled = false;
   const pending = layoutPendingRecord(element);
   $("#layoutResetElementButton").disabled = !(
     (pending && !pending.reset) ||
     (hasCommittedLayoutOverride(element) && !pending?.reset) ||
-    (isText && app.layout.fontSizeDraftDirty)
+    (isText && hasIncompleteLayoutDraft())
   );
   const visual = layoutVisualState(element);
   if (isMark) {
@@ -1511,6 +1537,19 @@ function renderLayoutInspector() {
     $("#layoutColor").value = safeColor;
     $("#layoutColorValue").textContent = safeColor.toUpperCase();
   } else if (isText) {
+    if (element.text_editable) {
+      $("#layoutText").disabled = false;
+      const text = pending && !pending.reset && pending.touched.has("text")
+        ? pending.text
+        : element.text;
+      const textInput = $("#layoutText");
+      if (!preserveTextFocus) {
+        textInput.value = String(text ?? element.label ?? "");
+        textInput.setCustomValidity("");
+        app.layout.textDraftValid = true;
+        app.layout.textDraftDirty = false;
+      }
+    }
     $("#layoutFontSize").disabled = false;
     $("#layoutFontFamily").disabled = false;
     const size = pending && !pending.reset && pending.touched.has("font_size")
@@ -1552,6 +1591,7 @@ function renderLayoutApplyAvailability() {
     Boolean(app.layout.previewTimer) ||
     app.layout.previewQueued ||
     !app.layout.fontSizeDraftValid ||
+    !app.layout.textDraftValid ||
     !app.layout.pending.size
   );
   renderActionAvailability();
@@ -1699,6 +1739,37 @@ function flushLayoutFontSizePreview() {
   if (pending?.touched.has("font_size")) scheduleLayoutPreview(40);
 }
 
+function handleLayoutTextInput(event) {
+  const input = event.currentTarget;
+  const value = String(input.value || "");
+  const valid = value.trim() !== "" && value.length <= 240;
+  app.layout.textDraftValid = valid;
+  app.layout.textDraftDirty = !valid;
+  input.setCustomValidity(valid ? "" : "Enter label text with 240 characters or fewer");
+  if (!valid) {
+    invalidateLayoutPreview();
+    setLayoutPreviewStatus(
+      "Enter label text with 240 characters or fewer",
+      "error",
+    );
+    $("#layoutResetElementButton").disabled = false;
+    renderLayoutApplyAvailability();
+    return;
+  }
+  updateSelectedLayoutValue(
+    "text",
+    value,
+    { refreshOverlays: false, previewDelay: 650 },
+  );
+}
+
+function flushLayoutTextPreview() {
+  if (!app.layout.textDraftValid) return;
+  const element = layoutElementById(app.layout.selectedId);
+  const pending = element ? layoutPendingRecord(element) : null;
+  if (pending?.touched.has("text")) scheduleLayoutPreview(40);
+}
+
 function toggleSelectedFontWeight() {
   const active = $("#layoutBoldButton").getAttribute("aria-pressed") === "true";
   updateSelectedLayoutValue("font_weight", active ? "normal" : "bold", {
@@ -1729,11 +1800,14 @@ function resetSelectedLayoutElement() {
   if (!element) return;
   const pending = layoutPendingRecord(element);
   const committed = hasCommittedLayoutOverride(element);
-  if (!pending && !committed && !app.layout.fontSizeDraftDirty) return;
+  if (!pending && !committed && !hasIncompleteLayoutDraft()) return;
   invalidateLayoutPreview();
-  if (app.layout.fontSizeDraftDirty) $("#layoutFontSize").blur();
+  $("#layoutFontSize").blur();
+  $("#layoutText").blur();
   app.layout.fontSizeDraftValid = true;
   app.layout.fontSizeDraftDirty = false;
+  app.layout.textDraftValid = true;
+  app.layout.textDraftDirty = false;
   if (!committed) {
     app.layout.pending.delete(element.id);
     renderLayoutOverlays();
@@ -1754,6 +1828,7 @@ function resetSelectedLayoutElement() {
     font_family: "",
     font_weight: "normal",
     font_style: "normal",
+    text: element.text || element.label || "",
     color: element.color || "",
   });
   renderLayoutOverlays();
@@ -1888,6 +1963,8 @@ async function openLayoutEditor() {
     app.layout.previewQueued = false;
     app.layout.fontSizeDraftValid = true;
     app.layout.fontSizeDraftDirty = false;
+    app.layout.textDraftValid = true;
+    app.layout.textDraftDirty = false;
     populateLayoutFonts(payload.layout.font_families);
     const canvas = $("#layoutCanvas");
     const viewport = $("#layoutCanvasViewport");
@@ -1932,6 +2009,8 @@ function closeLayoutEditor() {
   app.layout.drag = null;
   app.layout.fontSizeDraftValid = true;
   app.layout.fontSizeDraftDirty = false;
+  app.layout.textDraftValid = true;
+  app.layout.textDraftDirty = false;
   if (app.layout.objectUrl) {
     URL.revokeObjectURL(app.layout.objectUrl);
     app.layout.objectUrl = "";
@@ -1952,12 +2031,17 @@ function discardLayoutChanges() {
   if (
     !app.layout.open ||
     app.busy ||
-    (!app.layout.pending.size && !app.layout.fontSizeDraftDirty)
+    (!app.layout.pending.size && !hasIncompleteLayoutDraft())
   ) return;
+  $("#layoutFontSize").blur();
+  $("#layoutText").blur();
   app.layout.pending = new Map();
   app.layout.fontSizeDraftValid = true;
   app.layout.fontSizeDraftDirty = false;
+  app.layout.textDraftValid = true;
+  app.layout.textDraftDirty = false;
   $("#layoutFontSize").setCustomValidity("");
+  $("#layoutText").setCustomValidity("");
   restoreCommittedLayoutImage();
 }
 
@@ -2088,7 +2172,7 @@ document.addEventListener("keydown", (event) => {
   if (event.key !== "Escape" || event.repeat) return;
   if (
     app.layout.open &&
-    (app.layout.pending.size || app.layout.fontSizeDraftDirty) &&
+    (app.layout.pending.size || hasIncompleteLayoutDraft()) &&
     !app.busy
   ) {
     event.preventDefault();
@@ -2120,6 +2204,13 @@ $("#downloadCurrentFigure").addEventListener("click", (event) =>
 $("#downloadProject").addEventListener("click", downloadProject);
 $("#pullRequestButton").addEventListener("click", createPullRequest);
 $("#layoutApplyButton").addEventListener("click", applyLayoutChanges);
+$("#layoutText").addEventListener("input", handleLayoutTextInput);
+$("#layoutText").addEventListener("change", flushLayoutTextPreview);
+$("#layoutText").addEventListener("keydown", (event) => {
+  if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+    flushLayoutTextPreview();
+  }
+});
 $("#layoutFontSize").addEventListener("input", handleLayoutFontSizeInput);
 $("#layoutFontSize").addEventListener("change", flushLayoutFontSizePreview);
 $("#layoutFontSize").addEventListener("keydown", (event) => {

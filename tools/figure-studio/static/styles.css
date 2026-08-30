@@ -1147,7 +1147,8 @@ body.layout-editor-open {
 .layout-toolbar select,
 .layout-toolbar > input,
 .layout-inspector select,
-.layout-inspector input {
+.layout-inspector input,
+.layout-inspector textarea {
   min-height: 2.1rem;
   border: 1px solid var(--line);
   border-radius: 7px;
@@ -1335,11 +1336,22 @@ body.layout-editor-open {
 }
 
 .layout-field select,
-.layout-field input {
+.layout-field input,
+.layout-field textarea {
   width: 100%;
   color: var(--ink);
   font-weight: 500;
   letter-spacing: 0;
+}
+
+.layout-text-field {
+  grid-column: 1 / -1;
+}
+
+.layout-text-field textarea {
+  min-height: 3.25rem;
+  resize: vertical;
+  line-height: 1.35;
 }
 
 .layout-coordinate-grid {
@@ -1459,7 +1471,8 @@ body.layout-editor-open {
 .layout-inline-editor .layout-toolbar select,
 .layout-inline-editor .layout-toolbar > input,
 .layout-inline-editor .layout-inspector select,
-.layout-inline-editor .layout-inspector input {
+.layout-inline-editor .layout-inspector input,
+.layout-inline-editor .layout-inspector textarea {
   min-height: 2.55rem;
   border-color: rgba(255, 255, 255, 0.55);
   font-size: 1rem;
