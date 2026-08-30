@@ -7,13 +7,17 @@ import os
 from pathlib import Path
 import runpy
 import shutil
+import sys
 
 
 HERE = Path(__file__).resolve().parent
 LEGACY_OUTPUT = HERE / "figure-04.jpg"
+sys.path.insert(0, str(HERE.parent / "helpers"))
+from layout_runtime import install_entrypoint_layout
 
 
 def main() -> None:
+    install_entrypoint_layout(HERE, "figure-04")
     LEGACY_OUTPUT.unlink(missing_ok=True)
     runpy.run_path(str(HERE / "make_figure_04.py"), run_name="__main__")
     if not LEGACY_OUTPUT.is_file():

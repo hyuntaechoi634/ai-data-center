@@ -11,7 +11,7 @@ import tempfile
 
 
 FIGURES = tuple(f"figure-{number:02d}" for number in range(1, 7))
-SHARED_HELPERS = ("_registry.py", "gcam_style.py")
+SHARED_HELPERS = ("_registry.py", "gcam_style.py", "layout_runtime.py")
 COMMIT = re.compile(r"^[0-9a-f]{40}$")
 
 
@@ -92,6 +92,7 @@ def main() -> None:
         reviewed_paths.extend(
             (
                 root / "CAPTION.md",
+                root / "layout-overrides.json",
                 root / "make_figure.py",
                 root / f"make_figure_{figure_id[-2:]}.py",
             )
