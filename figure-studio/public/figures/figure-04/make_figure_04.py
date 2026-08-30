@@ -1,20 +1,12 @@
 #!/usr/bin/env python3
-"""Redesigned manuscript fig04 — global water (new file; existing untouched).
+"""Build Figure 4 from the audited BaseX freshwater queries.
 
-Three panels under the established scenario presentation (Low / Medium / High,
-):
-  a | Water-use pathways 2025-2050, one small panel per demand scenario
-      (Medium efficiency, reference). Stacked layers separate the CONSUMED
-      share from the WITHDRAWN-AND-RETURNED remainder, so the top edge is
-      total withdrawal; consumption is PART of withdrawal and the two are
-      never added.
-  b | Consumption in 2050 — direct + indirect stacked bars per demand and
-      policy at Medium efficiency, with whiskers spanning the three
-      efficiency pathways.
-  c | NET withdrawal in 2050 (withdrawal minus consumption, the returned
-      flow) — same organization; b + c = the total withdrawal in a. The
-      net-zero increase at High demand is indirect generation cooling water.
-Volumetric exposure only; the model carries no basin-level scarcity.
+Freshwater consumption and withdrawal are independent GCAM input categories.
+In particular, electricity-sector consumption includes hydropower reservoir
+evaporation, so it cannot be interpreted as a subset of withdrawal. Panel a
+therefore draws separate pathways rather than a consumption/return-flow stack.
+Panels b and c decompose each measure into direct data-center and indirect
+power-generation use. The figure reports volumetric use, not scarcity.
 """
 
 from __future__ import annotations
@@ -34,15 +26,12 @@ OUT_JPG = HERE / "figure-04.jpg"
 import os as _os
 D = Path(_os.environ.get(
     "FIG_DATA_DIR", str(ROOT / "results/derived/figure-data")))
-AGX = ROOT / "analysis/agentic-extreme-demand"
-
 DEMANDS = ["Low", "Medium", "High"]
 DEM_DISP = {"Low": "Low", "Medium": "Medium", "High": "High"}
 EFFS = ["Low", "Medium", "High"]
 C_REF, C_NZ = "#b3531d", "#1f7a8c"
 C_DIR, C_IND = "#1d5e86", "#a8cbe0"   # direct (deep) / indirect (pale) water
-C_CONS, C_RET = "#2b6a92", "#dcdcdc"  # consumed / withdrawn-and-returned (a)
-C_WEDGE = "#14496b"
+C_CONS, C_WITH = "#176d91", "#7651a1"
 
 FS = dict(tick=20, label=24, title=26, letter=34, ann=20, small=20)
 CM = FuncFormatter(lambda v, _p: f"{int(round(v)):,}")
@@ -66,9 +55,6 @@ def load():
     t = t[t.demand.isin(DEMANDS)]
     t["cons"] = t.dir_cons + t.ind_cons
     t["withdr"] = t.dir_withdr + t.ind_withdr
-    t["net_dir"] = t.dir_withdr - t.dir_cons
-    t["net_ind"] = t.ind_withdr - t.ind_cons
-    t["net"] = t.withdr - t.cons
     g = t[t.year == 2050].copy()
     return g, t
 
@@ -135,18 +121,20 @@ def main() -> None:
     gs = fig.add_gridspec(1, 3, width_ratios=[1.5, 1.0, 1.0], wspace=0.30,
                           left=0.05, right=0.975, bottom=0.175, top=0.875)
 
-    # -------- a: stacked water-use pathways, one column per demand --------
+    # -------- a: independent freshwater pathways, one column per demand --------
     sub_gs = gs[0].subgridspec(1, 3, wspace=0.38)
     med = t[(t.policy == "ref") & (t.eff == "Medium")
             & t.year.between(2021, 2050)]
-    ymax = float(med.withdr.max()) * 1.18
+    ymax = float(med[["cons", "withdr"]].max().max()) * 1.18
     for i, dem in enumerate(DEMANDS):
         ax = fig.add_subplot(sub_gs[0, i])
         style(ax)
         s = med[med.demand == dem].sort_values("year")
-        ax.fill_between(s.year, 0.0, s.cons, color=C_CONS, lw=0, zorder=3)
-        ax.fill_between(s.year, s.cons, s.withdr, color=C_RET, lw=0, zorder=2)
-        ax.plot(s.year, s.withdr, color=C_WEDGE, lw=1.5, zorder=4)
+        ax.plot(s.year, s.cons, color=C_CONS, lw=2.4, marker="o", ms=5.5,
+                mfc="white", mec=C_CONS, mew=1.4, zorder=4)
+        ax.plot(s.year, s.withdr, color=C_WITH, lw=2.4, ls="--",
+                marker="s", ms=5.0, mfc="white", mec=C_WITH, mew=1.3,
+                zorder=4)
         ax.set_xlim(2021, 2050)
         ax.set_xticks([2021, 2030, 2040, 2050])
         ax.set_ylim(0, ymax)
@@ -156,43 +144,38 @@ def main() -> None:
                       "High": "High demand"}[dem],
                      fontsize=FS["title"] - 2, color="0.15", pad=6)
         if i == 0:
-            ax.set_ylabel("Total withdrawal (km$^3$)",
+            ax.set_ylabel("Freshwater use (km$^3$)",
                           fontsize=FS["label"])
             ax.text(-0.46, 1.07, "a", transform=ax.transAxes,
                     fontsize=FS["letter"], fontweight="bold")
         else:
             ax.tick_params(labelleft=False)
         if dem == "Low":
-            # series key in the first mini-panel's upper dead space
-            ax.plot([0.07, 0.19], [0.935, 0.935], color=C_WEDGE, lw=1.8,
+            ax.plot([0.07, 0.19], [0.935, 0.935], color=C_CONS, lw=2.2,
                     transform=ax.transAxes, zorder=6, clip_on=False)
-            ax.text(0.24, 0.935, "Withdrawal", transform=ax.transAxes,
+            ax.text(0.24, 0.935, "Consumption", transform=ax.transAxes,
                     fontsize=FS["small"], color="0.2", va="center",
                     zorder=6)
-            ax.add_patch(plt.Rectangle((0.07, 0.825), 0.12, 0.05,
-                                       transform=ax.transAxes,
-                                       facecolor=C_RET, zorder=6))
-            ax.text(0.24, 0.85, "Return flow", transform=ax.transAxes,
-                    fontsize=FS["small"], color="0.2", va="center",
-                    zorder=6)
-            ax.add_patch(plt.Rectangle((0.07, 0.715), 0.12, 0.05,
-                                       transform=ax.transAxes,
-                                       facecolor=C_CONS, zorder=6))
-            ax.text(0.24, 0.74, "Consumption", transform=ax.transAxes,
+            ax.plot([0.07, 0.19], [0.835, 0.835], color=C_WITH, lw=2.2,
+                    ls="--", transform=ax.transAxes, zorder=6,
+                    clip_on=False)
+            ax.text(0.24, 0.835, "Withdrawal", transform=ax.transAxes,
                     fontsize=FS["small"], color="0.2", va="center",
                     zorder=6)
 
-    ymx = float(g.net.max()) * 1.30   # ONE shared y-range for b and c
     ax = fig.add_subplot(gs[1])
     style(ax)
+    consumption_max = float(g.cons.max()) * 1.28
     stack_panel(ax, g, "dir_cons", "ind_cons", "cons", "b",
-                "Consumption, 2050 (km$^3$)", ymx, key=True)
+                "Freshwater consumption, 2050 (km$^3$)",
+                consumption_max, key=True)
 
     ax = fig.add_subplot(gs[2])
     style(ax)
-    stack_panel(ax, g, "net_dir", "net_ind", "net", "c",
-                "Return flow, 2050 (km$^3$)", ymx, key=True,
-                cdir="#6e6e6e", cind="#d8d8d8")
+    withdrawal_max = float(g.withdr.max()) * 1.28
+    stack_panel(ax, g, "dir_withdr", "ind_withdr", "withdr", "c",
+                "Freshwater withdrawal, 2050 (km$^3$)",
+                withdrawal_max, key=True)
 
     fig.savefig(OUT_JPG, dpi=150)
     print(f"WROTE {OUT_JPG}")

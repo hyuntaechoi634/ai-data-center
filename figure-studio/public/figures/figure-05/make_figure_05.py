@@ -1,21 +1,11 @@
 #!/usr/bin/env python3
-"""fig05 redesign v2 (author layout ruling 2026-08-29).
-  a | CO2 price pathways by demand scenario (eff band).
-  b | Additional CO2 price bars, 2030/2040/2050 x demand, efficiency whiskers
-      (restored to the main figure).
-  c | Data-center electricity-price attribution bars, Reference and net-zero
-      CO2 by 2050 side by side, same grouping, Laspeyres counterfactual weights.
-  d | Regional heatmap (unchanged).
-Original 2026-08-27 draft docstring:
-  a | CO2 price pathways under net-zero CO2 by 2050 (unchanged).
-  b | Data-center-attributable electricity-price increase relative to the
-      post-2025 autonomous-growth counterfactual, SAME policy and efficiency,
-      Reference and net-zero CO2 by 2050 side by side (no policy stacking).
-      World aggregation uses FIXED counterfactual industrial-electricity
-      weights (Laspeyres), so the index reflects price change only.
-  c | Regional heatmap of the same attribution under net-zero CO2 by 2050
-      (unchanged construction, relabeled).
-Delta-CO2-price bars move to an SI candidate (SI_dtau_candidate.jpg)."""
+"""Build Figure 5 from the audited BaseX price queries.
+
+Carbon prices are compared with the matching autonomous-intensity
+counterfactual at the same efficiency. Electricity-price effects use fixed
+industrial-electricity weights from that same policy-and-efficiency
+counterfactual, so changes in regional weights do not enter the price index.
+"""
 from pathlib import Path
 import os
 import matplotlib
@@ -45,6 +35,25 @@ def weighted_price(group):
         return np.nan
     return (group.price_2020USDperMWh * group.w).sum() / total_weight
 
+
+def validate_inputs(rp, carbon):
+    """Reject incomplete or duplicated query exports before plotting."""
+    price_years = {2025, 2030, 2035, 2040, 2045, 2050}
+    if len(rp) != 24 * 32 * len(price_years):
+        raise RuntimeError("regional-price query does not contain 24 x 32 x 6 rows")
+    if rp[["scenario", "policy"]].drop_duplicates().shape[0] != 24:
+        raise RuntimeError("regional-price query does not contain 24 cells")
+    if rp.region.nunique() != 32 or set(rp.year) != price_years:
+        raise RuntimeError("regional-price region or year coverage changed")
+    if rp.duplicated(["scenario", "policy", "region", "year"]).any():
+        raise RuntimeError("regional-price query contains duplicate rows")
+    if (rp.price_2020USDperMWh <= 0).any() or (rp.ind_elec_EJ <= 0).any():
+        raise RuntimeError("regional prices and fixed weights must be positive")
+    if len(carbon) != 12 * len(price_years):
+        raise RuntimeError("carbon-price query does not contain 12 x 6 rows")
+    if carbon.duplicated(["scenario", "year"]).any():
+        raise RuntimeError("carbon-price query contains duplicate rows")
+
 def laspeyres(rp):
     """world DC attribution, fixed same-policy same-eff counterfactual weights"""
     out = {}
@@ -64,6 +73,7 @@ def main():
     c = pd.read_csv(D / "carbon_price_v91.csv")
     c["demand"] = c.scenario.str.extract(r"D(\w+?)_E")[0]
     c["eff"] = c.scenario.str.extract(r"_E(\w+)$")[0]
+    validate_inputs(rp, c)
     W = laspeyres(rp)
 
     fig = plt.figure(figsize=(20.0, 14.4))
@@ -101,6 +111,8 @@ def main():
     cd = c[c.demand.isin(DEMANDS)].copy()
     cd["dabs"] = cd.apply(lambda r: r.price_USDtCO2
                           - base_c.loc[(r.eff, r.year)], axis=1)
+    if cd.dabs.min() < -1e-9 or cd.dabs.max() > 18:
+        raise RuntimeError("additional carbon-price bars fall outside 0-18")
     x = 0.0; xticks, xtlabs = [], []
     for year in (2030, 2040, 2050):
         x0 = x

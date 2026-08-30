@@ -1,82 +1,25 @@
 #!/usr/bin/env python
-"""Fig. 6 | Regional concentration of data-centre electricity, water and compute trade in 2050.
+"""Build Figure 6 from the audited regional BaseX query tables.
 
-Layout (2 rows x 3 columns; ONE COLUMN PER QUANTITY, structure by POSITION):
-  columns  1 electricity | 2 water consumption | 3 water withdrawal
-  (the net-compute-trade column was removed 2026-07-31; trade goes to the SI)
+Panels a-c retain the 32 GCAM regions and show 2050 within-region shares for
+High autonomous intensity, Medium efficiency, and the reference power system.
+Panels d-f aggregate the same numerators and denominators to 12 reporting
+regions and show the full 18-cell demand-by-efficiency-by-policy range.
 
-  ROW 1 (a-d) = the spatial view. World choropleth of the 2050 amount in the upper-bound
-      cell (High demand x Low efficiency, reference), Robinson projection.
-      a-c are burden maps and share ONE sequential ramp (light = small, dark = large); each
-      colour scale runs from zero to a ROUND ceiling just above that quantity's maximum,
-      with round ticks. Consumption and withdrawal keep separate numeric scales because
-      withdrawal is roughly three times consumption and one shared scale would flatten the
-      consumption map to near-white everywhere and destroy the spatial pattern.
-      d is the only SIGNED quantity in the figure and carries the trade argument: AI compute
-      is a traded good, so the electricity and water burden settles where compute is
-      PRODUCED, which need not be where it is used. Diverging red <-> blue through white at
-      zero, with the limits rounded outward from the data to clean values.
-
-  ROW 2 (d-f) = the full factorial SCENARIO SET, shown as structured points, not boxes
-      (a box over 18 designed cases quotes quartiles that are not meaningful statistics).
-      One horizontal row per reporting region around an INVISIBLE CENTERLINE:
-        - SIX CIRCLES per row = 3 demand levels x 2 policies.
-        - policy = VERTICAL DODGE + FILL: reference sits slightly ABOVE the centerline as
-          a SOLID circle in the region colour; net-zero CO2 by 2050 sits slightly BELOW as
-          an OPEN circle (white face, region-colour edge). Policy reads vertically,
-          demand horizontally.
-        - demand = CIRCLE SIZE ladder (small = Low, medium = Medium, large = High).
-          Circles only; squares and triangles are reserved for efficiency in fig02e.
-        - efficiency = a thin WHISKER in the region colour through each circle, spanning
-          the Low-to-High efficiency range; the circle sits at the Medium-efficiency value
-          (same whisker grammar as fig02e).
-        - the CALIBRATED 2025 SHARE = one grey diamond ON the centerline at its own
-          x-position, so the 2025-to-2050 shift reads as horizontal distance.
-      The region NAME is written at the right end of its own row in that row's colour, so
-      there is no legend and no y-axis tick label. Regions are ordered by panel d and hold
-      the SAME row in all three panels so the eye can read across. A mini key drawn once
-      under the row explains the non-standard encoding (house rule).
-      d-f plot the region's 2050 WITHIN-REGION SHARE (data centres as a percentage of that
-      region's own total electricity / water consumption / water withdrawal). d has its own
-      x-scale; e and f share one tighter water scale (the sanctioned linear zoom), because
-      one common 0-to-50% axis flattened every water row into a cluster at the origin.
-
-"Data centre" = AI compute + conventional compute.
-
-Current CSV names are `D{demand}_E{efficiency}`. Legacy aliases are created
-only inside this plotting script to preserve the established panel layout.
-
-The 12 reporting regions: United States, China, Republic of Korea, Pacific OECD, Europe,
-Canada, Latin America, South Asia, Southeast Asia, Middle East, Africa, Reforming
-economies. Republic of Korea and Canada are standalone GCAM-32 regions and are named as
-such; Pacific OECD = Japan + Australia + New Zealand; Taiwan joins Southeast Asia.
-
-All quantities are recomputed at GCAM-32 granularity from the unmodified result files and
-re-aggregated to the 12 reporting regions:
-  data centre electricity (TWh) = AI electricity (v7_regional.csv, ai_elec_TWh)
-    + conventional-compute electricity (fig_region_elec_dc_v3.csv, conv_elec_TWh)
-  regional total electricity (denominator) = fig_region_elec_dc_v3.csv total_elec_TWh
-  data centre water footprint (km3) = direct cooling + indirect generation water
-    (fig_water_footprint.csv, tot_cons / tot_withdr)
-  regional total water (denominator) = the matching scenario and policy in
-    v7_region_total_water.csv (year 2050)
-  net AI-service trade (%) = (fixed-weight service-index output - use) / use x 100
-    (v7_regional.csv, year 2050; 2021 Training/Inference weights 0.425/0.575)
-
-EVERY axis limit and colour limit below is derived from the data at run time and then
-rounded OUTWARD to clean values, so no scale endpoint is a raw data value.
+Data-center electricity is AI plus conventional-compute electricity. Water
+footprints are direct facility plus indirect power-generation freshwater use.
+Every numerator and denominator is matched on scenario, policy, region, and
+year before the 12-region aggregation.
 """
 import os
 import sys
 import warnings
-import urllib.request
 
 warnings.filterwarnings("ignore")
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as pe
-import matplotlib.patches as mpatches
 from matplotlib import cm, colors
 from matplotlib.ticker import FuncFormatter, MultipleLocator
 import geopandas as gpd
@@ -85,37 +28,17 @@ from shapely.geometry import box
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(ROOT, "figures", "helpers"))
 import gcam_style as gs
-from _registry import UPPER_BOUND
 OUT = os.path.dirname(os.path.abspath(__file__))
 import os as _os
 D = _os.environ.get(
     "FIG_DATA_DIR", os.path.join(ROOT, "results/derived/figure-data"))
 CACHE = os.path.join(ROOT, "figures", "source-data", "ne_110m_admin_0_countries.zip")
 if not os.path.exists(CACHE):
-    os.makedirs(os.path.dirname(CACHE), exist_ok=True)
-    urllib.request.urlretrieve(
-        "https://naciscdn.org/naturalearth/110m/cultural/ne_110m_admin_0_countries.zip", CACHE)
+    raise FileNotFoundError(
+        "missing frozen Natural Earth boundary archive: " + CACHE
+    )
 
 YEAR = 2050
-
-# ---------------------------------------------------------------------------------------
-# DISPLAY RENAME (2026-07-13). CSVs keep the internal names; only labels change.
-# ---------------------------------------------------------------------------------------
-DEMAND_NAME = {"Low": "Low", "Medium": "Medium", "High": "High",
-               "Constant": "Constant"}
-EFF_NAME = {
-    "": "High efficiency",
-    "medeff": "Medium efficiency",
-    "loweff": "Low efficiency",
-}
-POLICY_NAME = {"ref": "reference", "nz2050co2": "net-zero CO$_2$ by 2050"}
-
-
-def cell_label(cell):
-    """'High_medeff' -> 'High demand, Medium efficiency'."""
-    dem, _, eff = cell.partition("_")
-    return f"{DEMAND_NAME[dem]} demand, {EFF_NAME[eff]}"
-
 
 # the 18 scenario cases the box spans: 3 demand x 3 efficiency x 2 policy
 DEMANDS = ["Low", "Medium", "High"]
@@ -190,35 +113,41 @@ reg = (world[world.RR.notna()][["RR", "geometry"]].dissolve(by="RR").reset_index
        .rename(columns={"RR": "region"}).to_crs(ctry.crs))
 
 # ============================ recompute 12-region quantities ============================
-ai = pd.read_csv(f"{D}/v7_regional.csv")   # v3: every demand level
+def validate_regional_table(frame, label):
+    """Require the exact 24-cell, 32-region, seven-year query grid."""
+    years = {2021, 2025, 2030, 2035, 2040, 2045, 2050}
+    if len(frame) != 24 * 32 * len(years):
+        raise RuntimeError(f"{label} does not contain 24 x 32 x 7 rows")
+    if frame[["scenario", "policy"]].drop_duplicates().shape[0] != 24:
+        raise RuntimeError(f"{label} does not contain 24 scenario-policy cells")
+    if frame.region.nunique() != 32 or set(frame.year) != years:
+        raise RuntimeError(f"{label} region or year coverage changed")
+    if frame.duplicated(["scenario", "policy", "region", "year"]).any():
+        raise RuntimeError(f"{label} contains duplicate rows")
+
+
+ai = pd.read_csv(f"{D}/v7_regional.csv")
+validate_regional_table(ai, "v7_regional.csv")
 ai["scenario"] = ai["scenario"].map(legacy_cell)
-ai = ai[ai.year == YEAR][[
-    "scenario", "policy", "region", "ai_elec_TWh",
-    "ai_service_index_out", "ai_service_index_use",
-]]
+ai = ai[ai.year == YEAR][
+    ["scenario", "policy", "region", "ai_elec_TWh"]
+]
 tot = pd.read_csv(f"{D}/fig_region_elec_dc_v3.csv")
+validate_regional_table(tot, "fig_region_elec_dc_v3.csv")
 tot["scenario"] = tot["scenario"].map(legacy_cell)
 tot = tot[tot.year == YEAR]
 el = tot.merge(ai, on=["scenario", "policy", "region"], how="left")
-for c in ("ai_elec_TWh", "ai_service_index_out", "ai_service_index_use"):
-    el[c] = el[c].fillna(0.0)
+el["ai_elec_TWh"] = el["ai_elec_TWh"].fillna(0.0)
 el["dc_elec_TWh"] = el.ai_elec_TWh + el.conv_elec_TWh
 el["RR"] = el.region.map(RMAP)
 elr = (el.groupby(["scenario", "policy", "RR"])
-       .agg(dc_elec_TWh=("dc_elec_TWh", "sum"), _tot=("total_elec_TWh", "sum"),
-            c_out=("ai_service_index_out", "sum"),
-            c_use=("ai_service_index_use", "sum"))
+       .agg(dc_elec_TWh=("dc_elec_TWh", "sum"),
+            _tot=("total_elec_TWh", "sum"))
        .reset_index())
 elr["dc_elec_share"] = elr.dc_elec_TWh / elr._tot * 100.0
-# NET AI-SERVICE TRADE. Training and Inference remain in separate normalized
-# service units upstream. The regional aggregate is their fixed-2021-weight
-# volume index (0.425/0.575), not a physical addition of TSU and ISU.
-elr["net_trade_abs"] = elr.c_out - elr.c_use
-elr["net_trade_pct"] = np.where(elr.c_use > 0,
-                                (elr.c_out - elr.c_use) / elr.c_use.replace(0, np.nan) * 100.0,
-                                np.nan)
 
 fp = pd.read_csv(f"{D}/fig_water_footprint.csv")
+validate_regional_table(fp, "fig_water_footprint.csv")
 fp["scenario"] = fp["scenario"].map(legacy_cell)
 fp = fp[fp.year == YEAR].copy()
 fp["RR"] = fp.region.map(RMAP)
@@ -226,6 +155,7 @@ fwr = (fp.groupby(["scenario", "policy", "RR"])
        .agg(dc_wcons_km3=("tot_cons", "sum"), dc_wwithdr_km3=("tot_withdr", "sum"))
        .reset_index())
 tw = pd.read_csv(f"{D}/v7_region_total_water.csv")
+validate_regional_table(tw, "v7_region_total_water.csv")
 tw = tw[tw.year == YEAR].copy()
 tw["scenario"] = tw["scenario"].map(legacy_cell)
 tw["RR"] = tw.region.map(RMAP)
@@ -296,18 +226,8 @@ W25 = {"dc_elec_TWh": float(_b_elr.dc.sum()),
 # High x Low-efficiency x reference upper-edge maps move to the SI as an
 # upper-burden sensitivity).
 MAP_CELL = "High_medeff"
-mp = sc32[(sc32.scenario == MAP_CELL) & (sc32.policy == "nz2050co2")].copy()
-MAP_TAG = f"{cell_label(MAP_CELL)}, {POLICY_NAME['nz2050co2']}"
 
 REGIONS = sorted(sc.region.unique())
-
-# SHARED region colour key keyed BY NAME: the same region carries the same hue in every
-# panel, so the name written on one row also identifies that region on the maps. Okabe-Ito
-# colour-blind-safe set, extended with four well-separated Tol/Brewer hues.
-# 32 rows cannot carry 32 distinguishable hues; the rows go neutral and the
-# row label alone identifies the region (2026-08-24)
-from collections import defaultdict
-RCOL = defaultdict(lambda: "0.25")
 
 NICE = (1.0, 1.2, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0)
 
@@ -327,57 +247,7 @@ def _trunc(name, lo=0.18, hi=1.0, n=256):
     return colors.LinearSegmentedColormap.from_list(name + "_t", base(np.linspace(lo, hi, n)))
 
 
-BURDEN = _trunc("magma_r", lo=0.02, hi=0.90)   # one ramp for the three burden maps
-TRADE = plt.get_cmap("RdBu")                   # the one signed quantity
-
-# ---------------------------------------------------------------- panel specifications --
-MAPS = [
-    dict(let="a", col="dc_elec_TWh", kind="seq", unit="TWh",
-         title=f"Data center electricity, {YEAR}", cblab="TWh", comma=True),
-    dict(let="b", col="dc_wcons_km3", kind="seq", unit="km$^3$",
-         title=f"Water consumption, {YEAR}", cblab="", comma=False),
-    dict(let="c", col="dc_wwithdr_km3", kind="seq", unit="km$^3$",
-         title=f"Water withdrawal, {YEAR}", cblab="", comma=False),
-]
-SUB_SHARE = f"% of the region's own total, {YEAR}"
-ROWS = [
-    dict(let="d", col="dc_elec_share", share=True, grp="elec", sub=SUB_SHARE,
-         title="Data center share of electricity"),
-    dict(let="e", col="dc_wcons_share", share=True, grp="water", sub=SUB_SHARE,
-         title="Share of water consumption"),
-    dict(let="f", col="dc_wwithdr_share", share=True, grp="water", sub=SUB_SHARE,
-         title="Share of water withdrawal"),
-]
-
-# ---- DERIVED limits ----
-for M in MAPS:
-    v = mp[M["col"]].dropna()
-    if M["kind"] == "seq":
-        M["vmin"], M["vmax"] = 0.0, _nice_ceil(float(v.max()))  # round ceiling above the max
-        M["top"] = mp.loc[v.idxmax(), "region"]
-        _cnus = mp[mp.region.isin(["China", "USA"])][M["col"]].sum()
-        M["cnus"] = _cnus / mp[M["col"]].sum() * 100.0
-    else:
-        M["vmin"] = -_nice_ceil(abs(float(v.min())))
-        M["vmax"] = _nice_ceil(float(v.max()))
-        assert M["vmin"] < 0 < M["vmax"]
-        M["cnus"] = None
-
-# TWO x-scales for the three share panels: electricity (d) on its own scale, the two
-# water panels (e, f) on one shared tighter scale. The water shares peak near 25% while
-# South Asia and Africa sit below 0.6%; one 0-to-50% axis across all three panels
-# flattened every water row into an unreadable cluster at the axis origin, so the water
-# pair takes the sanctioned x-axis zoom (linear, never log) while e and f stay mutually
-# comparable, which is the comparison that matters within the water pair.
-GRP_HI = {grp: _nice_ceil(max(sc[R["col"]].max() for R in ROWS if R["grp"] == grp))
-          for grp in ("elec", "water")}
-# a small NEGATIVE left data margin keeps every glyph of the near-zero rows off the
-# y-spine (the 0% tick stays; the data floor stays 0)
-XMARG = 0.015
-for R in ROWS:
-    R["hi"] = GRP_HI[R["grp"]]
-    R["lo"] = -XMARG * R["hi"]
-    R["step"] = _nice_ceil(R["hi"] / 2.6)
+BURDEN = _trunc("magma_r", lo=0.02, hi=0.90)
 
 # (map callouts removed 2026-08-24 — regions are read from the colour scale)
 
@@ -398,14 +268,6 @@ for _k in ("font.size", "xtick.labelsize", "ytick.labelsize",
 # Medium efficiency (reference), one coloured | per demand.
 # The full 18-scenario rails remain the SI companion figure.
 # ======================================================================
-def fmt(v, comma):
-    if comma:
-        return f"{v:,.0f}"
-    if v == 0:
-        return "0"
-    return f"{v:,.0f}" if abs(v - round(v)) < 0.05 else f"{v:,.1f}"
-
-
 def pct(v):
     s = f"{v:,.0f}%"
     return s.replace("-", "\u2212")
@@ -497,12 +359,9 @@ for ci, C in enumerate(SHARE_COLS):
     ax.set_ylim(_fy.min() - 3e5, _fy.max() + 3e5)
     C["ax"] = ax
 
-# ------- d-f: all regions; filled bar = demand x efficiency range ----------
-# (2026-08-24 ruling v3: filled bar spans ALL nine reference demand-by-
-# efficiency cases; three coloured verticals mark the demand ladder at
-# Medium efficiency; all 32 model regions are retained.)
+# ------- d-f: 12 reporting regions; bar = full scenario range ----------
 XMARG = 0.015
-NTOP = len(REGIONS)          # all 32 regions (user ruling 2026-08-24)
+NTOP = len(REGIONS)
 _val = sc.set_index(["region", "scenario", "policy"])
 DIAMOND = dict(marker="D", ms=3.5, mfc="0.74", mec="0.38", mew=0.8)
 HALO = [pe.withStroke(linewidth=2.0, foreground="white")]
@@ -529,12 +388,8 @@ for R in RAILS:
                        hi=max(R["rng"][r][1],
                               b25s.get(r) if b25s.get(r) is not None else 0.0))
                for r in REGIONS}
-GRP_HI = {g: _nice_ceil(max(R["st"][r]["hi"] for R in RAILS
-                            if R["grp"] == g for r in REGIONS))
-          for g in ("elec", "water")}
 for ci, R in enumerate(RAILS):
     ax = fig.add_subplot(gsm[1, ci])
-    # 2026-08-30 ruling: fixed axis ranges — electricity to 80%, water to 50%.
     R["hi"] = 80.0 if R["grp"] == "elec" else 50.0
     R["lo"] = -XMARG * R["hi"]
     R["step"] = 10.0
@@ -572,9 +427,7 @@ for ci, R in enumerate(RAILS):
     ax.spines["left"].set_position(("outward", 6))
     ax.spines["bottom"].set_position(("outward", 8))
 
-# widen x ONLY until every name fits inside its panel (common per group)
-# 2026-08-30 ruling: DISABLED — axes are fixed (elec 0-80, water 0-50) and the
-# fixed headroom already holds every name
+# Axes are fixed at 0-80% for electricity and 0-50% for water.
 fig.canvas.draw()
 rend = fig.canvas.get_renderer()
 for _ in range(0):
@@ -593,8 +446,6 @@ for _ in range(0):
         R["lo"] = -XMARG * R["hi"]
         R["ax"].set_xlim(R["lo"], R["hi"])
     fig.canvas.draw()
-GRP_DMAX = {g: max(R["st"][r]["hi"] for R in RAILS if R["grp"] == g
-                   for r in R["order"]) for g in ("elec", "water")}
 for R in RAILS:
     ticks = np.arange(0.0, R["hi"] + 1e-9, R["step"])
     R["ax"].set_xticks(list(ticks))
