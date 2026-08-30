@@ -2,10 +2,10 @@
   "allowed_sha256": {
     "figures/figure-01/CAPTION.md": "1b3b7e3483a9800d45be130dbb7d2c057f5cbcff592402d996082df7d0e221a5",
     "figures/figure-01/make_figure.py": "441b780d4cd573f0194e518387446914f451f148c19dc3d6185981851544fe48",
-    "figures/figure-01/make_figure_01.py": "f16da32a4b807bb377d2f27eca3b2fafede66cc6f03c91a11b2a69e0903a9dc4",
-    "figures/figure-02/CAPTION.md": "78bdc9049c3d59aa88b60b9601c1c257168509347563febef4ea8510583806c6",
+    "figures/figure-01/make_figure_01.py": "d10b757961980fa656d14ae102f7bf7ce355e25410722377c7038f246ee01411",
+    "figures/figure-02/CAPTION.md": "032ed388c7adda862dde5e841c1de70a1d741154bcddd394f7fb7198efa3aa65",
     "figures/figure-02/make_figure.py": "d67bc1e6d899493fb68d6cb14e4fe7c7643a4b954e8faeebbeaa48c9d1ff3176",
-    "figures/figure-02/make_figure_02.py": "6c53fc91cd783265d4150245cc9297ae24e660d87611c4e3c2c09dbeeb3e9aff",
+    "figures/figure-02/make_figure_02.py": "0a3851e7f8a859a232da082a10c7147f953ca49c8aa7e25d971e24f267ddf747",
     "figures/figure-03/CAPTION.md": "388ed679a9012b838ad52120cd1599d8bdfb391f5a0406158ee94da3cbecd75b",
     "figures/figure-03/make_figure.py": "89829fb0331414b1c47f82f3d163132818f0dd69b3df30ee0a41941161c8011a",
     "figures/figure-03/make_figure_03.py": "7114107d517fb3a457bba6189ca7aeb9ec052f28edd73767dc1d5c04f0ef0be0",
@@ -17,7 +17,7 @@
     "figures/figure-05/make_figure_05.py": "4ead756a7cb24cfc581f0cedfe4d784a011b4e6e403aa5c7354a20dc8cefb4cb",
     "figures/figure-06/CAPTION.md": "627ab12710270838fc8d33ef8725e59605c7fd41256d7c271f58018f55c22146",
     "figures/figure-06/make_figure.py": "a174bad380b544eef58b9dee1c2075d883aefe08fb90741b937e1f4c49933737",
-    "figures/figure-06/make_figure_06.py": "d4aed0b66fdca8bb7ccb52171f3490af56ba7ce8c66d5c34e7438b6f83bd788f",
+    "figures/figure-06/make_figure_06.py": "f8d7b3139a5cac622d8aaa69d0f1aff9e0781c14e4df7eac146a7236ef08d2f0",
     "figures/helpers/_registry.py": "a86ca78e16998e0e50e846bd5cff7e9bec87e0c1e9cfbd1d23a8531d8da21f56",
     "figures/helpers/gcam_style.py": "0366c6c959e0e4aab617a87b828d27af72c1ebfcf7a32415319e5e4837a2f17c"
   },

@@ -534,10 +534,10 @@ GRP_HI = {g: _nice_ceil(max(R["st"][r]["hi"] for R in RAILS
           for g in ("elec", "water")}
 for ci, R in enumerate(RAILS):
     ax = fig.add_subplot(gsm[1, ci])
-    # 2026-08-26 ruling: fixed axis ranges — electricity to 100%, water to 50%
-    R["hi"] = 70.0 if R["grp"] == "elec" else 40.0
+    # 2026-08-30 ruling: fixed axis ranges — electricity to 80%, water to 50%.
+    R["hi"] = 80.0 if R["grp"] == "elec" else 50.0
     R["lo"] = -XMARG * R["hi"]
-    R["step"] = 10.0 if R["grp"] == "elec" else 5.0   # 2026-08-26 ruling: elec 10s to 70, water 5s to 40
+    R["step"] = 10.0
     top = sorted(REGIONS, key=lambda r: R["st"][r]["med"], reverse=True)[:NTOP]
     order = list(reversed(top))          # largest ends up at the top row
     R["order"], R["ax"] = order, ax
@@ -573,7 +573,7 @@ for ci, R in enumerate(RAILS):
     ax.spines["bottom"].set_position(("outward", 8))
 
 # widen x ONLY until every name fits inside its panel (common per group)
-# 2026-08-26 ruling: DISABLED — axes are fixed (elec 0-70, water 0-40) and the
+# 2026-08-30 ruling: DISABLED — axes are fixed (elec 0-80, water 0-50) and the
 # fixed headroom already holds every name
 fig.canvas.draw()
 rend = fig.canvas.get_renderer()

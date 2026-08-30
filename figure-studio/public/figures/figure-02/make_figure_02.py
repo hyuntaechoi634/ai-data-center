@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Prototype redesign of manuscript fig02 (new file; existing figures untouched).
+"""Render manuscript Figure 2 from the audited figure-data tables.
 
 One message per element, 3-demand presentation:
-  a/b | Historical gross additions followed by projected positive annualized
-        net capacity changes, with total clean capacity, by policy.
+  a/b | Tracked historical gross additions followed by projected annualized
+        gross generation-equivalent additions, with total clean capacity.
   c   | Total clean capacity in 2050 (renewables + nuclear + all CCS) per
         scenario, against the 2025 clean stock (user ruling 2026-07-31 —
         replaces the additions/increment decomposition).
@@ -93,11 +93,11 @@ def main() -> None:
                           hspace=0.52, wspace=0.9,
                           left=0.085, right=0.928, top=0.955, bottom=0.03)
 
-    # ---------- a/b: observed additions, then positive net changes ----------
+    # ---------- a/b: tracked and modeled gross capacity additions ----------
     BAR_SCEN = "DHigh_EMedium"          # bars: High demand, Medium efficiency
     RANGE_SCENS = ("DHigh_ELow", "DHigh_EHigh")   # whiskers: efficiency range
     hp = H.assign(tech=H.tech.replace(POOL_OTHER)).pivot_table(
-        index="year", columns="tech", values="add_GWyr", aggfunc="sum")
+        index="year", columns="tech", values="gross_GWyr", aggfunc="sum")
     hp = hp.reindex(columns=[t for t in ORDER if t in hp.columns]).fillna(0.0)
     hp = hp.loc[[y for y in hp.index if 2011 <= y <= 2024]]
 
@@ -108,38 +108,34 @@ def main() -> None:
         ax = fig.add_subplot(gs[0, 3 * k:3 * k + 3])
         style(ax)
         pp = M[(M.scenario == BAR_SCEN) & (M.policy == pol)].pivot_table(
-            index="year", columns="group", values="net_GWyr", aggfunc="sum")
+            index="year", columns="group", values="gross_GWyr", aggfunc="sum")
         pp = pp.rename(columns=POOL_OTHER).T.groupby(level=0).sum().T
         pp = pp.reindex(columns=[t for t in ORDER if t in pp.columns]).fillna(0.0)
         # the 2025 model period (2021-2025) is already covered by observed
         # annual data, so the projection starts with the 2026-2030 period
         pp = pp.loc[pp.index >= 2030]
-        # efficiency range of TOTAL additions for the whiskers
+        # Efficiency range of total gross additions for the whiskers.
         rng = {}
         for scen in RANGE_SCENS:
-            s = M[(M.scenario == scen) & (M.policy == pol)
-                  & (M.net_GWyr > 0)].groupby("year").net_GWyr.sum()
+            s = M[(M.scenario == scen) & (M.policy == pol)].groupby(
+                "year").gross_GWyr.sum()
             rng[scen] = s.loc[s.index >= 2030]
 
         for p, w, off in ((hp, 1.0, 0.5), (pp, 5.0, -2.5)):
             for y in p.index:
-                posb = negb = 0.0
+                bottom = 0.0
                 for t in ORDER:
                     if t not in p.columns:
                         continue
                     v = float(p.loc[y, t])
                     if v <= 0.0:
-                        continue   # additions only; retirements not shown
+                        continue
                     htch = "////" if t == "CCS" else None
                     ec = "0.25" if t == "CCS" else "white"
-                    bottom = posb if v >= 0 else negb
                     ax.bar(y + off, v, bottom=bottom, width=w,
                            color=TECH_COLORS[t], hatch=htch, edgecolor=ec,
                            linewidth=0.35, zorder=3)
-                    if v >= 0:
-                        posb += v
-                    else:
-                        negb += v
+                    bottom += v
         for y in pp.index:
             vals = [float(rng[s][y]) for s in RANGE_SCENS]
             wlo, whi = min(vals), max(vals)
@@ -179,7 +175,7 @@ def main() -> None:
         ax.set_title(disp, fontsize=FS["title"],
                      color=C_REF if pol == "ref" else C_NZ, pad=8)
         if k == 0:
-            ax.set_ylabel("Annual capacity\nadditions (GW)",
+            ax.set_ylabel("Gross capacity additions\n(GW yr$^{-1}$)",
                           fontsize=FS["label"])
             ax.text(-0.14, 1.10, "a", transform=ax.transAxes,
                     fontsize=FS["letter"], fontweight="bold")
