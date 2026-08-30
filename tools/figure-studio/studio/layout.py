@@ -29,6 +29,8 @@ FONT_FAMILIES = (
     ("monospace", "System monospace"),
 )
 ALLOWED_FONT_FAMILIES = {value for value, _label in FONT_FAMILIES}
+FONT_WEIGHTS = {"normal", "bold"}
+FONT_STYLES = {"normal", "italic"}
 
 
 class LayoutError(RuntimeError):
@@ -57,6 +59,22 @@ def _number(value: object, label: str) -> float:
     if not math.isfinite(number):
         raise LayoutError(f"{label} must be a finite number")
     return number
+
+
+def _font_weight(value: object) -> str:
+    normalized = str(value or "normal").lower()
+    try:
+        return "bold" if float(normalized) >= 600 else "normal"
+    except ValueError:
+        return (
+            "bold"
+            if normalized in {"bold", "semibold", "demibold", "heavy", "black"}
+            else "normal"
+        )
+
+
+def _font_style(value: object) -> str:
+    return "italic" if str(value or "normal").lower() in {"italic", "oblique"} else "normal"
 
 
 def _read_json(path: Path, maximum: int, label: str) -> dict[str, Any]:
@@ -149,6 +167,8 @@ def load_layout_catalog(root: Path, figure_id: str) -> dict[str, Any]:
         if font_size is not None:
             font_size = _number(font_size, "Font size")
         font_family = str(raw.get("font_family", ""))[:100]
+        font_weight = _font_weight(raw.get("font_weight"))
+        font_style = _font_style(raw.get("font_style"))
         color = str(raw.get("color", ""))
         if color and not HEX_COLOR.fullmatch(color):
             raise LayoutError("A layout element color is invalid")
@@ -182,6 +202,8 @@ def load_layout_catalog(root: Path, figure_id: str) -> dict[str, Any]:
                 },
                 "font_size": None if font_size is None else round(font_size, 3),
                 "font_family": font_family,
+                "font_weight": font_weight,
+                "font_style": font_style,
                 "color": color.lower(),
                 "override": override,
             }
@@ -247,7 +269,9 @@ def prepare_layout_update(
         if element["kind"] == "mark":
             allowed_fields.add("color")
         else:
-            allowed_fields.update({"offset_px", "font_size", "font_family"})
+            allowed_fields.update(
+                {"offset_px", "font_size", "font_family", "font_weight", "font_style"}
+            )
         if set(raw_change) - allowed_fields:
             raise LayoutError("The selected element does not support that setting")
 
@@ -291,6 +315,22 @@ def prepare_layout_update(
                 raise LayoutError("The selected font family is unavailable")
             else:
                 record["font_family"] = font_family
+        if "font_weight" in raw_change:
+            font_weight = str(raw_change["font_weight"] or "")
+            if not font_weight:
+                record.pop("font_weight", None)
+            elif font_weight not in FONT_WEIGHTS:
+                raise LayoutError("The selected font weight is unavailable")
+            else:
+                record["font_weight"] = font_weight
+        if "font_style" in raw_change:
+            font_style = str(raw_change["font_style"] or "")
+            if not font_style:
+                record.pop("font_style", None)
+            elif font_style not in FONT_STYLES:
+                raise LayoutError("The selected font style is unavailable")
+            else:
+                record["font_style"] = font_style
         if "color" in raw_change:
             color = str(raw_change["color"] or "")
             if not color:

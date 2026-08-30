@@ -1301,6 +1301,30 @@ body.layout-editor-open {
   gap: 0.65rem;
 }
 
+.layout-style-controls {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.layout-style-controls button {
+  min-height: 2.25rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  color: var(--ink);
+  font-size: 0.84rem;
+  font-weight: 670;
+}
+
+.layout-style-controls button.active,
+.layout-style-controls button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--soft);
+  color: var(--accent-dark);
+}
+
 .layout-field {
   display: grid;
   gap: 0.3rem;
@@ -1384,6 +1408,7 @@ body.layout-editor-open {
 }
 
 .layout-editor-actions {
+  grid-template-columns: minmax(0, 1fr);
   padding-top: 0.2rem;
 }
 
@@ -1486,7 +1511,8 @@ body.layout-editor-open {
 }
 
 .layout-inline-editor .layout-element-actions button,
-.layout-inline-editor .layout-editor-actions button {
+.layout-inline-editor .layout-editor-actions button,
+.layout-inline-editor .layout-style-controls button {
   min-height: 2.55rem;
   border-color: rgba(255, 255, 255, 0.55);
   background: rgba(255, 255, 255, 0.1);
@@ -1495,9 +1521,17 @@ body.layout-editor-open {
 }
 
 .layout-inline-editor .layout-element-actions button:hover:not(:disabled),
-.layout-inline-editor .layout-editor-actions button:hover:not(:disabled) {
+.layout-inline-editor .layout-editor-actions button:hover:not(:disabled),
+.layout-inline-editor .layout-style-controls button:hover:not(:disabled) {
   border-color: white;
   background: rgba(255, 255, 255, 0.18);
+}
+
+.layout-inline-editor .layout-style-controls button.active,
+.layout-inline-editor .layout-style-controls button[aria-pressed="true"] {
+  border-color: white;
+  background: white;
+  color: var(--accent-dark);
 }
 
 .layout-inline-editor .layout-safety-note {

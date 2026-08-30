@@ -403,12 +403,18 @@ def _apply_axis_override(
         axis.set_visible(False)
     font_size = record.get("font_size")
     font_family = record.get("font_family")
-    if font_size is not None or font_family:
+    font_weight = record.get("font_weight")
+    font_style = record.get("font_style")
+    if font_size is not None or font_family or font_weight or font_style:
         for artist in axis.findobj(match=Text):
             if font_size is not None:
                 artist.set_fontsize(float(font_size))
             if font_family:
                 artist.set_fontfamily(str(font_family))
+            if font_weight:
+                artist.set_fontweight(str(font_weight))
+            if font_style:
+                artist.set_fontstyle(str(font_style))
 
 
 def _apply_text_override(
@@ -429,6 +435,10 @@ def _apply_text_override(
         artist.set_fontsize(float(record["font_size"]))
     if record.get("font_family"):
         artist.set_fontfamily(str(record["font_family"]))
+    if record.get("font_weight"):
+        artist.set_fontweight(str(record["font_weight"]))
+    if record.get("font_style"):
+        artist.set_fontstyle(str(record["font_style"]))
 
 
 def _apply_mark_override(mark: MarkRecord, record: dict[str, Any]) -> None:
@@ -556,6 +566,28 @@ def _font_family(artist: Text) -> str:
     return str(families[0]) if families else ""
 
 
+def _font_weight(artist: Text) -> str:
+    try:
+        weight = str(artist.get_fontweight()).lower()
+        return "bold" if float(weight) >= 600 else "normal"
+    except ValueError:
+        return (
+            "bold"
+            if weight in {"bold", "semibold", "demibold", "heavy", "black"}
+            else "normal"
+        )
+    except Exception:
+        return "normal"
+
+
+def _font_style(artist: Text) -> str:
+    try:
+        style = str(artist.get_fontstyle()).lower()
+    except Exception:
+        return "normal"
+    return "italic" if style in {"italic", "oblique"} else "normal"
+
+
 def _write_catalog(
     path: Path,
     fig: Figure,
@@ -593,6 +625,8 @@ def _write_catalog(
                     },
                     "font_size": record.get("font_size"),
                     "font_family": record.get("font_family", ""),
+                    "font_weight": record.get("font_weight", "normal"),
+                    "font_style": record.get("font_style", "normal"),
                     "hidden": record.get("hidden") is True,
                     "override": record,
                 }
@@ -616,6 +650,8 @@ def _write_catalog(
                     "offset_px": {"x": 0.0, "y": 0.0},
                     "font_size": None,
                     "font_family": "",
+                    "font_weight": "normal",
+                    "font_style": "normal",
                     "color": record.get("color") or _mark_color(mark),
                     "hidden": record.get("hidden") is True,
                     "override": record,
@@ -642,6 +678,8 @@ def _write_catalog(
                     },
                     "font_size": round(float(artist.get_fontsize()), 3),
                     "font_family": _font_family(artist),
+                    "font_weight": _font_weight(artist),
+                    "font_style": _font_style(artist),
                     "hidden": record.get("hidden") is True,
                     "override": record,
                 }

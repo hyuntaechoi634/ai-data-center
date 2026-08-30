@@ -80,6 +80,8 @@ class LayoutContractTests(unittest.TestCase):
                     "offset_px": {"x": 14, "y": -6},
                     "font_size": 16,
                     "font_family": "DejaVu Sans",
+                    "font_weight": "bold",
+                    "font_style": "italic",
                 }
             ],
             panel_id="a",
@@ -90,6 +92,12 @@ class LayoutContractTests(unittest.TestCase):
             payload["elements"]["axis-00:title"]["offset_px"],
             {"x": 14.0, "y": -6.0},
         )
+        self.assertEqual(
+            payload["elements"]["axis-00:title"]["font_weight"], "bold"
+        )
+        self.assertEqual(
+            payload["elements"]["axis-00:title"]["font_style"], "italic"
+        )
 
     def test_unreviewed_font_is_rejected(self) -> None:
         with self.assertRaisesRegex(LayoutError, "font family"):
@@ -97,6 +105,18 @@ class LayoutContractTests(unittest.TestCase):
                 self.workspace,
                 "figure-01",
                 [{"id": "axis-00:title", "font_family": "Remote Web Font"}],
+            )
+        with self.assertRaisesRegex(LayoutError, "font weight"):
+            prepare_layout_update(
+                self.workspace,
+                "figure-01",
+                [{"id": "axis-00:title", "font_weight": "extra-black"}],
+            )
+        with self.assertRaisesRegex(LayoutError, "font style"):
+            prepare_layout_update(
+                self.workspace,
+                "figure-01",
+                [{"id": "axis-00:title", "font_style": "slanted"}],
             )
 
     def test_mark_color_is_reviewable_and_position_is_locked(self) -> None:
