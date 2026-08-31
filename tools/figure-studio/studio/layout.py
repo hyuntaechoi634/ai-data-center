@@ -17,6 +17,9 @@ MAX_OVERRIDE_BYTES = 1024 * 1024
 MAX_ELEMENTS = 2000
 MAX_CHANGES = 120
 MAX_LABEL_TEXT = 240
+MAX_SELECTION_SHAPES = 192
+MAX_SELECTION_POINTS = 192
+MAX_SELECTION_TOTAL_POINTS = 4096
 ELEMENT_ID = re.compile(r"^[A-Za-z0-9:_-]{1,120}$")
 HEX_COLOR = re.compile(r"^#[0-9A-Fa-f]{6}$")
 FONT_FAMILIES = (
@@ -99,6 +102,68 @@ def _read_json(path: Path, maximum: int, label: str) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise LayoutError(f"The {label} is invalid")
     return payload
+
+
+def _selection_shapes(raw: object, width: float, height: float) -> list[dict[str, Any]]:
+    if raw is None:
+        return []
+    if not isinstance(raw, list) or len(raw) > MAX_SELECTION_SHAPES:
+        raise LayoutError("A mark selection shape list is invalid")
+    maximum = max(width, height)
+    output: list[dict[str, Any]] = []
+    total_points = 0
+
+    def point(raw_point: object) -> list[float]:
+        if not isinstance(raw_point, list) or len(raw_point) != 2:
+            raise LayoutError("A mark selection coordinate is invalid")
+        values = [
+            _number(raw_point[0], "Selection x coordinate"),
+            _number(raw_point[1], "Selection y coordinate"),
+        ]
+        if any(abs(value) > maximum * 4 for value in values):
+            raise LayoutError("A mark selection coordinate is outside the safe canvas")
+        return [round(value, 2) for value in values]
+
+    for raw_shape in raw:
+        if not isinstance(raw_shape, dict):
+            raise LayoutError("A mark selection shape is invalid")
+        kind = str(raw_shape.get("kind", ""))
+        if kind == "rect":
+            raw_bbox = raw_shape.get("bbox_px")
+            if not isinstance(raw_bbox, list) or len(raw_bbox) != 4:
+                raise LayoutError("A mark selection rectangle is invalid")
+            bbox = [_number(value, "Selection rectangle") for value in raw_bbox]
+            if bbox[2] < bbox[0] or bbox[3] < bbox[1]:
+                raise LayoutError("A mark selection rectangle is invalid")
+            if any(abs(value) > maximum * 4 for value in bbox):
+                raise LayoutError("A mark selection rectangle is outside the safe canvas")
+            output.append({"kind": kind, "bbox_px": [round(value, 2) for value in bbox]})
+            total_points += 1
+        elif kind == "point":
+            center = point(raw_shape.get("center_px"))
+            radius = _number(raw_shape.get("radius_px", 6), "Selection point radius")
+            if not 1 <= radius <= 100:
+                raise LayoutError("A mark selection point radius is invalid")
+            output.append(
+                {"kind": kind, "center_px": center, "radius_px": round(radius, 2)}
+            )
+            total_points += 1
+        elif kind in {"polyline", "polygon"}:
+            raw_points = raw_shape.get("points_px")
+            minimum = 3 if kind == "polygon" else 2
+            if (
+                not isinstance(raw_points, list)
+                or not minimum <= len(raw_points) <= MAX_SELECTION_POINTS
+            ):
+                raise LayoutError("A mark selection path is invalid")
+            points = [point(raw_point) for raw_point in raw_points]
+            output.append({"kind": kind, "points_px": points})
+            total_points += len(points)
+        else:
+            raise LayoutError("A mark selection shape type is invalid")
+        if total_points > MAX_SELECTION_TOTAL_POINTS:
+            raise LayoutError("A mark selection geometry is too large")
+    return output
 
 
 def _panel_for_bbox(
@@ -203,6 +268,9 @@ def load_layout_catalog(root: Path, figure_id: str) -> dict[str, Any]:
         override = raw.get("override")
         if not isinstance(override, dict):
             override = {}
+        selection_shapes = _selection_shapes(
+            raw.get("selection_shapes"), width, height
+        ) if kind == "mark" else []
         elements.append(
             {
                 "id": element_id,
@@ -216,6 +284,7 @@ def load_layout_catalog(root: Path, figure_id: str) -> dict[str, Any]:
                 "text": text,
                 "text_editable": text_editable,
                 "bbox_px": [round(value, 2) for value in bbox],
+                "selection_shapes": selection_shapes,
                 "panel_id": _panel_for_bbox(figure_id, bbox, (width, height)),
                 "visible": bool(raw.get("visible", True)),
                 "hidden": bool(raw.get("hidden", False)),

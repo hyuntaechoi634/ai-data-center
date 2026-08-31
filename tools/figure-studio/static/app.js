@@ -6,6 +6,7 @@ const FIGURE_IDS = [
   "figure-05",
   "figure-06",
 ];
+const SVG_NS = "http://www.w3.org/2000/svg";
 
 function storedSessions() {
   try {
@@ -62,6 +63,7 @@ const app = {
     baseBlob: null,
     objectUrl: "",
     selectedId: "",
+    hitCycle: null,
     pending: new Map(),
     drag: null,
     previewTimer: 0,
@@ -1439,6 +1441,79 @@ function positionLayoutBox(box, element) {
   box.classList.toggle("is-reset", Boolean(app.layout.pending.get(element.id)?.reset));
 }
 
+function createLayoutSvgShape(shape, className) {
+  const kind = shape?.kind;
+  let node = null;
+  if (kind === "rect" && Array.isArray(shape.bbox_px)) {
+    const [x0, y0, x1, y1] = shape.bbox_px.map(Number);
+    node = document.createElementNS(SVG_NS, "rect");
+    node.setAttribute("x", x0);
+    node.setAttribute("y", y0);
+    node.setAttribute("width", Math.max(0.5, x1 - x0));
+    node.setAttribute("height", Math.max(0.5, y1 - y0));
+    node.setAttribute("rx", "1.5");
+  } else if (kind === "point" && Array.isArray(shape.center_px)) {
+    node = document.createElementNS(SVG_NS, "circle");
+    node.setAttribute("cx", Number(shape.center_px[0]));
+    node.setAttribute("cy", Number(shape.center_px[1]));
+    node.setAttribute("r", Math.max(5, Number(shape.radius_px || 6)));
+  } else if (["polyline", "polygon"].includes(kind) && Array.isArray(shape.points_px)) {
+    node = document.createElementNS(SVG_NS, kind);
+    node.setAttribute(
+      "points",
+      shape.points_px.map((point) => `${Number(point[0])},${Number(point[1])}`).join(" "),
+    );
+  }
+  if (!node) return null;
+  node.setAttribute("class", `${className} ${kind}`);
+  node.setAttribute("vector-effect", "non-scaling-stroke");
+  return node;
+}
+
+function createLayoutMarkTarget(element) {
+  const shapes = Array.isArray(element.selection_shapes)
+    ? element.selection_shapes
+    : [];
+  if (!shapes.length) return null;
+  const group = document.createElementNS(SVG_NS, "g");
+  group.setAttribute("class", "layout-mark-target");
+  group.setAttribute("tabindex", "0");
+  group.setAttribute("role", "button");
+  group.dataset.elementId = element.id;
+  group.setAttribute("aria-label", `Select ${element.role}: ${element.label}`);
+  group.classList.toggle("selected", element.id === app.layout.selectedId);
+  group.classList.toggle("pending", app.layout.pending.has(element.id));
+  group.classList.toggle("is-hidden", layoutVisualState(element).hidden);
+  group.classList.toggle("is-reset", Boolean(app.layout.pending.get(element.id)?.reset));
+  const title = document.createElementNS(SVG_NS, "title");
+  title.textContent = `${element.role}: ${element.label}`;
+  group.appendChild(title);
+  shapes.forEach((shape) => {
+    const hit = createLayoutSvgShape(shape, "layout-mark-hit");
+    const outline = createLayoutSvgShape(shape, "layout-mark-outline");
+    if (hit) group.appendChild(hit);
+    if (outline) group.appendChild(outline);
+  });
+  group.addEventListener("pointerdown", startLayoutDrag);
+  group.addEventListener("keydown", handleLayoutElementKeydown);
+  return group;
+}
+
+function layoutMarkHitPriority(element) {
+  const shapes = Array.isArray(element.selection_shapes)
+    ? element.selection_shapes
+    : [];
+  const kinds = new Set(shapes.map((shape) => shape?.kind));
+  const role = String(element.role || "").toLowerCase();
+  if (kinds.has("point")) return 50;
+  if (kinds.has("polyline") || role.includes("line") || role.includes("whisker")) {
+    return 40;
+  }
+  if (role.includes("bar")) return 30;
+  if (role.includes("area")) return 10;
+  return 20;
+}
+
 function renderLayoutOverlays() {
   if (!app.layout.data) return;
   const layer = $("#layoutOverlayLayer");
@@ -1447,7 +1522,24 @@ function renderLayoutOverlays() {
     app.layout.selectedId = initialLayoutElementId();
   }
   layer.replaceChildren();
+  const [canvasWidth, canvasHeight] = app.layout.data.canvas_px;
+  const markSvg = document.createElementNS(SVG_NS, "svg");
+  markSvg.setAttribute("class", "layout-mark-svg");
+  markSvg.setAttribute("viewBox", `0 0 ${canvasWidth} ${canvasHeight}`);
+  markSvg.setAttribute("preserveAspectRatio", "none");
+  markSvg.setAttribute("aria-label", "Selectable figure marks");
+  layer.appendChild(markSvg);
+  elements
+    .filter((element) => element.kind === "mark")
+    .sort((left, right) => layoutMarkHitPriority(left) - layoutMarkHitPriority(right))
+    .forEach((element) => {
+      const markTarget = createLayoutMarkTarget(element);
+      if (markTarget) markSvg.appendChild(markTarget);
+    });
   elements.forEach((element) => {
+    if (element.kind === "mark") {
+      if (Array.isArray(element.selection_shapes) && element.selection_shapes.length) return;
+    }
     const box = document.createElement("button");
     box.type = "button";
     box.className = `layout-element-box ${element.kind}`;
@@ -1471,7 +1563,7 @@ function selectLayoutElement(elementId) {
   app.layout.selectedId = elementId;
   renderLayoutOverlays();
   const selected = document.querySelector(
-    `.layout-element-box[data-element-id="${CSS.escape(elementId)}"]`,
+    `[data-element-id="${CSS.escape(elementId)}"]`,
   );
   selected?.focus({ preventScroll: true });
 }
@@ -1881,11 +1973,45 @@ function startLayoutDrag(event) {
   const element = layoutElementById(elementId);
   if (!element) return;
   event.preventDefault();
-  app.layout.selectedId = elementId;
   if (element.kind === "mark") {
-    renderLayoutOverlays();
+    const overlappingIds = [];
+    document.elementsFromPoint(event.clientX, event.clientY).forEach((target) => {
+      const id = target.closest?.(".layout-mark-target")?.dataset?.elementId;
+      if (id && !overlappingIds.includes(id)) overlappingIds.push(id);
+    });
+    if (!overlappingIds.includes(elementId)) overlappingIds.unshift(elementId);
+    const signature = overlappingIds.join("|");
+    const previous = app.layout.hitCycle;
+    const now = performance.now();
+    const repeated = Boolean(
+      previous &&
+      previous.signature === signature &&
+      now - previous.time < 1800 &&
+      Math.hypot(event.clientX - previous.x, event.clientY - previous.y) < 24
+    );
+    const index = repeated
+      ? (previous.index + 1) % overlappingIds.length
+      : 0;
+    const selectedId = overlappingIds[index] || elementId;
+    app.layout.hitCycle = {
+      signature,
+      index,
+      x: event.clientX,
+      y: event.clientY,
+      time: now,
+    };
+    app.layout.selectedId = selectedId;
+    document
+      .querySelectorAll("[data-element-id].selected")
+      .forEach((target) => target.classList.remove("selected"));
+    document
+      .querySelector(`[data-element-id="${CSS.escape(selectedId)}"]`)
+      ?.classList.add("selected");
+    renderLayoutInspector();
     return;
   }
+  app.layout.hitCycle = null;
+  app.layout.selectedId = elementId;
   const visual = layoutVisualState(element);
   app.layout.drag = {
     pointerId: event.pointerId,
@@ -1934,6 +2060,12 @@ function endLayoutDrag(event) {
 function handleLayoutElementKeydown(event) {
   const elementId = event.currentTarget.dataset.elementId;
   if (!elementId) return;
+  if (["Enter", " "].includes(event.key)) {
+    event.preventDefault();
+    app.layout.hitCycle = null;
+    selectLayoutElement(elementId);
+    return;
+  }
   if (["Delete", "Backspace"].includes(event.key)) {
     event.preventDefault();
     app.layout.selectedId = elementId;
@@ -1998,6 +2130,7 @@ async function openLayoutEditor() {
     app.layout.data = payload.layout;
     app.layout.baseData = payload.layout;
     app.layout.selectedId = "";
+    app.layout.hitCycle = null;
     app.layout.pending = new Map();
     app.layout.drag = null;
     app.layout.open = true;
@@ -2047,6 +2180,7 @@ function closeLayoutEditor() {
   app.layout.baseData = null;
   app.layout.baseBlob = null;
   app.layout.selectedId = "";
+  app.layout.hitCycle = null;
   app.layout.pending = new Map();
   app.layout.drag = null;
   app.layout.fontSizeDraftValid = true;

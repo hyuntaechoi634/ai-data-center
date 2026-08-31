@@ -19,6 +19,7 @@ from matplotlib.colors import to_hex
 from matplotlib.container import BarContainer, ErrorbarContainer
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
+from matplotlib.path import Path as MatplotlibPath
 from matplotlib.patches import Patch
 from matplotlib.text import Text
 from matplotlib.transforms import Bbox, ScaledTranslation
@@ -27,6 +28,9 @@ from matplotlib.transforms import Bbox, ScaledTranslation
 SCHEMA_VERSION = 1
 MAX_ELEMENTS = 2000
 MAX_LABEL_TEXT = 240
+MAX_SELECTION_SHAPES = 192
+MAX_SELECTION_POINTS = 192
+MAX_SELECTION_TOTAL_POINTS = 4096
 _INSTALLED = False
 _ORIGINAL_SAVEFIG = Figure.savefig
 
@@ -528,6 +532,203 @@ def _group_bbox_px(
     ]
 
 
+def _path_parts(path: Any) -> list[list[list[float]]]:
+    """Split one Matplotlib path into finite, independently selectable parts."""
+    try:
+        vertices = path.vertices
+        codes = path.codes
+    except (AttributeError, TypeError, ValueError):
+        return []
+    if hasattr(vertices, "tolist"):
+        vertices = vertices.tolist()
+    if hasattr(codes, "tolist"):
+        codes = codes.tolist()
+    if codes is None:
+        codes = [None] * len(vertices)
+    parts: list[list[list[float]]] = []
+    current: list[list[float]] = []
+    for raw_point, code in zip(vertices, codes):
+        try:
+            point = [float(raw_point[0]), float(raw_point[1])]
+        except (TypeError, ValueError, IndexError):
+            point = [math.nan, math.nan]
+        if code == MatplotlibPath.MOVETO and current:
+            parts.append(current)
+            current = []
+        if not all(math.isfinite(value) for value in point):
+            if current:
+                parts.append(current)
+                current = []
+            continue
+        current.append(point)
+        if code == MatplotlibPath.CLOSEPOLY and current:
+            parts.append(current)
+            current = []
+    if current:
+        parts.append(current)
+    return parts
+
+
+def _sample_points(points: list[list[float]]) -> list[list[float]]:
+    if len(points) <= MAX_SELECTION_POINTS:
+        return points
+    last = len(points) - 1
+    indices = sorted(
+        {round(index * last / (MAX_SELECTION_POINTS - 1))
+         for index in range(MAX_SELECTION_POINTS)}
+    )
+    return [points[index] for index in indices]
+
+
+def _display_points(
+    points: list[list[float]],
+    transform: Any,
+    width: float,
+    height: float,
+) -> list[list[float]]:
+    if not points:
+        return []
+    try:
+        transformed = transform.transform(points)
+    except Exception:
+        return []
+    if hasattr(transformed, "tolist"):
+        transformed = transformed.tolist()
+    output: list[list[float]] = []
+    for raw_point in transformed:
+        try:
+            x = float(raw_point[0])
+            y = float(raw_point[1])
+        except (TypeError, ValueError, IndexError):
+            continue
+        if not math.isfinite(x) or not math.isfinite(y):
+            continue
+        x = max(-width, min(2 * width, x))
+        y = max(-height, min(2 * height, height - y))
+        output.append([round(x, 2), round(y, 2)])
+    return _sample_points(output)
+
+
+def _artist_selection_shapes(
+    artist: Any,
+    renderer: Any,
+    width: float,
+    height: float,
+) -> list[dict[str, Any]]:
+    shapes: list[dict[str, Any]] = []
+    class_name = artist.__class__.__name__
+
+    if "PathCollection" in class_name:
+        try:
+            offsets = artist.get_offsets()
+            if hasattr(offsets, "tolist"):
+                offsets = offsets.tolist()
+            centers = artist.get_offset_transform().transform(offsets)
+            if hasattr(centers, "tolist"):
+                centers = centers.tolist()
+        except Exception:
+            centers = []
+        if len(centers) > MAX_SELECTION_SHAPES:
+            step = len(centers) / MAX_SELECTION_SHAPES
+            centers = [centers[int(index * step)] for index in range(MAX_SELECTION_SHAPES)]
+        for raw_center in centers:
+            try:
+                x = float(raw_center[0])
+                y = height - float(raw_center[1])
+            except (TypeError, ValueError, IndexError):
+                continue
+            if math.isfinite(x) and math.isfinite(y):
+                shapes.append(
+                    {
+                        "kind": "point",
+                        "center_px": [round(x, 2), round(y, 2)],
+                        "radius_px": 6.0,
+                    }
+                )
+        if shapes:
+            return shapes
+
+    if isinstance(artist, Line2D):
+        try:
+            parts = _path_parts(artist.get_path())
+            transform = artist.get_transform()
+        except Exception:
+            parts, transform = [], None
+        if transform is not None:
+            for part in parts:
+                points = _display_points(part, transform, width, height)
+                if len(points) >= 2:
+                    shapes.append({"kind": "polyline", "points_px": points})
+        if shapes:
+            return shapes
+
+    segments = _line_segments(artist)
+    if segments:
+        try:
+            transform = artist.get_transform()
+        except Exception:
+            transform = None
+        if transform is not None:
+            for segment in segments:
+                points = _display_points(segment, transform, width, height)
+                if len(points) >= 2:
+                    shapes.append({"kind": "polyline", "points_px": points})
+        if shapes:
+            return shapes
+
+    try:
+        paths = [artist.get_path()] if isinstance(artist, Patch) else artist.get_paths()
+        transform = artist.get_transform()
+    except Exception:
+        paths, transform = [], None
+    if transform is not None:
+        for path in paths[:MAX_SELECTION_SHAPES]:
+            for part in _path_parts(path):
+                points = _display_points(part, transform, width, height)
+                if len(points) >= 3:
+                    shapes.append({"kind": "polygon", "points_px": points})
+                elif len(points) == 2:
+                    shapes.append({"kind": "polyline", "points_px": points})
+                if len(shapes) >= MAX_SELECTION_SHAPES:
+                    return shapes
+    if shapes:
+        return shapes
+
+    bbox = _bbox_px(artist, renderer, height)
+    if bbox is not None and bbox[2] > bbox[0] and bbox[3] > bbox[1]:
+        return [{"kind": "rect", "bbox_px": bbox}]
+    return []
+
+
+def _selection_shapes(
+    mark: MarkRecord,
+    renderer: Any,
+    width: float,
+    height: float,
+) -> list[dict[str, Any]]:
+    shapes: list[dict[str, Any]] = []
+    total_points = 0
+    for artist in mark.bbox_artists:
+        for shape in _artist_selection_shapes(artist, renderer, width, height):
+            points = shape.get("points_px")
+            point_count = len(points) if isinstance(points, list) else 1
+            remaining = MAX_SELECTION_TOTAL_POINTS - total_points
+            if remaining <= 0:
+                return shapes
+            if isinstance(points, list) and point_count > remaining:
+                minimum = 3 if shape.get("kind") == "polygon" else 2
+                if remaining < minimum:
+                    return shapes
+                shape = dict(shape)
+                shape["points_px"] = _sample_points(points)[:remaining]
+                point_count = len(shape["points_px"])
+            shapes.append(shape)
+            total_points += point_count
+            if len(shapes) >= MAX_SELECTION_SHAPES:
+                return shapes
+    return shapes[:MAX_SELECTION_SHAPES]
+
+
 def _simple_color(value: Any) -> str:
     if hasattr(value, "tolist"):
         value = value.tolist()
@@ -647,6 +848,9 @@ def _write_catalog(
                     "label": mark.label,
                     "axis_index": mark.axis_index,
                     "bbox_px": bbox,
+                    "selection_shapes": _selection_shapes(
+                        mark, renderer, width, height
+                    ),
                     "visible": any(
                         bool(artist.get_visible()) for artist in mark.bbox_artists
                     ),

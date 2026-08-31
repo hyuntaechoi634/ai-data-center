@@ -26,7 +26,7 @@
     "figures/figure-06/make_figure_06.py": "368981150ac8a9fb1fb182897057a170e4f9a1d6f7e4701c1f3cbe5b59d81e2d",
     "figures/helpers/_registry.py": "a86ca78e16998e0e50e846bd5cff7e9bec87e0c1e9cfbd1d23a8531d8da21f56",
     "figures/helpers/gcam_style.py": "0366c6c959e0e4aab617a87b828d27af72c1ebfcf7a32415319e5e4837a2f17c",
-    "figures/helpers/layout_runtime.py": "288c7987ea51016ced394c2a95706718ffa54ae9f55c57c9763a329821a49e8f"
+    "figures/helpers/layout_runtime.py": "3aa2c9e9c02da3cc05b924a258fe2b48ea3a07988d2b21d96efbaa9d7b18f098"
   },
   "repository_root": "figure-studio/public",
   "schema_version": 1,

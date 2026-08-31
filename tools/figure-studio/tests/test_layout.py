@@ -67,6 +67,12 @@ class LayoutContractTests(unittest.TestCase):
                             "font_size": None,
                             "font_family": "",
                             "color": "#333333",
+                            "selection_shapes": [
+                                {
+                                    "kind": "polyline",
+                                    "points_px": [[235, 180], [235, 330]],
+                                }
+                            ],
                             "override": {},
                         }
                     ],
@@ -88,6 +94,10 @@ class LayoutContractTests(unittest.TestCase):
         self.assertEqual(catalog["elements"][0]["panel_id"], "a")
         self.assertTrue(catalog["elements"][0]["text_editable"])
         self.assertFalse(catalog["elements"][1]["text_editable"])
+        self.assertEqual(
+            catalog["elements"][2]["selection_shapes"],
+            [{"kind": "polyline", "points_px": [[235.0, 180.0], [235.0, 330.0]]}],
+        )
         font_families = {item["id"] for item in catalog["font_families"]}
         self.assertEqual(len(font_families), 17)
         self.assertIn("Nimbus Sans Narrow", font_families)
@@ -157,6 +167,16 @@ class LayoutContractTests(unittest.TestCase):
                 "figure-01",
                 [{"id": "axis-00:x-tick-00", "text": "2030"}],
             )
+
+    def test_invalid_mark_selection_geometry_is_rejected(self) -> None:
+        path = self.workspace / "layout/elements.json"
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload["elements"][2]["selection_shapes"] = [
+            {"kind": "polyline", "points_px": [[10, 10]]}
+        ]
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        with self.assertRaisesRegex(LayoutError, "selection path"):
+            load_layout_catalog(self.workspace, "figure-01")
 
     def test_mark_color_is_reviewable_and_position_is_locked(self) -> None:
         update = prepare_layout_update(
