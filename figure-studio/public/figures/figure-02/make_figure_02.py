@@ -2,11 +2,13 @@
 """Render manuscript Figure 2 from the audited figure-data tables.
 
 One message per element, 3-demand presentation:
-  a/b | Tracked historical gross additions followed by projected annualized
-        gross generation-equivalent additions, with total clean capacity.
+  a/b | IRENA historical net additions followed by projected annualized
+        Plutus retirement-adjusted generation-equivalent additions, with total
+        clean capacity.
   c   | Total clean capacity in 2050 (renewables + nuclear + all CCS) per
-        scenario, against the 2025 clean stock (user ruling 2026-07-31 —
-        replaces the additions/increment decomposition).
+        scenario. Short horizontal marks show the matching Constant-scenario
+        capacity, so the portion above each mark is the increase associated
+        with additional demand growth after 2025.
   d   | Generation in 2050 at Medium efficiency, with the efficiency range as
         whiskers on the totals (replaces old f, 3x3-consistent).
   e   | Electricity end-use in 2050 WITHOUT the world-total backdrop
@@ -21,7 +23,6 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import matplotlib.patheffects as pe
 from matplotlib.ticker import FuncFormatter
 import numpy as np
 import pandas as pd
@@ -84,6 +85,25 @@ def load():
     if set(clean_hist.columns) != expected or set(clean_hist.year) != set(
             range(2000, 2026)):
         raise ValueError("historical clean-capacity source has an invalid schema")
+    historical_tech = {
+        "biomass", "coal", "gas", "geothermal", "hydro", "nuclear",
+        "oil", "other", "solar", "wind",
+    }
+    if (
+        set(H.columns)
+        != {"year", "tech", "net_GWyr", "source", "accounting_method"}
+        or set(H.year) != set(range(2001, 2026))
+        or set(H.tech) != historical_tech
+        or H.duplicated(["year", "tech"]).any()
+    ):
+        raise ValueError("historical capacity-additions table is incomplete")
+    fossil = H.tech.isin({"coal", "gas", "oil"})
+    if not H.loc[fossil, "accounting_method"].eq(
+            "irena-total-with-gipt-net-flow-allocation").all():
+        raise ValueError("historical fossil allocation has an invalid method")
+    if not H.loc[~fossil, "accounting_method"].eq(
+            "year-end-nameplate-capacity-change").all():
+        raise ValueError("direct IRENA capacity rows have an invalid method")
     return H, M, cap, gen, use, clean_hist
 
 
@@ -102,13 +122,13 @@ def main() -> None:
                           hspace=0.52, wspace=0.9,
                           left=0.085, right=0.928, top=0.955, bottom=0.03)
 
-    # ---------- a/b: tracked and modeled gross capacity additions ----------
+    # ---------- a/b: observed net and modeled adjusted additions ----------
     BAR_SCEN = "DHigh_EMedium"          # bars: High demand, Medium efficiency
     RANGE_SCENS = ("DHigh_ELow", "DHigh_EHigh")   # whiskers: efficiency range
     hp = H.assign(tech=H.tech.replace(POOL_OTHER)).pivot_table(
-        index="year", columns="tech", values="gross_GWyr", aggfunc="sum")
+        index="year", columns="tech", values="net_GWyr", aggfunc="sum")
     hp = hp.reindex(columns=[t for t in ORDER if t in hp.columns]).fillna(0.0)
-    hp = hp.loc[[y for y in hp.index if 2000 <= y <= 2024]]
+    hp = hp.loc[[y for y in hp.index if 2001 <= y <= 2025]]
 
     historical_clean_stock = clean_hist.groupby(
         "year").generation_equivalent_capacity_GW.sum()
@@ -119,34 +139,39 @@ def main() -> None:
         ax = fig.add_subplot(gs[0, 3 * k:3 * k + 3])
         style(ax)
         pp = M[(M.scenario == BAR_SCEN) & (M.policy == pol)].pivot_table(
-            index="year", columns="group", values="gross_GWyr", aggfunc="sum")
+            index="year", columns="group", values="adjusted_GWyr", aggfunc="sum")
         pp = pp.rename(columns=POOL_OTHER).T.groupby(level=0).sum().T
         pp = pp.reindex(columns=[t for t in ORDER if t in pp.columns]).fillna(0.0)
         # the 2025 model period (2021-2025) is already covered by observed
         # annual data, so the projection starts with the 2026-2030 period
         pp = pp.loc[pp.index >= 2030]
-        # Efficiency range of total gross additions for the whiskers.
+        # Efficiency range of total retirement-adjusted additions.
         rng = {}
         for scen in RANGE_SCENS:
             s = M[(M.scenario == scen) & (M.policy == pol)].groupby(
-                "year").gross_GWyr.sum()
+                "year").adjusted_GWyr.sum()
             rng[scen] = s.loc[s.index >= 2030]
 
-        for p, w, off in ((hp, 1.0, 0.5), (pp, 5.0, -2.5)):
+        for p, w, off in ((hp, 0.9, -0.5), (pp, 5.0, -2.5)):
             for y in p.index:
-                bottom = 0.0
+                positive_bottom = 0.0
+                negative_bottom = 0.0
                 for t in ORDER:
                     if t not in p.columns:
                         continue
                     v = float(p.loc[y, t])
-                    if v <= 0.0:
+                    if v == 0.0:
                         continue
+                    bottom = positive_bottom if v > 0 else negative_bottom
                     htch = "////" if t == "CCS" else None
                     ec = "0.25" if t == "CCS" else "white"
                     ax.bar(y + off, v, bottom=bottom, width=w,
                            color=TECH_COLORS[t], hatch=htch, edgecolor=ec,
                            linewidth=0.35, zorder=3)
-                    bottom += v
+                    if v > 0:
+                        positive_bottom += v
+                    else:
+                        negative_bottom += v
         for y in pp.index:
             vals = [float(rng[s][y]) for s in RANGE_SCENS]
             wlo, whi = min(vals), max(vals)
@@ -183,7 +208,7 @@ def main() -> None:
                    ls=(0, (4, 3)), zorder=4)
         ax.set_xlim(1999.3, 2051.5)
         ax.set_xticks([2000, 2010, 2020, 2030, 2040, 2050])
-        ax.set_ylim(0, 1650)
+        ax.set_ylim(-80, 1350)
         ax.yaxis.set_major_formatter(CM)
         ax.set_title(disp, fontsize=FS["title"],
                      color=C_REF if pol == "ref" else C_NZ, pad=8)
@@ -197,12 +222,13 @@ def main() -> None:
                     fontsize=FS["letter"], fontweight="bold")
             ax.tick_params(labelleft=False)
 
-    # ---------- c: total clean capacity in 2050 ----------
-    # (user ruling 2026-08-21: the DConstant counterfactual and the
-    # data-center-increment decomposition are dropped — the capacity metric
-    # is generation-derived, so mix shifts between low- and high-CF clean
-    # techs swamped the increment and could even turn it negative. The
-    # panel now shows the 2050 clean stock itself, stacked by technology.)
+    # ---------- c: total clean capacity and matched Constant baseline ----------
+    # Technology stacks retain the system composition. A short horizontal
+    # mark within each bar shows the clean-capacity total in the matching
+    # DConstant cell under the same efficiency and policy. The portion above
+    # that mark is therefore the matched increase associated with additional demand growth
+    # after 2025. This aggregate difference is kept distinct
+    # from any technology-by-technology attribution.
     ax = fig.add_subplot(gs[1, :])
     style(ax)
     # Independent 2025 benchmark in the same generation-equivalent metric as
@@ -228,7 +254,16 @@ def main() -> None:
             grp_start = x
             for eff in EFFS_C:
                 s = clean_by_tech(f"D{dem}_E{eff}", pol)
-                hi_bar = max(hi_bar, float(s.sum()))
+                total = float(s.sum())
+                baseline = clean_stock(
+                    cap, f"DConstant_E{eff}", pol, 2050
+                )
+                if total < baseline - 1e-6:
+                    raise ValueError(
+                        "panel c requires non-negative capacity above the "
+                        f"matching Constant scenario: {pol}, {dem}, {eff}"
+                    )
+                hi_bar = max(hi_bar, total)
                 bottom = 0.0
                 for t in CLEAN_ORDER:
                     v = float(s[t])
@@ -240,6 +275,10 @@ def main() -> None:
                            color=TECH_COLORS[t], hatch=htch, edgecolor=ec,
                            linewidth=0.35, zorder=3)
                     bottom += v
+                ax.hlines(
+                    baseline, x - 0.43, x + 0.43,
+                    color="0.12", lw=1.35, zorder=7,
+                )
                 xticks.append(x)
                 xtlabs.append("Med" if eff == "Medium" else eff)
                 x += 1.0
@@ -256,12 +295,17 @@ def main() -> None:
         x += 1.6
     ax.hlines(stock25, -0.7, x - 2.3, color="0.30", lw=1.2, ls=(0, (5, 3)),
               zorder=5)
-    policy_gap = (block_centres["ref"] + block_centres["nz2050co2"]) / 2
-    ax.annotate("2025 clean capacity", xy=(policy_gap, stock25),
-                xytext=(0, 2), textcoords="offset points", ha="center",
-                va="bottom", fontsize=10.5, color="0.30", zorder=6,
-                path_effects=[pe.withStroke(linewidth=2.3,
-                                            foreground="white")])
+    from matplotlib.lines import Line2D as _L2
+    c_handles = [
+        _L2([], [], color="0.12", lw=1.35, label="Constant scenario"),
+        _L2([], [], color="0.30", lw=1.2, ls=(0, (5, 3)),
+            label="2025 benchmark"),
+    ]
+    ax.legend(
+        handles=c_handles, loc="upper left", bbox_to_anchor=(0.005, 0.985),
+        ncol=2, frameon=False, fontsize=FS["small"], handlelength=2.4,
+        columnspacing=1.5, borderaxespad=0.0,
+    )
     for pol, disp in POLICIES:
         ax.text(block_centres[pol], 1.03, disp,
                 transform=ax.get_xaxis_transform(), ha="center",

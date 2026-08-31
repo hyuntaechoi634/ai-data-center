@@ -1,35 +1,32 @@
 # Figure 2 caption
 
-**Fig. 2 | Power-system response to data center growth.** **a**,**b**,
-Tracked global nameplate capacity commissioned from 2000 to 2024,
-followed by modeled annualized gross generation-equivalent capacity additions
-under the reference power system (**a**) and net-zero CO₂ by 2050 (**b**).
-Bars show High demand at Medium efficiency, whiskers span the Low and High
-efficiency assumptions, and the dark line shows total clean
-generation-equivalent capacity on the right axis. Its 2000–2025 history uses
-Ember generation by source converted with the same capacity factors as the
-GCAM figure bridge, followed by the GCAM projection from 2030. The independent
-history differs from GCAM by at most 1.2% across the 2005–2021 calibration
-anchors and by 3.8% in the first future period, 2025. Historical additions are
-unit-level start-year sums from Global
-Energy Monitor's August 2026 Global Integrated Power Tracker. Modeled
-additions identify new construction cohorts using electricity generation by
-generation technology, cooling technology and vintage, convert generation to
-capacity with the declared technology capacity factors, and annualize each
-five-year model period. Because hydropower is not vintaged in this GCAM
-representation, its modeled additions use positive changes in inferred
-capacity stock. **c**, Total generation-equivalent clean capacity in 2050 for
-the nine demand-by-efficiency scenarios under each policy, stacked by
-technology. The dashed line marks 4,011 GW of external clean
-generation-equivalent capacity in 2025. **d**, Electricity generation in 2050 at Medium efficiency,
-with whiskers spanning the three efficiency assumptions. **e**, Electricity
-consumption by end-use sector in 2050. Data centers comprise conventional,
-training and inference electricity, and buildings exclude data center
-consumption. In panels a and b, Other pools oil or other fossil, biomass, and
-geothermal additions. The historical tracker applies technology-specific
-facility-size thresholds and does not cover distributed solar globally, so
-the historical bars are a tracked utility-scale series rather than a complete
-global total.
+**Fig. 2 | Power-system response to data center growth.** **a,b**, Observed
+annual net capacity additions from 2001 to 2025, followed by modeled annual
+capacity additions under the Reference pathway (**a**) and net-zero CO₂ by
+2050 (**b**). Projected bars show High demand at Medium efficiency, with
+whiskers spanning the Low and High efficiency pathways. Historical bars
+measure changes in observed year-end nameplate capacity. Modeled bars infer
+additions from new-vintage generation after accounting for declining
+generation from existing plants; the full accounting is described in
+Methods. Dark lines show clean capacity inferred from observed and modeled
+generation using a common set of technology-specific capacity factors.
+Historical capacity additions are from IRENASTAT, their fossil composition is
+allocated using the Global Integrated Power Tracker, and historical clean
+generation is from Ember. **c**, Total clean capacity in 2050 across the nine
+demand and efficiency scenarios under each policy, stacked by technology.
+Short horizontal marks within the bars show clean capacity in the matching
+Constant scenario under the same efficiency and policy; the portion above
+each mark is the increase associated with additional demand growth after
+2025. The dashed line marks the 4,011-GW benchmark derived from Ember's
+observed clean generation in 2025 using the same capacity factors. **d**,
+Global electricity
+generation by technology in 2050 at Medium efficiency for each demand and
+policy scenario. **e**, Electricity consumption by end-use sector in 2050.
+Lines connect Medium-efficiency values across the demand scenarios; squares,
+circles and triangles denote Low, Medium and High efficiency. Data centers
+include conventional computing, training and inference, while buildings
+exclude data center consumption. In panels a and b, Other pools oil and other
+fossil capacity, biomass, geothermal and the small non-fossil residual.
 
 Model results: final 24-scenario database archive (2026-08-30). Figure data are
 read from `results/derived/figure-data`.
