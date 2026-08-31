@@ -14,10 +14,10 @@ Historical capacity additions are from IRENASTAT, their fossil composition is
 allocated using the Global Integrated Power Tracker, and historical clean
 generation is from Ember. **c**, Total clean capacity in 2050 across the nine
 demand and efficiency scenarios under each policy, stacked by technology.
-Short horizontal marks within the bars show clean capacity in the matching
-Constant scenario under the same efficiency and policy; the portion above
-each mark is the increase associated with additional demand growth after
-2025. The dashed line marks the 4,011-GW benchmark derived from Ember's
+Purple portions show the aggregate additional capacity associated with AI
+demand growth after 2025, calculated against the matched no-growth
+counterfactual but not allocated across technologies. The dashed line marks
+the 4,011-GW benchmark derived from Ember's
 observed clean generation in 2025 using the same capacity factors. **d**,
 Global electricity
 generation by technology in 2050 at Medium efficiency for each demand and

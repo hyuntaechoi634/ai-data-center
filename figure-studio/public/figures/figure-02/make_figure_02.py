@@ -6,9 +6,8 @@ One message per element, 3-demand presentation:
         Plutus retirement-adjusted generation-equivalent additions, with total
         clean capacity.
   c   | Total clean capacity in 2050 (renewables + nuclear + all CCS) per
-        scenario. Short horizontal marks show the matching Constant-scenario
-        capacity, so the portion above each mark is the increase associated
-        with additional demand growth after 2025.
+        scenario. Purple overlays identify the aggregate additional capacity
+        associated with post-2025 AI demand growth.
   d   | Generation in 2050 at Medium efficiency, with the efficiency range as
         whiskers on the totals (replaces old f, 3x3-consistent).
   e   | Electricity end-use in 2050 WITHOUT the world-total backdrop
@@ -222,13 +221,10 @@ def main() -> None:
                     fontsize=FS["letter"], fontweight="bold")
             ax.tick_params(labelleft=False)
 
-    # ---------- c: total clean capacity and matched Constant baseline ----------
-    # Technology stacks retain the system composition. A short horizontal
-    # mark within each bar shows the clean-capacity total in the matching
-    # DConstant cell under the same efficiency and policy. The portion above
-    # that mark is therefore the matched increase associated with additional demand growth
-    # after 2025. This aggregate difference is kept distinct
-    # from any technology-by-technology attribution.
+    # ---------- c: total clean capacity and AI-demand increment ----------
+    # Technology stacks retain the system composition. The purple overlay is
+    # the aggregate difference from the matched no-growth counterfactual. It
+    # is deliberately not allocated across technologies.
     ax = fig.add_subplot(gs[1, :])
     style(ax)
     # Independent 2025 benchmark in the same generation-equivalent metric as
@@ -261,7 +257,7 @@ def main() -> None:
                 if total < baseline - 1e-6:
                     raise ValueError(
                         "panel c requires non-negative capacity above the "
-                        f"matching Constant scenario: {pol}, {dem}, {eff}"
+                        f"matched no-growth counterfactual: {pol}, {dem}, {eff}"
                     )
                 hi_bar = max(hi_bar, total)
                 bottom = 0.0
@@ -275,9 +271,11 @@ def main() -> None:
                            color=TECH_COLORS[t], hatch=htch, edgecolor=ec,
                            linewidth=0.35, zorder=3)
                     bottom += v
-                ax.hlines(
-                    baseline, x - 0.43, x + 0.43,
-                    color="0.12", lw=1.35, zorder=7,
+                additional = total - baseline
+                ax.bar(
+                    x, additional, bottom=baseline, width=0.8,
+                    color=AI_COL, edgecolor="white", linewidth=0.35,
+                    zorder=6,
                 )
                 xticks.append(x)
                 xtlabs.append("Med" if eff == "Medium" else eff)
@@ -296,8 +294,10 @@ def main() -> None:
     ax.hlines(stock25, -0.7, x - 2.3, color="0.30", lw=1.2, ls=(0, (5, 3)),
               zorder=5)
     from matplotlib.lines import Line2D as _L2
+    from matplotlib.patches import Patch as _Patch
     c_handles = [
-        _L2([], [], color="0.12", lw=1.35, label="Constant scenario"),
+        _Patch(facecolor=AI_COL, edgecolor="none",
+               label="Additional capacity from AI demand"),
         _L2([], [], color="0.30", lw=1.2, ls=(0, (5, 3)),
             label="2025 benchmark"),
     ]
