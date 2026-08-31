@@ -17,6 +17,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlparse
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
 
+from .catalog import FIGURE_PROJECTS
 from .panels import panel_catalog
 
 
@@ -351,7 +352,7 @@ def _active_figure_directory(workspace: Path) -> Path:
     if (
         len(directory.parts) != 2
         or directory.parts[0] != "figures"
-        or directory.parts[1] not in {f"figure-{number:02d}" for number in range(1, 7)}
+        or directory.parts[1] not in FIGURE_PROJECTS
     ):
         raise AgentError("The active figure directory is invalid")
     return directory

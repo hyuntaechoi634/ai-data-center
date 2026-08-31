@@ -1,7 +1,7 @@
 # Public figure code export
 
-This directory contains the reviewed plotting code and captions for Figure 01
-through Figure 06 from the GCAM 9.1 final calibrated result set.
+This directory contains the reviewed plotting code and captions for main
+Figure 01 through Figure 06 and Supplementary Figure 01 through Figure 06.
 
 It intentionally excludes source data, derived result tables, uploaded files,
 rendered output, and session history. Figure Studio proposals may change only

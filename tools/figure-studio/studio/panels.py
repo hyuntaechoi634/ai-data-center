@@ -75,6 +75,42 @@ FIGURE_PANELS: dict[str, dict] = {
             {"id": "f", "label": "F", "bbox_px": (2485, 1046, 3640, 3117)},
         ),
     },
+    "supplementary-01": {
+        "canvas_px": (2720, 919),
+        "dpi": 200,
+        "panels": (
+            {"id": "a", "label": "A", "bbox_px": (0, 0, 1035, 919)},
+            {"id": "b", "label": "B", "bbox_px": (1035, 0, 1875, 919)},
+            {"id": "c", "label": "C", "bbox_px": (1875, 0, 2720, 919)},
+        ),
+    },
+    "supplementary-02": {
+        "canvas_px": (4080, 1380),
+        "dpi": 300,
+        "panels": (
+            {"id": "a", "label": "A", "bbox_px": (0, 0, 1532, 1380)},
+            {"id": "b", "label": "B", "bbox_px": (1532, 0, 2818, 1380)},
+            {"id": "c", "label": "C", "bbox_px": (2818, 0, 4080, 1380)},
+        ),
+    },
+    "supplementary-04": {
+        "canvas_px": (6840, 1770),
+        "dpi": 300,
+        "panels": (
+            {"id": "a", "label": "A", "bbox_px": (0, 0, 2010, 1770)},
+            {"id": "b", "label": "B", "bbox_px": (2010, 0, 3892, 1770)},
+            {"id": "c", "label": "C", "bbox_px": (3892, 0, 6840, 1770)},
+        ),
+    },
+    "supplementary-06": {
+        "canvas_px": (5460, 4140),
+        "dpi": 300,
+        "panels": (
+            {"id": "a", "label": "A", "bbox_px": (0, 0, 2109, 4140)},
+            {"id": "b", "label": "B", "bbox_px": (2109, 0, 3868, 4140)},
+            {"id": "c", "label": "C", "bbox_px": (3868, 0, 5460, 4140)},
+        ),
+    },
 }
 
 
@@ -174,6 +210,42 @@ PANEL_DATA_SOURCES: dict[str, dict[str, tuple[str, ...]]] = {
             "results/derived/figure-data/fig_water_footprint.csv",
             "results/derived/figure-data/v7_region_total_water.csv",
         ),
+    },
+    "supplementary-01": {
+        panel_id: (
+            "figures/source-data/supplementary-01/demand_calibration_annual.csv",
+            "figures/source-data/supplementary-01/demand_calibration_summary.csv",
+            "figures/source-data/supplementary-01/scenario_design.csv",
+            "figures/source-data/supplementary-01/scenario_common_parameters.csv",
+        )
+        for panel_id in ("a", "b", "c")
+    },
+    "supplementary-02": {
+        panel_id: (
+            "figures/source-data/supplementary-02/fleet_efficiency_index_2021_2025.csv",
+            "figures/source-data/supplementary-02/efficiency_scenario_parameters.csv",
+        )
+        for panel_id in ("a", "b", "c")
+    },
+    "supplementary-04": {
+        "a": (
+            "figures/source-data/supplementary-04/global-electricity-generation-by-source-2000-2025.csv",
+        ),
+        "b": (
+            "figures/source-data/supplementary-04/global-electricity-generation-summary-2000-2025.csv",
+        ),
+        "c": (
+            "figures/source-data/supplementary-04/global-tracked-gross-capacity-additions-2000-2024.csv",
+        ),
+    },
+    "supplementary-06": {
+        panel_id: (
+            "results/derived/figure-data/v7_regional.csv",
+            "results/derived/figure-data/fig_region_elec_dc_v3.csv",
+            "results/derived/figure-data/fig_water_footprint.csv",
+            "results/derived/figure-data/v7_region_total_water.csv",
+        )
+        for panel_id in ("a", "b", "c")
     },
 }
 

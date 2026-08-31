@@ -134,12 +134,30 @@ button:disabled {
 
 .figure-navigator {
   min-width: 0;
+  max-height: calc(100vh - 6rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .figure-tabs {
   display: flex;
   width: 100%;
   flex-direction: column;
+}
+
+.figure-section-label {
+  padding: 0.72rem 0.9rem 0.42rem;
+  color: #748078;
+  font-size: 0.86rem;
+  font-weight: 760;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.figure-section-label.supplementary {
+  border-top: 1px solid var(--line);
+  padding-top: 0.9rem;
 }
 
 .figure-nav-group + .figure-nav-group {
@@ -217,6 +235,7 @@ button:disabled {
 }
 
 .workspace-shell.sidebar-collapsed .sidebar-title,
+.workspace-shell.sidebar-collapsed .figure-section-label,
 .workspace-shell.sidebar-collapsed .figure-tab-label,
 .workspace-shell.sidebar-collapsed .panel-subnav {
   display: none;

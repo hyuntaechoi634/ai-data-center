@@ -10,7 +10,9 @@ import re
 import tempfile
 
 
-FIGURES = tuple(f"figure-{number:02d}" for number in range(1, 7))
+FIGURES = tuple(f"figure-{number:02d}" for number in range(1, 7)) + tuple(
+    f"supplementary-{number:02d}" for number in range(1, 7)
+)
 SHARED_HELPERS = ("_registry.py", "gcam_style.py", "layout_runtime.py")
 COMMIT = re.compile(r"^[0-9a-f]{40}$")
 
@@ -75,16 +77,19 @@ def main() -> None:
     if not (template / "project.json").is_file():
         parser.error("the template does not contain project.json")
 
-    roots = [
+    figure_roots = [
         Path("figures") / figure_id
         for figure_id in FIGURES
         if (template / "figures" / figure_id).is_dir()
     ]
+    if len(figure_roots) != len(FIGURES):
+        parser.error(
+            "the reviewed template must contain main and supplementary figures 01 through 06"
+        )
+    roots = list(figure_roots)
     helpers = Path("figures/helpers")
     if (template / helpers).is_dir():
         roots.append(helpers)
-    if len([root for root in roots if root.name.startswith("figure-")]) != 6:
-        parser.error("the reviewed template must contain Figure 01 through Figure 06")
 
     reviewed_paths = []
     for figure_id in FIGURES:

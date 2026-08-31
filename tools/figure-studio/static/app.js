@@ -5,6 +5,12 @@ const FIGURE_IDS = [
   "figure-04",
   "figure-05",
   "figure-06",
+  "supplementary-01",
+  "supplementary-02",
+  "supplementary-03",
+  "supplementary-04",
+  "supplementary-05",
+  "supplementary-06",
 ];
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -260,7 +266,10 @@ function panelScopeLabel(panelId = selectedPanelId()) {
 }
 
 function figureLabel(figureId = app.figureId) {
-  return figureId.replace("figure-", "Figure ");
+  const number = figureId.slice(-2);
+  return figureId.startsWith("supplementary-")
+    ? `Supplementary Figure ${number}`
+    : `Figure ${number}`;
 }
 
 function isWidePanel(panel = selectedPanelRecord()) {
@@ -725,7 +734,7 @@ function renderState() {
   const warningBox = $("#warningBox");
   warningBox.textContent = warnings.join("\n");
   warningBox.classList.toggle("hidden", !warnings.length);
-  document.title = `${app.figureId.replace("figure-", "Figure ")} - Figure Studio`;
+  document.title = `${figureLabel()} - Figure Studio`;
   renderNavigator();
 }
 
@@ -815,7 +824,7 @@ async function selectFigure(figureId) {
   );
   renderMessages([]);
   renderUploads([]);
-  setBusy(true, `Opening ${figureId.replace("figure-", "Figure ")}`, "Preparing its isolated editing session.");
+  setBusy(true, `Opening ${figureLabel(figureId)}`, "Preparing its isolated editing session.");
   try {
     if (app.sessionId) {
       try {
