@@ -2,7 +2,7 @@
 """Build Figure 6 from the audited regional BaseX query tables.
 
 Panels a-c retain the 32 GCAM regions and show 2050 within-region shares for
-High autonomous intensity, Medium efficiency, and the reference power system.
+High demand, Medium efficiency, and the reference power system.
 Panels d-f aggregate the same numerators and denominators to 12 reporting
 regions and show the full 18-cell demand-by-efficiency-by-policy range.
 
@@ -300,9 +300,11 @@ DEMCOL = {"Low": "#e0946a", "Medium": "#c2601f", "High": "#7d3506"}
 NZCOL = {"Low": "#83b6c0", "Medium": "#3f93a4", "High": "#14596b"}
 
 fig = plt.figure(figsize=(18.2, 16.8))
-gsm = fig.add_gridspec(2, 3, height_ratios=[1.0, 2.55],
-                       left=0.052, right=0.988, top=0.955, bottom=0.105,
-                       hspace=0.22, wspace=0.13)
+outer = fig.add_gridspec(2, 1, height_ratios=[1.0, 2.55],
+                         left=0.020, right=0.995, top=0.965, bottom=0.105,
+                         hspace=0.18)
+map_grid = outer[0].subgridspec(1, 3, wspace=0.010)
+rail_grid = outer[1].subgridspec(1, 3, wspace=0.13)
 
 from pyproj import Transformer
 _TR = Transformer.from_crs("EPSG:4326", ctry.crs, always_xy=True)
@@ -314,7 +316,7 @@ _fr_lat = np.r_[np.full(361, LAT1), np.linspace(LAT1, LAT0, 50),
 _fx, _fy = _TR.transform(_fr_lon, _fr_lat)
 
 for ci, C in enumerate(SHARE_COLS):
-    ax = fig.add_subplot(gsm[0, ci])
+    ax = fig.add_subplot(map_grid[0, ci])
     ax.set_axis_off()
     ax.set_aspect("equal")
     norm = colors.Normalize(0.0, C["vmax"])
@@ -338,25 +340,8 @@ for ci, C in enumerate(SHARE_COLS):
         _x, _y = _TR.transform(np.full_like(_la, float(lng)), _la)
         ax.plot(_x, _y, color="0.78", lw=0.5, ls=(0, (2, 2)), zorder=0.5)
     ax.plot(_fx, _fy, color="0.1", lw=1.0, zorder=6)
-    if ci == 0:
-        for latg in (60, 30, 0, -30, -60):
-            _x, _y = _TR.transform(-180.0, float(latg))
-            lab = ("0\u00b0" if latg == 0
-                   else f"{abs(latg)}\u00b0 {'N' if latg > 0 else 'S'}")
-            ax.annotate(lab, (_x, _y), xytext=(-4, 0),
-                        textcoords="offset points", ha="right", va="center",
-                        fontsize=7.6 * SCALE, color="0.25",
-                        annotation_clip=False)
-    for lng in (-120, -60, 0, 60, 120):
-        _x, _y = _TR.transform(float(lng), LAT0)
-        lab = ("0\u00b0" if lng == 0
-               else f"{abs(lng)}\u00b0 {'W' if lng < 0 else 'E'}")
-        ax.annotate(lab, (_x, _y), xytext=(0, -3),
-                    textcoords="offset points", ha="center", va="top",
-                    fontsize=7.6 * SCALE, color="0.25",
-                    annotation_clip=False)
-    ax.set_xlim(_fx.min() - 3e5, _fx.max() + 3e5)
-    ax.set_ylim(_fy.min() - 3e5, _fy.max() + 3e5)
+    ax.set_xlim(_fx.min(), _fx.max())
+    ax.set_ylim(_fy.min(), _fy.max())
     C["ax"] = ax
 
 # ------- d-f: 12 reporting regions; bar = full scenario range ----------
@@ -389,7 +374,7 @@ for R in RAILS:
                               b25s.get(r) if b25s.get(r) is not None else 0.0))
                for r in REGIONS}
 for ci, R in enumerate(RAILS):
-    ax = fig.add_subplot(gsm[1, ci])
+    ax = fig.add_subplot(rail_grid[0, ci])
     R["hi"] = 80.0 if R["grp"] == "elec" else 50.0
     R["lo"] = -XMARG * R["hi"]
     R["step"] = 10.0
@@ -456,7 +441,7 @@ for ci, C in enumerate(SHARE_COLS):
     pos = C["ax"].get_position(original=False)
     fig.text(pos.x0 + pos.width / 2, pos.y1 + 0.009, C["title"],
              fontsize=12.5 * SCALE, color="0.12", ha="center", va="bottom")
-    fig.text(pos.x0 - 0.010, pos.y1 + 0.009, "abc"[ci], fontsize=16 * SCALE,
+    fig.text(pos.x0 + 0.002, pos.y1 + 0.009, "abc"[ci], fontsize=16 * SCALE,
              fontweight="bold", ha="left", va="bottom")
     sm = cm.ScalarMappable(norm=colors.Normalize(0.0, C["vmax"]),
                            cmap=C["cmap"])

@@ -67,12 +67,12 @@ FIGURE_PANELS: dict[str, dict] = {
         "canvas_px": (3640, 3360),
         "dpi": 200,
         "panels": (
-            {"id": "a", "label": "A", "bbox_px": (90, 173, 1251, 948)},
-            {"id": "b", "label": "B", "bbox_px": (1316, 159, 2432, 948)},
-            {"id": "c", "label": "C", "bbox_px": (2494, 173, 3613, 948)},
-            {"id": "d", "label": "D", "bbox_px": (125, 1047, 1396, 3110)},
-            {"id": "e", "label": "E", "bbox_px": (1306, 1060, 2491, 3117)},
-            {"id": "f", "label": "F", "bbox_px": (2485, 1046, 3640, 3117)},
+            {"id": "a", "label": "A", "bbox_px": (0, 0, 1254, 975)},
+            {"id": "b", "label": "B", "bbox_px": (1254, 0, 2441, 975)},
+            {"id": "c", "label": "C", "bbox_px": (2441, 0, 3640, 975)},
+            {"id": "d", "label": "D", "bbox_px": (0, 975, 1232, 3130)},
+            {"id": "e", "label": "E", "bbox_px": (1232, 975, 2462, 3130)},
+            {"id": "f", "label": "F", "bbox_px": (2462, 975, 3640, 3130)},
         ),
     },
     "supplementary-01": {
